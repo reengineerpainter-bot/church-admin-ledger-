@@ -153,6 +153,8 @@ export function App() {
       {/* Dynamic top profile switcher */}
       <SimulatorBar
         currentUser={currentUser}
+        authUserId={state.authUserId}
+        authUser={state.authUser}
         users={state.users}
         logs={state.logs}
         onSwitchUser={state.switchUser}

@@ -27,6 +27,11 @@ export function useAppState() {
     return saved || 'logged_out'; // Default to Login Validation Screen
   });
 
+  const [authUserId, setAuthUserId] = useState(() => {
+    const saved = localStorage.getItem('church_auth_user_id');
+    return saved || 'logged_out';
+  });
+
   const [logs, setLogs] = useState(() => {
     const saved = localStorage.getItem('church_logs');
     return saved ? JSON.parse(saved) : [
@@ -61,6 +66,10 @@ export function useAppState() {
   }, [currentUserId]);
 
   useEffect(() => {
+    localStorage.setItem('church_auth_user_id', authUserId);
+  }, [authUserId]);
+
+  useEffect(() => {
     localStorage.setItem('church_logs', JSON.stringify(logs));
   }, [logs]);
 
@@ -69,6 +78,7 @@ export function useAppState() {
   }, [souls]);
 
   const currentUser = users.find(u => u.id === currentUserId);
+  const authUser = users.find(u => u.id === authUserId);
 
   // Helper to add system audit logs
   const addLog = (text) => {
@@ -90,6 +100,7 @@ export function useAppState() {
 
   const logout = () => {
     setCurrentUserId('logged_out');
+    setAuthUserId('logged_out');
     addLog(`Logged out active profile session.`);
   };
 
@@ -107,6 +118,7 @@ export function useAppState() {
       return { success: false, error: 'Incorrect credentials password.' };
     }
     setCurrentUserId(matched.id);
+    setAuthUserId(matched.id);
     addLog(`Authenticated session as ${matched.name} (@${matched.username})`);
     return { success: true };
   };
@@ -408,12 +420,15 @@ export function useAppState() {
     setCells(initialCells);
     setSouls([]);
     setCurrentUserId('logged_out');
+    setAuthUserId('logged_out');
     setLogs([{ id: 'log_reset', text: 'Database reset to initial mock configurations.', time: new Date().toLocaleTimeString() }]);
   };
 
   return {
     currentUserId,
     currentUser,
+    authUserId,
+    authUser,
     users,
     ledger,
     chapters,

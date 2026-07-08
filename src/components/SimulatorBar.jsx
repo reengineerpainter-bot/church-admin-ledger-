@@ -2,16 +2,16 @@ import React, { useState } from 'react';
 import { Users, Shield, RotateCcw, Activity, Terminal, ChevronDown, ChevronUp, User, LogOut } from 'lucide-react';
 import { EditUserModal } from './Common/EditUserModal';
 
-export function SimulatorBar({ currentUser, users, logs, onSwitchUser, onReset, updateUser, onLogout }) {
+export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, onSwitchUser, onReset, updateUser, onLogout }) {
   const [isOpen, setIsOpen] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
 
-  // Group users by role with hierarchical visibility constraints:
+  // Group users by role with hierarchical visibility constraints based on the authenticated operator:
   const getVisibleUsers = () => {
-    if (!currentUser) return { admin: [], cl: [], cell: [], member: [] };
+    if (!authUser || authUserId === 'logged_out') return { admin: [], cl: [], cell: [], member: [] };
 
-    const role = currentUser.role;
+    const role = authUser.role;
 
     if (role === 'admin') {
       // Pastor sees everyone
@@ -27,9 +27,9 @@ export function SimulatorBar({ currentUser, users, logs, onSwitchUser, onReset, 
       // Chapter Leader sees only themselves, cell leaders in their chapter, and members in their chapter
       return {
         admin: [],
-        cl: users.filter(u => u.id === currentUser.id),
-        cell: users.filter(u => u.role === 'cell_leader' && u.chapterId === currentUser.chapterId && u.status === 'Active'),
-        member: users.filter(u => u.role === 'member' && u.chapterId === currentUser.chapterId && u.status === 'Active')
+        cl: users.filter(u => u.id === authUser.id),
+        cell: users.filter(u => u.role === 'cell_leader' && u.chapterId === authUser.chapterId && u.status === 'Active'),
+        member: users.filter(u => u.role === 'member' && u.chapterId === authUser.chapterId && u.status === 'Active')
       };
     }
 
@@ -38,8 +38,8 @@ export function SimulatorBar({ currentUser, users, logs, onSwitchUser, onReset, 
       return {
         admin: [],
         cl: [],
-        cell: users.filter(u => u.id === currentUser.id),
-        member: users.filter(u => u.role === 'member' && u.cellId === currentUser.cellId && u.status === 'Active')
+        cell: users.filter(u => u.id === authUser.id),
+        member: users.filter(u => u.role === 'member' && u.cellId === authUser.cellId && u.status === 'Active')
       };
     }
 
@@ -49,7 +49,7 @@ export function SimulatorBar({ currentUser, users, logs, onSwitchUser, onReset, 
         admin: [],
         cl: [],
         cell: [],
-        member: users.filter(u => u.id === currentUser.id)
+        member: users.filter(u => u.id === authUser.id)
       };
     }
 
