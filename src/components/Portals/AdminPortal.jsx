@@ -5,8 +5,10 @@ import { CredentialForm } from './CredentialForm';
 import { UserDirectory } from './UserDirectory';
 import { 
   TrendingUp, Users, Map, Grid, CheckCircle, XCircle, 
-  UserPlus, UserCheck, AlertTriangle, Trophy, Calendar
+  UserPlus, UserCheck, AlertTriangle, Trophy, Calendar, Sparkles, AlertCircle
 } from 'lucide-react';
+import { RecordGivingForm } from '../Common/RecordGivingForm';
+import { RecordSoulForm } from '../Common/RecordSoulForm';
 
 export function AdminPortal({ 
   currentUser, 
@@ -20,7 +22,13 @@ export function AdminPortal({
   createChapter,
   updateUser,
   approveUserDeletion,
-  rejectUserDeletion
+  rejectUserDeletion,
+  submitSoulRecord,
+  approveSoul,
+  rejectSoul,
+  submitLedgerEntry,
+  verifyLedgerEntry,
+  souls
 }) {
   const [showAddLeader, setShowAddLeader] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'directory'
@@ -110,13 +118,27 @@ export function AdminPortal({
   const totalGiving = confirmedLedger.reduce((sum, item) => sum + item.totalAmount, 0);
   
   // Total Souls Won
-  const totalSoulsWon = confirmedLedger.reduce((sum, item) => sum + item.newMembersBroughtIn, 0);
+  const totalSoulsWon = confirmedLedger.reduce((sum, item) => sum + item.newMembersBroughtIn, 0) + souls.filter(s => s.status === 'Approved').length;
 
   // Active Users count
   const activeMembersCount = users.filter(u => u.role === 'member' && u.status === 'Active').length;
   const activeCellLeaders = users.filter(u => u.role === 'cell_leader' && u.status === 'Active').length;
 
   const pendingDeletions = users.filter(u => u.status === 'Pending_Deletion');
+
+  // Souls pending approval under Pastor (Chapter Leaders' recorded souls)
+  const pendingSouls = souls.filter(s => {
+    if (s.status !== 'Pending_Approval') return false;
+    const reporter = users.find(u => u.id === s.recordedBy);
+    return reporter && reporter.role === 'chapter_leader';
+  });
+
+  // Giving entries from Chapter Leaders pending audit
+  const pendingGivings = ledger.filter(item => {
+    if (item.status !== 'Pending_Cell_Review') return false;
+    const reporter = users.find(u => u.id === item.memberId);
+    return reporter && reporter.role === 'chapter_leader';
+  });
 
   // --- CHART DATA PREPARATION ---
   // 1. Weekly Giving trend
@@ -295,6 +317,12 @@ export function AdminPortal({
         >
           Credentials & User Directory
         </button>
+        <button
+          onClick={() => { setActiveTab('personal'); setShowAddLeader(false); }}
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all border-b-2 ${activeTab === 'personal' ? 'text-indigo-400 border-indigo-500 bg-indigo-500/5' : 'text-slate-400 border-transparent hover:text-slate-205'}`}
+        >
+          My Personal Input
+        </button>
       </div>
 
       {showAddLeader ? (
@@ -349,6 +377,20 @@ export function AdminPortal({
               </button>
             </form>
           </div>
+        </div>
+      ) : activeTab === 'personal' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <RecordGivingForm
+            currentUser={currentUser}
+            onSubmit={submitLedgerEntry}
+            onUpdateUser={updateUser}
+          />
+          <RecordSoulForm
+            currentUser={currentUser}
+            chapters={chapters}
+            cells={cells}
+            onSubmit={submitSoulRecord}
+          />
         </div>
       ) : activeTab === 'directory' ? (
         <UserDirectory
@@ -508,6 +550,108 @@ export function AdminPortal({
                     })}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* Souls Pending Verification Queue */}
+          {pendingSouls.length > 0 && (
+            <div className="p-6 border border-indigo-500/15 bg-indigo-500/5 rounded-3xl mt-4">
+              <h3 className="text-md font-bold text-indigo-400 flex items-center gap-2 mb-4">
+                <Sparkles size={18} />
+                Souls Awaiting Pastor Confirmation ({pendingSouls.length})
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {pendingSouls.map(soul => (
+                  <div key={soul.id} className="p-4 bg-slate-950 border border-slate-850 rounded-2xl flex flex-col justify-between gap-3 font-medium">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-200">{soul.name}</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 font-bold border border-indigo-900">{soul.sex}</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-1">Recorded by: <span className="text-slate-400 font-semibold">{soul.reporterName}</span> (Chapter Leader)</p>
+                      <div className="mt-2 text-xs space-y-1 text-slate-450 border-t border-slate-900 pt-2">
+                        <p><span className="text-slate-500 font-medium">Profession:</span> {soul.profession}</p>
+                        <p><span className="text-slate-500 font-medium">Phone:</span> {soul.phone}</p>
+                        <p><span className="text-slate-500 font-medium">Address:</span> {soul.address}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 border-t border-slate-900 pt-2.5">
+                      <button
+                        onClick={() => approveSoul(soul.id)}
+                        className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-[10px] transition-colors"
+                      >
+                        Confirm & Activate
+                      </button>
+                      <button
+                        onClick={() => rejectSoul(soul.id)}
+                        className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold rounded-lg text-[10px] transition-colors border border-rose-500/10"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Pastor Giving Verification Queue */}
+          {pendingGivings.length > 0 && (
+            <div className="p-6 border border-amber-500/15 bg-amber-500/5 rounded-3xl mt-4">
+              <h3 className="text-md font-bold text-amber-400 flex items-center gap-2 mb-4">
+                <AlertCircle size={18} />
+                Financial Audit Queue: Pending Pastor Review ({pendingGivings.length})
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {pendingGivings.map(item => (
+                  <div key={item.id} className="bg-slate-950 border border-slate-850 p-5 rounded-2xl flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-bold text-slate-100">{item.memberName}</span>
+                        <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                          <Calendar size={12} />
+                          {item.serviceDate}
+                        </span>
+                      </div>
+                      
+                      <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-900 mb-4 space-y-2 text-xs">
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-500 font-semibold">Giving Segment:</span>
+                          <span className="text-slate-205 font-bold">{item.segment || 'Local'}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-500 font-semibold">Category:</span>
+                          <span className="text-indigo-400 font-bold">{item.category}</span>
+                        </div>
+                        <div className="flex justify-between items-center border-t border-slate-900 pt-2 font-bold text-sm">
+                          <span className="text-slate-300">Amount:</span>
+                          <span className="text-emerald-400">${item.totalAmount}</span>
+                        </div>
+                        {item.description && (
+                          <div className="border-t border-slate-900 pt-2">
+                            <span className="text-slate-500 block font-semibold mb-1">Additional Description:</span>
+                            <p className="text-slate-400 italic text-[11px] leading-relaxed">{item.description}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 border-t border-slate-900 pt-3">
+                      <button
+                        onClick={() => verifyLedgerEntry(item.id, true)}
+                        className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-[10px] transition-colors"
+                      >
+                        Approve Receipt
+                      </button>
+                      <button
+                        onClick={() => verifyLedgerEntry(item.id, false)}
+                        className="px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold rounded-lg text-[10px] transition-colors border border-rose-500/10"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

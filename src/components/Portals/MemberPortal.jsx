@@ -5,8 +5,9 @@ import {
   TrendingUp, Calendar, Send, CheckCircle2, Clock, 
   XCircle, FileText, Upload, Sparkles, Award
 } from 'lucide-react';
+import { RecordSoulForm } from '../Common/RecordSoulForm';
 
-export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedgerEntry, updateUser }) {
+export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedgerEntry, updateUser, submitSoulRecord, souls }) {
   const [serviceDate, setServiceDate] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Bank Transfer');
   const [newMembersBroughtIn, setNewMembersBroughtIn] = useState(0);
@@ -121,7 +122,7 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
   const myConfirmed = mySubmissions.filter(item => item.status === 'Confirmed');
   
   const totalGiving = myConfirmed.reduce((sum, item) => sum + (item.amount || item.totalAmount || 0), 0);
-  const totalOutreach = myConfirmed.reduce((sum, item) => sum + item.newMembersBroughtIn, 0);
+  const totalOutreach = myConfirmed.reduce((sum, item) => sum + item.newMembersBroughtIn, 0) + souls.filter(s => s.status === 'Approved' && s.recordedBy === currentUser.id).length;
 
   // Compute consistency (active weeks in mock dashboard)
   const consistencyIndex = Math.min((myConfirmed.length / 4) * 100, 100);
@@ -448,6 +449,15 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
               Submit Weekly Record
             </button>
           </form>
+
+          <div className="mt-6 pt-6 border-t border-slate-800">
+            <RecordSoulForm
+              currentUser={currentUser}
+              chapters={chapters}
+              cells={cells}
+              onSubmit={submitSoulRecord}
+            />
+          </div>
         </div>
 
         {/* Right: Personal Growth Tracker */}

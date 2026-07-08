@@ -78,6 +78,12 @@ export function App() {
             updateUser={state.updateUser}
             approveUserDeletion={state.approveUserDeletion}
             rejectUserDeletion={state.rejectUserDeletion}
+            submitSoulRecord={state.submitSoulRecord}
+            approveSoul={state.approveSoul}
+            rejectSoul={state.rejectSoul}
+            submitLedgerEntry={state.submitLedgerEntry}
+            verifyLedgerEntry={state.verifyLedgerEntry}
+            souls={state.souls}
           />
         );
       case 'chapter_leader':
@@ -94,6 +100,12 @@ export function App() {
             createCell={state.createCell}
             updateUser={state.updateUser}
             requestUserDeletion={state.requestUserDeletion}
+            submitSoulRecord={state.submitSoulRecord}
+            approveSoul={state.approveSoul}
+            rejectSoul={state.rejectSoul}
+            submitLedgerEntry={state.submitLedgerEntry}
+            verifyLedgerEntry={state.verifyLedgerEntry}
+            souls={state.souls}
           />
         );
       case 'cell_leader':
@@ -107,6 +119,11 @@ export function App() {
             createCredential={state.createCredential}
             verifyLedgerEntry={state.verifyLedgerEntry}
             updateUser={state.updateUser}
+            submitSoulRecord={state.submitSoulRecord}
+            approveSoul={state.approveSoul}
+            rejectSoul={state.rejectSoul}
+            submitLedgerEntry={state.submitLedgerEntry}
+            souls={state.souls}
           />
         );
       case 'member':
@@ -118,6 +135,8 @@ export function App() {
             cells={state.cells}
             submitLedgerEntry={state.submitLedgerEntry}
             updateUser={state.updateUser}
+            submitSoulRecord={state.submitSoulRecord}
+            souls={state.souls}
           />
         );
       default:

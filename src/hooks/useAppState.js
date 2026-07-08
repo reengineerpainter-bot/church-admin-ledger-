@@ -24,7 +24,7 @@ export function useAppState() {
 
   const [currentUserId, setCurrentUserId] = useState(() => {
     const saved = localStorage.getItem('church_current_user_id');
-    return saved || 'u1'; // Default to Pastor Chris
+    return saved || 'logged_out'; // Default to Login Validation Screen
   });
 
   const [logs, setLogs] = useState(() => {
@@ -32,6 +32,11 @@ export function useAppState() {
     return saved ? JSON.parse(saved) : [
       { id: 'log_init', text: 'System initialized. Loaded default database.', time: new Date().toLocaleTimeString() }
     ];
+  });
+
+  const [souls, setSouls] = useState(() => {
+    const saved = localStorage.getItem('church_souls');
+    return saved ? JSON.parse(saved) : [];
   });
 
   // Sync to local storage
@@ -58,6 +63,10 @@ export function useAppState() {
   useEffect(() => {
     localStorage.setItem('church_logs', JSON.stringify(logs));
   }, [logs]);
+
+  useEffect(() => {
+    localStorage.setItem('church_souls', JSON.stringify(souls));
+  }, [souls]);
 
   const currentUser = users.find(u => u.id === currentUserId);
 
@@ -172,6 +181,9 @@ export function useAppState() {
       havenSeed: (category === 'PCO Seed' || category === 'Welfare' || category === 'Others') ? numericAmount : 0
     };
 
+    const isPastor = currentUser.role === 'admin';
+    const initialStatus = isPastor ? 'Confirmed' : 'Pending_Cell_Review';
+
     const newEntry = {
       id: `l_${Date.now()}`,
       memberId: currentUser.id,
@@ -188,12 +200,12 @@ export function useAppState() {
       paymentMethod,
       receiptUrl: receiptFileName || 'receipt_placeholder.png',
       newMembersBroughtIn: Number(newMembersBroughtIn) || 0,
-      status: 'Pending_Cell_Review',
+      status: initialStatus,
       createdAt: new Date().toISOString()
     };
 
     setLedger(prev => [newEntry, ...prev]);
-    addLog(`${currentUser.name} submitted ${segment} giving (${category}) of $${numericAmount}. Status: Pending Cell Review.`);
+    addLog(`${currentUser.name} submitted ${segment} giving (${category}) of $${numericAmount}. Status: ${initialStatus === 'Confirmed' ? 'Confirmed' : 'Pending Review'}.`);
     return { success: true };
   };
 
@@ -297,6 +309,91 @@ export function useAppState() {
     return { success: true };
   };
 
+  // Souls Won Records Workflow
+  const submitSoulRecord = (name, address, phone, sex, profession, soulChapterId, soulCellId) => {
+    const isPastor = currentUser.role === 'admin';
+    const initialStatus = isPastor ? 'Approved' : 'Pending_Approval';
+    const targetChapterId = soulChapterId || currentUser.chapterId || 'c1';
+    const targetCellId = soulCellId || currentUser.cellId;
+
+    const newSoul = {
+      id: `soul_${Date.now()}`,
+      name: name.trim(),
+      address: address.trim(),
+      phone: phone.trim(),
+      sex,
+      profession: profession.trim(),
+      status: initialStatus,
+      recordedBy: currentUser.id,
+      reporterName: currentUser.name,
+      chapterId: targetChapterId,
+      cellId: targetCellId,
+      createdAt: new Date().toLocaleString()
+    };
+
+    setSouls(prev => [newSoul, ...prev]);
+
+    if (initialStatus === 'Approved') {
+      const newUser = {
+        id: `u_${Date.now()}_${Math.floor(Math.random() * 100)}`,
+        username: name.trim().toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(Math.random() * 90 + 10),
+        name: name.trim(),
+        role: 'member',
+        status: 'Active',
+        title: sex === 'Male' ? 'Bro' : 'Sis',
+        chapterId: targetChapterId,
+        cellId: targetCellId,
+        address: address.trim(),
+        phone: phone.trim(),
+        profession: profession.trim(),
+        creatorId: currentUser.id,
+        createdAt: new Date().toISOString()
+      };
+      setUsers(prev => [...prev, newUser]);
+      addLog(`${currentUser.name} recorded and instantly activated a new soul: ${name.trim()}.`);
+    } else {
+      addLog(`${currentUser.name} recorded a new soul won: ${name.trim()}. Status: Awaiting confirmation.`);
+    }
+
+    return { success: true };
+  };
+
+  const approveSoul = (soulId) => {
+    const soul = souls.find(s => s.id === soulId);
+    if (!soul) return { success: false, error: 'Soul record not found.' };
+
+    setSouls(prev => prev.map(s => s.id === soulId ? { ...s, status: 'Approved' } : s));
+
+    const newUser = {
+      id: `u_${Date.now()}_${Math.floor(Math.random() * 100)}`,
+      username: soul.name.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(Math.random() * 90 + 10),
+      name: soul.name,
+      role: 'member',
+      status: 'Active',
+      title: soul.sex === 'Male' ? 'Bro' : 'Sis',
+      chapterId: soul.chapterId,
+      cellId: soul.cellId,
+      address: soul.address,
+      phone: soul.phone,
+      profession: soul.profession,
+      creatorId: soul.recordedBy,
+      createdAt: new Date().toISOString()
+    };
+
+    setUsers(prev => [...prev, newUser]);
+    addLog(`${currentUser.name} approved soul won: ${soul.name}. New member account activated.`);
+    return { success: true };
+  };
+
+  const rejectSoul = (soulId) => {
+    const soul = souls.find(s => s.id === soulId);
+    if (!soul) return { success: false, error: 'Soul record not found.' };
+
+    setSouls(prev => prev.map(s => s.id === soulId ? { ...s, status: 'Rejected' } : s));
+    addLog(`${currentUser.name} rejected soul won record for ${soul.name}.`);
+    return { success: true };
+  };
+
   const resetData = () => {
     localStorage.removeItem('church_users');
     localStorage.removeItem('church_ledger');
@@ -304,11 +401,13 @@ export function useAppState() {
     localStorage.removeItem('church_cells');
     localStorage.removeItem('church_current_user_id');
     localStorage.removeItem('church_logs');
+    localStorage.removeItem('church_souls');
     setUsers(initialUsers);
     setLedger(initialLedger);
     setChapters(initialChapters);
     setCells(initialCells);
-    setCurrentUserId('u1');
+    setSouls([]);
+    setCurrentUserId('logged_out');
     setLogs([{ id: 'log_reset', text: 'Database reset to initial mock configurations.', time: new Date().toLocaleTimeString() }]);
   };
 
@@ -332,6 +431,10 @@ export function useAppState() {
     requestUserDeletion,
     approveUserDeletion,
     rejectUserDeletion,
+    submitSoulRecord,
+    approveSoul,
+    rejectSoul,
+    souls,
     login,
     logout,
     resetData

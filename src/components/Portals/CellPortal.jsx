@@ -4,8 +4,10 @@ import { CredentialForm } from './CredentialForm';
 import { UserDirectory } from './UserDirectory';
 import { 
   TrendingUp, Users, CheckCircle, XCircle, UserPlus, 
-  UserCheck, AlertCircle, FileText, Eye, Calendar, Trophy
+  UserCheck, AlertCircle, FileText, Eye, Calendar, Trophy, Sparkles
 } from 'lucide-react';
+import { RecordGivingForm } from '../Common/RecordGivingForm';
+import { RecordSoulForm } from '../Common/RecordSoulForm';
 
 export function CellPortal({ 
   currentUser, 
@@ -15,7 +17,12 @@ export function CellPortal({
   cells, 
   createCredential, 
   verifyLedgerEntry,
-  updateUser
+  updateUser,
+  submitSoulRecord,
+  approveSoul,
+  rejectSoul,
+  submitLedgerEntry,
+  souls
 }) {
   const [showAddMember, setShowAddMember] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'directory'
@@ -108,11 +115,18 @@ export function CellPortal({
 
   // --- STATS COMPUTATIONS ---
   const totalCellGiving = confirmedLedger.reduce((sum, item) => sum + item.totalAmount, 0);
-  const totalCellSouls = confirmedLedger.reduce((sum, item) => sum + item.newMembersBroughtIn, 0);
+  const totalCellSouls = confirmedLedger.reduce((sum, item) => sum + item.newMembersBroughtIn, 0) + souls.filter(s => s.status === 'Approved' && s.cellId === cellId).length;
 
   // --- FINANCIAL VERIFICATION QUEUE ---
   // Submissions by cell members awaiting cell leader audit
   const pendingSubmissions = cellLedger.filter(item => item.status === 'Pending_Cell_Review');
+
+  // Souls pending approval under this Cell Leader
+  const pendingSouls = souls.filter(s => {
+    if (s.status !== 'Pending_Approval') return false;
+    const reporter = users.find(u => u.id === s.recordedBy);
+    return reporter && reporter.role === 'member' && reporter.cellId === cellId;
+  });
 
   // --- MEMBER ASSESSMENT LEDGER ---
   // Track individual member performance, outreach, and consistency
@@ -181,6 +195,12 @@ export function CellPortal({
         >
           Credentials & User Directory
         </button>
+        <button
+          onClick={() => { setActiveTab('personal'); setShowAddMember(false); }}
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all border-b-2 ${activeTab === 'personal' ? 'text-indigo-400 border-indigo-500 bg-indigo-500/5' : 'text-slate-400 border-transparent hover:text-slate-205'}`}
+        >
+          My Personal Input
+        </button>
       </div>
 
       {showAddMember ? (
@@ -203,6 +223,20 @@ export function CellPortal({
           cells={cells}
           updateUser={updateUser}
         />
+      ) : activeTab === 'personal' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <RecordGivingForm
+            currentUser={currentUser}
+            onSubmit={submitLedgerEntry}
+            onUpdateUser={updateUser}
+          />
+          <RecordSoulForm
+            currentUser={currentUser}
+            chapters={chapters}
+            cells={cells}
+            onSubmit={submitSoulRecord}
+          />
+        </div>
       ) : (
         <>
           {/* Metrics */}
@@ -308,6 +342,48 @@ export function CellPortal({
                           Reject
                         </button>
                       </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Souls Pending Verification Queue */}
+          {pendingSouls.length > 0 && (
+            <div className="p-6 border border-indigo-500/15 bg-indigo-500/5 rounded-3xl mt-4">
+              <h3 className="text-md font-bold text-indigo-400 flex items-center gap-2 mb-4">
+                <Sparkles size={18} />
+                Souls Awaiting Confirmation ({pendingSouls.length})
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {pendingSouls.map(soul => (
+                  <div key={soul.id} className="p-4 bg-slate-950 border border-slate-850 rounded-2xl flex flex-col justify-between gap-3">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-200">{soul.name}</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 font-bold border border-indigo-900">{soul.sex}</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-1">Recorded by: <span className="text-slate-400 font-semibold">{soul.reporterName}</span></p>
+                      <div className="mt-2 text-xs space-y-1 text-slate-450 border-t border-slate-900 pt-2">
+                        <p><span className="text-slate-500 font-medium">Profession:</span> {soul.profession}</p>
+                        <p><span className="text-slate-500 font-medium">Phone:</span> {soul.phone}</p>
+                        <p><span className="text-slate-500 font-medium">Address:</span> {soul.address}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 border-t border-slate-900 pt-2.5">
+                      <button
+                        onClick={() => approveSoul(soul.id)}
+                        className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-[10px] transition-colors"
+                      >
+                        Confirm & Activate
+                      </button>
+                      <button
+                        onClick={() => rejectSoul(soul.id)}
+                        className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold rounded-lg text-[10px] transition-colors border border-rose-500/10"
+                      >
+                        Reject
+                      </button>
                     </div>
                   </div>
                 ))}
