@@ -30,6 +30,8 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
   const [error, setError] = useState('');
   const [revealedReport, setRevealedReport] = useState(null); // 'givings' | 'souls' | 'submissions' | null
   const [timeframe, setTimeframe] = useState('monthly');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
 
   const filterByTimeframe = (dateStr) => {
     if (!dateStr) return false;
@@ -38,6 +40,15 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
     
     itemDate.setHours(0, 0, 0, 0);
     now.setHours(0, 0, 0, 0);
+
+    if (timeframe === 'custom') {
+      if (!customStart || !customEnd) return true;
+      const start = new Date(customStart);
+      const end = new Date(customEnd);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      return itemDate >= start && itemDate <= end;
+    }
     
     const diffTime = now.getTime() - itemDate.getTime();
     const diffDays = diffTime / (1000 * 60 * 60 * 24);
@@ -274,7 +285,14 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
           <p className="text-slate-400 text-sm mt-1">Cell: <span className="text-indigo-300 font-bold">{cellName}</span> | Chapter: <span className="text-indigo-300 font-bold">{chapterName}</span></p>
         </div>
         <div className="flex flex-wrap items-center gap-3 shrink-0">
-          <TimeframeFilter value={timeframe} onChange={setTimeframe} />
+          <TimeframeFilter 
+            value={timeframe} 
+            onChange={setTimeframe} 
+            customStart={customStart}
+            onChangeStart={setCustomStart}
+            customEnd={customEnd}
+            onChangeEnd={setCustomEnd}
+          />
           <div className="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 px-4 py-2 rounded-2xl">
             <Award size={18} className="text-indigo-400" />
             <div>

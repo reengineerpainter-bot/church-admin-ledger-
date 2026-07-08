@@ -36,6 +36,8 @@ export function ChapterPortal({
   const [cellSuccess, setCellSuccess] = useState(false);
   const [revealedReport, setRevealedReport] = useState(null); // 'givings' | 'souls' | 'cells' | 'members' | null
   const [timeframe, setTimeframe] = useState('monthly');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
 
   const filterByTimeframe = (dateStr) => {
     if (!dateStr) return false;
@@ -44,6 +46,15 @@ export function ChapterPortal({
     
     itemDate.setHours(0, 0, 0, 0);
     now.setHours(0, 0, 0, 0);
+
+    if (timeframe === 'custom') {
+      if (!customStart || !customEnd) return true;
+      const start = new Date(customStart);
+      const end = new Date(customEnd);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      return itemDate >= start && itemDate <= end;
+    }
     
     const diffTime = now.getTime() - itemDate.getTime();
     const diffDays = diffTime / (1000 * 60 * 60 * 24);
@@ -309,7 +320,14 @@ export function ChapterPortal({
           <p className="text-slate-400 text-sm mt-1">Managing cells, auditing member credentials, and assessing local financial health.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 shrink-0">
-          <TimeframeFilter value={timeframe} onChange={setTimeframe} />
+          <TimeframeFilter 
+            value={timeframe} 
+            onChange={setTimeframe} 
+            customStart={customStart}
+            onChangeStart={setCustomStart}
+            customEnd={customEnd}
+            onChangeEnd={setCustomEnd}
+          />
           <button
             onClick={() => setShowAddLeader(!showAddLeader)}
             className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-900/30"
