@@ -22,7 +22,12 @@ export function TimeframeFilter({ value, onChange, customStart, onChangeStart, c
           className="bg-transparent text-slate-200 text-xs font-bold outline-none cursor-pointer pr-2 focus:text-indigo-300 transition-colors"
         >
           {options.map((opt) => (
-            <option key={opt.value} value={opt.value} className="bg-slate-955 text-slate-200 font-medium">
+            <option 
+              key={opt.value} 
+              value={opt.value} 
+              className="bg-slate-900 text-slate-205 font-medium"
+              style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}
+            >
               {opt.label}
             </option>
           ))}
