@@ -86,7 +86,7 @@ export function SimulatorBar({ currentUser, users, logs, onSwitchUser, onReset, 
               ⛪
             </div>
             <div>
-              <span className="font-extrabold text-lg text-slate-100 tracking-tight">Logos<span className="text-indigo-400">Bridge</span></span>
+              <span className="font-extrabold text-lg text-slate-100 tracking-tight">The <span className="text-indigo-400">Haven</span></span>
               <span className="text-[10px] text-slate-400 block -mt-1 font-semibold tracking-widest uppercase">Admin & Ledger</span>
             </div>
           </div>

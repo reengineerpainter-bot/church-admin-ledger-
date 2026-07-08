@@ -82,7 +82,7 @@ export function CellPortal({
     html += `<style>body {font-family: system-ui, -apple-system, sans-serif; padding: 30px; color: #1e293b;} h2 {color: #4f46e5; margin-bottom: 5px;} .meta {font-size: 11px; color: #64748b; margin-bottom: 25px;} table {width: 100%; border-collapse: collapse;} th, td {border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 12px;} th {background-color: #f8fafc; color: #475569; font-weight: bold;} tr:nth-child(even) {background-color: #f8fafc;}</style>`;
     html += `</head><body>`;
     html += `<h2>${title}</h2>`;
-    html += `<div class="meta">LogosBridge Administration | Generated: ${new Date().toLocaleString()}</div>`;
+    html += `<div class="meta">The Haven Administration | Generated: ${new Date().toLocaleString()}</div>`;
     html += `<table><thead><tr>`;
     headers.forEach(h => {
       html += `<th>${h}</th>`;
