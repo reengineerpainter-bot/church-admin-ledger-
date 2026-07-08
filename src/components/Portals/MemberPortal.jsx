@@ -3,9 +3,10 @@ import { StatCard } from '../Common/StatCard';
 import { LineChart } from '../Common/SvgCharts';
 import { 
   TrendingUp, Calendar, Send, CheckCircle2, Clock, 
-  XCircle, FileText, Upload, Sparkles, Award
+  XCircle, FileText, Upload, Sparkles, Award, AlertCircle
 } from 'lucide-react';
 import { RecordSoulForm } from '../Common/RecordSoulForm';
+import { TimeframeFilter } from '../Common/TimeframeFilter';
 
 export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedgerEntry, updateUser, submitSoulRecord, souls }) {
   const [serviceDate, setServiceDate] = useState('');
@@ -28,6 +29,36 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [revealedReport, setRevealedReport] = useState(null); // 'givings' | 'souls' | 'submissions' | null
+  const [timeframe, setTimeframe] = useState('monthly');
+
+  const filterByTimeframe = (dateStr) => {
+    if (!dateStr) return false;
+    const itemDate = new Date(dateStr);
+    const now = new Date();
+    
+    itemDate.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+    
+    const diffTime = now.getTime() - itemDate.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    
+    if (diffDays < 0) return true; // future dates
+    
+    switch (timeframe) {
+      case 'weekly':
+        return diffDays <= 7;
+      case 'monthly':
+        return diffDays <= 30;
+      case 'quarterly':
+        return diffDays <= 90;
+      case 'half_year':
+        return diffDays <= 180;
+      case 'full_year':
+        return diffDays <= 365;
+      default:
+        return true;
+    }
+  };
 
   // --- EXPORT UTILITIES ---
   const exportToTxt = (title, headers, rows) => {
@@ -121,8 +152,18 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
   const mySubmissions = ledger.filter(item => item.memberId === currentUser.id);
   const myConfirmed = mySubmissions.filter(item => item.status === 'Confirmed');
   
-  const totalGiving = myConfirmed.reduce((sum, item) => sum + (item.amount || item.totalAmount || 0), 0);
-  const totalOutreach = myConfirmed.reduce((sum, item) => sum + item.newMembersBroughtIn, 0) + souls.filter(s => s.status === 'Approved' && s.recordedBy === currentUser.id).length;
+  // Filtered by selected timeframe
+  const mySubmissionsFiltered = mySubmissions.filter(item => filterByTimeframe(item.serviceDate));
+  const myConfirmedFiltered = myConfirmed.filter(item => filterByTimeframe(item.serviceDate));
+  
+  const totalGiving = myConfirmedFiltered.reduce((sum, item) => sum + (item.amount || item.totalAmount || 0), 0);
+  
+  const soulsReporter = souls.filter(s => s.recordedBy === currentUser.id);
+  const soulsReporterFiltered = soulsReporter.filter(s => s.status === 'Approved' && filterByTimeframe(s.recordedAt || s.createdAt || new Date()));
+  const totalOutreach = myConfirmedFiltered.reduce((sum, item) => sum + item.newMembersBroughtIn, 0) + soulsReporterFiltered.length;
+
+  const hasAttendance = currentUser.attendance?.sundayInPerson || currentUser.attendance?.wednesdayOnline;
+  const isNonPerforming = totalGiving === 0 && !hasAttendance;
 
   // Compute consistency (active weeks in mock dashboard)
   const consistencyIndex = Math.min((myConfirmed.length / 4) * 100, 100);
@@ -232,14 +273,29 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
           </h2>
           <p className="text-slate-400 text-sm mt-1">Cell: <span className="text-indigo-300 font-bold">{cellName}</span> | Chapter: <span className="text-indigo-300 font-bold">{chapterName}</span></p>
         </div>
-        <div className="flex items-center gap-2 shrink-0 bg-indigo-500/10 border border-indigo-500/20 px-4 py-2 rounded-2xl">
-          <Award size={18} className="text-indigo-400" />
-          <div>
-            <span className="text-[10px] text-slate-400 block font-semibold uppercase">Consistency Index</span>
-            <span className="text-sm font-extrabold text-slate-100">{consistencyIndex}% Stable</span>
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <TimeframeFilter value={timeframe} onChange={setTimeframe} />
+          <div className="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 px-4 py-2 rounded-2xl">
+            <Award size={18} className="text-indigo-400" />
+            <div>
+              <span className="text-[10px] text-slate-400 block font-semibold uppercase">Consistency Index</span>
+              <span className="text-sm font-extrabold text-slate-100">{consistencyIndex}% Stable</span>
+            </div>
           </div>
         </div>
       </div>
+
+      {isNonPerforming && (
+        <div className="p-4 bg-rose-500/10 border border-rose-500/25 rounded-2xl flex items-center gap-3 text-rose-400">
+          <AlertCircle className="shrink-0 animate-pulse" size={18} />
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wider">Non-Performance Alert</h4>
+            <p className="text-[11px] text-rose-300 font-medium mt-0.5">
+              You are currently flagged as a Non-Performing Member to your Cell Leader for this timeframe because you have no confirmed giving records and no service attendance checked.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -580,7 +636,7 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
         if (revealedReport === 'givings') {
           reportTitle = 'My Personal Confirmed Givings Report';
           headers = ['Category', 'Segment', 'Payment Method', 'Amount', 'Date & Time'];
-          rows = myConfirmed.map(item => [
+          rows = myConfirmedFiltered.map(item => [
             item.category || 'Tithe',
             item.segment || 'Local',
             item.paymentMethod,
@@ -590,7 +646,7 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
         } else if (revealedReport === 'souls') {
           reportTitle = 'My Personal Soul-Winning Outreach Report';
           headers = ['Service Date', 'Souls Won', 'Verification Status', 'Submission Date'];
-          rows = mySubmissions
+          rows = mySubmissionsFiltered
             .filter(item => item.newMembersBroughtIn > 0)
             .map(item => [
               item.serviceDate,
@@ -601,7 +657,7 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
         } else if (revealedReport === 'submissions') {
           reportTitle = 'My Submission Log History Audit Report';
           headers = ['Category', 'Segment', 'Amount', 'Uploaded At', 'Verification Status'];
-          rows = mySubmissions.map(item => [
+          rows = mySubmissionsFiltered.map(item => [
             item.category || 'Tithe',
             item.segment || 'Local',
             `$${item.amount || item.totalAmount}`,

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { RecordGivingForm } from '../Common/RecordGivingForm';
 import { RecordSoulForm } from '../Common/RecordSoulForm';
+import { TimeframeFilter } from '../Common/TimeframeFilter';
 
 export function ChapterPortal({ 
   currentUser, 
@@ -34,6 +35,36 @@ export function ChapterPortal({
   const [newCellName, setNewCellName] = useState('');
   const [cellSuccess, setCellSuccess] = useState(false);
   const [revealedReport, setRevealedReport] = useState(null); // 'givings' | 'souls' | 'cells' | 'members' | null
+  const [timeframe, setTimeframe] = useState('monthly');
+
+  const filterByTimeframe = (dateStr) => {
+    if (!dateStr) return false;
+    const itemDate = new Date(dateStr);
+    const now = new Date();
+    
+    itemDate.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+    
+    const diffTime = now.getTime() - itemDate.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    
+    if (diffDays < 0) return true; // future dates
+    
+    switch (timeframe) {
+      case 'weekly':
+        return diffDays <= 7;
+      case 'monthly':
+        return diffDays <= 30;
+      case 'quarterly':
+        return diffDays <= 90;
+      case 'half_year':
+        return diffDays <= 180;
+      case 'full_year':
+        return diffDays <= 365;
+      default:
+        return true;
+    }
+  };
 
   // --- EXPORT UTILITIES ---
   const exportToTxt = (title, headers, rows) => {
@@ -118,10 +149,30 @@ export function ChapterPortal({
   const confirmedLedger = chapterLedger.filter(item => item.status === 'Confirmed');
 
   // --- STATS COMPUTATIONS ---
-  const totalChapterGiving = confirmedLedger.reduce((sum, item) => sum + item.totalAmount, 0);
-  const totalChapterSouls = confirmedLedger.reduce((sum, item) => sum + item.newMembersBroughtIn, 0) + souls.filter(s => s.status === 'Approved' && s.chapterId === chapterId).length;
+  const confirmedLedgerFiltered = confirmedLedger.filter(item => filterByTimeframe(item.serviceDate));
+  
+  const totalChapterGiving = confirmedLedgerFiltered.reduce((sum, item) => sum + item.totalAmount, 0);
+  
+  const soulsFiltered = souls.filter(s => s.status === 'Approved' && s.chapterId === chapterId && filterByTimeframe(s.recordedAt || s.createdAt || new Date()));
+  const totalChapterSouls = confirmedLedgerFiltered.reduce((sum, item) => sum + item.newMembersBroughtIn, 0) + soulsFiltered.length;
+  
   const activeCellLeadersCount = chapterUsers.filter(u => u.role === 'cell_leader' && u.status === 'Active').length;
   const activeMembersCount = chapterUsers.filter(u => u.role === 'member' && u.status === 'Active').length;
+
+  // Evaluate underperforming cell groups inside this chapter
+  const cellGroups = cells.filter(c => c.chapterId === chapterId);
+  const nonPerformingCells = cellGroups.filter(cell => {
+    const cellGiving = confirmedLedgerFiltered
+      .filter(item => item.cellId === cell.id)
+      .reduce((sum, item) => sum + item.totalAmount, 0);
+    
+    const cellSouls = confirmedLedgerFiltered
+      .filter(item => item.cellId === cell.id)
+      .reduce((sum, item) => sum + item.newMembersBroughtIn, 0) + 
+      soulsFiltered.filter(s => s.cellId === cell.id).length;
+    
+    return cellGiving === 0 && cellSouls === 0;
+  });
 
   // --- CHART DATA ---
   // 1. Weekly Giving trend for this chapter
@@ -257,7 +308,8 @@ export function ChapterPortal({
           <h2 className="text-2xl font-extrabold text-slate-100 mt-1">Senior care Group Administration</h2>
           <p className="text-slate-400 text-sm mt-1">Managing cells, auditing member credentials, and assessing local financial health.</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <TimeframeFilter value={timeframe} onChange={setTimeframe} />
           <button
             onClick={() => setShowAddLeader(!showAddLeader)}
             className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-900/30"
@@ -550,6 +602,36 @@ export function ChapterPortal({
               </div>
             </div>
           )}
+
+          {/* Chapter Cell Groups Non-Performance Alerts */}
+          <div className="p-6 border border-rose-500/10 bg-rose-500/5 rounded-3xl mt-6">
+            <h3 className="text-md font-bold text-rose-450 flex items-center gap-2 mb-2">
+              <AlertCircle size={18} className="text-rose-400 shrink-0" />
+              Non-Performance Flags: Chapter Cell Groups ({nonPerformingCells.length})
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Fellowship cells inside this chapter flagged for zero total cell giving AND zero souls won within the selected timeframe.
+            </p>
+            {nonPerformingCells.length === 0 ? (
+              <div className="text-xs text-slate-500 italic py-4 text-center">
+                All fellowship cells are performing actively. No flags generated.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {nonPerformingCells.map(cell => (
+                  <div key={cell.id} className="p-4 bg-slate-950/80 border border-slate-850 rounded-2xl flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-slate-205 block">{cell.name}</span>
+                      <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">Chapter: {chapterName}</span>
+                    </div>
+                    <span className="px-2 py-0.5 bg-rose-550/10 text-rose-400 border border-rose-500/10 rounded-lg text-[9px] font-bold uppercase tracking-wider animate-pulse">
+                      Underperforming
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Chapter Analytical Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

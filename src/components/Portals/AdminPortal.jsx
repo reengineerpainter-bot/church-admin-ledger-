@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { RecordGivingForm } from '../Common/RecordGivingForm';
 import { RecordSoulForm } from '../Common/RecordSoulForm';
+import { TimeframeFilter } from '../Common/TimeframeFilter';
 
 export function AdminPortal({ 
   currentUser, 
@@ -36,6 +37,36 @@ export function AdminPortal({
   const [newChapterHq, setNewChapterHq] = useState('');
   const [chapterSuccess, setChapterSuccess] = useState(false);
   const [revealedReport, setRevealedReport] = useState(null); // 'givings' | 'souls' | 'chapters' | 'members' | null
+  const [timeframe, setTimeframe] = useState('monthly');
+
+  const filterByTimeframe = (dateStr) => {
+    if (!dateStr) return false;
+    const itemDate = new Date(dateStr);
+    const now = new Date();
+    
+    itemDate.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+    
+    const diffTime = now.getTime() - itemDate.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    
+    if (diffDays < 0) return true; // future dates
+    
+    switch (timeframe) {
+      case 'weekly':
+        return diffDays <= 7;
+      case 'monthly':
+        return diffDays <= 30;
+      case 'quarterly':
+        return diffDays <= 90;
+      case 'half_year':
+        return diffDays <= 180;
+      case 'full_year':
+        return diffDays <= 365;
+      default:
+        return true;
+    }
+  };
 
   // --- EXPORT UTILITIES ---
   const exportToTxt = (title, headers, rows) => {
@@ -114,11 +145,27 @@ export function AdminPortal({
   // Confirmed entries
   const confirmedLedger = ledger.filter(item => item.status === 'Confirmed');
   
-  // Total Giving
-  const totalGiving = confirmedLedger.reduce((sum, item) => sum + item.totalAmount, 0);
+  // --- STATS COMPUTATIONS ---
+  const confirmedLedgerFiltered = confirmedLedger.filter(item => filterByTimeframe(item.serviceDate));
   
-  // Total Souls Won
-  const totalSoulsWon = confirmedLedger.reduce((sum, item) => sum + item.newMembersBroughtIn, 0) + souls.filter(s => s.status === 'Approved').length;
+  const totalGiving = confirmedLedgerFiltered.reduce((sum, item) => sum + item.totalAmount, 0);
+  
+  const soulsFiltered = souls.filter(s => s.status === 'Approved' && filterByTimeframe(s.recordedAt || s.createdAt || new Date()));
+  const totalSoulsWon = confirmedLedgerFiltered.reduce((sum, item) => sum + item.newMembersBroughtIn, 0) + soulsFiltered.length;
+
+  // Evaluate underperforming chapters
+  const nonPerformingChapters = chapters.filter(chapter => {
+    const chapterGiving = confirmedLedgerFiltered
+      .filter(item => item.chapterId === chapter.id)
+      .reduce((sum, item) => sum + item.totalAmount, 0);
+    
+    const chapterSouls = confirmedLedgerFiltered
+      .filter(item => item.chapterId === chapter.id)
+      .reduce((sum, item) => sum + item.newMembersBroughtIn, 0) + 
+      soulsFiltered.filter(s => s.chapterId === chapter.id).length;
+    
+    return chapterGiving === 0 && chapterSouls === 0;
+  });
 
   // Active Users count
   const activeMembersCount = users.filter(u => u.role === 'member' && u.status === 'Active').length;
@@ -292,7 +339,8 @@ export function AdminPortal({
           <h2 className="text-2xl font-extrabold text-slate-100 mt-1">Global Root Administration</h2>
           <p className="text-slate-400 text-sm mt-1">Full structural oversight of all chapters, cells, members, and giving receipts.</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <TimeframeFilter value={timeframe} onChange={setTimeframe} />
           <button
             onClick={() => setShowAddLeader(!showAddLeader)}
             className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-900/30"
@@ -655,6 +703,36 @@ export function AdminPortal({
               </div>
             </div>
           )}
+
+          {/* Chapters Non-Performance Alerts */}
+          <div className="p-6 border border-rose-500/10 bg-rose-500/5 rounded-3xl mt-6">
+            <h3 className="text-md font-bold text-rose-450 flex items-center gap-2 mb-2">
+              <AlertCircle size={18} className="text-rose-400 shrink-0" />
+              Non-Performance Flags: Chapters ({nonPerformingChapters.length})
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Regional chapters flagged for zero total chapter giving AND zero souls won within the selected timeframe.
+            </p>
+            {nonPerformingChapters.length === 0 ? (
+              <div className="text-xs text-slate-500 italic py-4 text-center">
+                All regional chapters are performing actively. No flags generated.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {nonPerformingChapters.map(chapter => (
+                  <div key={chapter.id} className="p-4 bg-slate-950/80 border border-slate-850 rounded-2xl flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-slate-205 block">{chapter.name}</span>
+                      <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">HQ: {chapter.hq || 'Global HQ'}</span>
+                    </div>
+                    <span className="px-2 py-0.5 bg-rose-550/10 text-rose-400 border border-rose-500/10 rounded-lg text-[9px] font-bold uppercase tracking-wider animate-pulse">
+                      Underperforming
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Charts Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

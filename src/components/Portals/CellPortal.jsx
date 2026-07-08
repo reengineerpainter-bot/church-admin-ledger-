@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { RecordGivingForm } from '../Common/RecordGivingForm';
 import { RecordSoulForm } from '../Common/RecordSoulForm';
+import { TimeframeFilter } from '../Common/TimeframeFilter';
 
 export function CellPortal({ 
   currentUser, 
@@ -28,6 +29,36 @@ export function CellPortal({
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'directory'
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [revealedReport, setRevealedReport] = useState(null); // 'givings' | 'souls' | 'members' | null
+  const [timeframe, setTimeframe] = useState('monthly');
+
+  const filterByTimeframe = (dateStr) => {
+    if (!dateStr) return false;
+    const itemDate = new Date(dateStr);
+    const now = new Date();
+    
+    itemDate.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+    
+    const diffTime = now.getTime() - itemDate.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    
+    if (diffDays < 0) return true; // future dates
+    
+    switch (timeframe) {
+      case 'weekly':
+        return diffDays <= 7;
+      case 'monthly':
+        return diffDays <= 30;
+      case 'quarterly':
+        return diffDays <= 90;
+      case 'half_year':
+        return diffDays <= 180;
+      case 'full_year':
+        return diffDays <= 365;
+      default:
+        return true;
+    }
+  };
 
   // --- EXPORT UTILITIES ---
   const exportToTxt = (title, headers, rows) => {
@@ -114,8 +145,23 @@ export function CellPortal({
   const confirmedLedger = cellLedger.filter(item => item.status === 'Confirmed');
 
   // --- STATS COMPUTATIONS ---
-  const totalCellGiving = confirmedLedger.reduce((sum, item) => sum + item.totalAmount, 0);
-  const totalCellSouls = confirmedLedger.reduce((sum, item) => sum + item.newMembersBroughtIn, 0) + souls.filter(s => s.status === 'Approved' && s.cellId === cellId).length;
+  const cellLedgerFiltered = cellLedger.filter(item => filterByTimeframe(item.serviceDate));
+  const confirmedLedgerFiltered = confirmedLedger.filter(item => filterByTimeframe(item.serviceDate));
+  
+  const totalCellGiving = confirmedLedgerFiltered.reduce((sum, item) => sum + item.totalAmount, 0);
+  
+  const soulsFiltered = souls.filter(s => s.status === 'Approved' && s.cellId === cellId && filterByTimeframe(s.recordedAt || s.createdAt || new Date()));
+  const totalCellSouls = confirmedLedgerFiltered.reduce((sum, item) => sum + item.newMembersBroughtIn, 0) + soulsFiltered.length;
+
+  // Evaluate underperforming cell members
+  const nonPerformingMembers = activeMembers.filter(member => {
+    const memberGiving = confirmedLedgerFiltered
+      .filter(item => item.memberId === member.id)
+      .reduce((sum, item) => sum + item.totalAmount, 0);
+    
+    const hasAttendance = member.attendance?.sundayInPerson || member.attendance?.wednesdayOnline;
+    return memberGiving === 0 && !hasAttendance;
+  });
 
   // --- FINANCIAL VERIFICATION QUEUE ---
   // Submissions by cell members awaiting cell leader audit
@@ -170,7 +216,8 @@ export function CellPortal({
           <h2 className="text-2xl font-extrabold text-slate-100 mt-1">{chapterName} &rarr; Home Fellowship</h2>
           <p className="text-slate-400 text-sm mt-1">Audit weekly member receipt uploads and provision member credentials.</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <TimeframeFilter value={timeframe} onChange={setTimeframe} />
           <button
             onClick={() => setShowAddMember(!showAddMember)}
             className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-900/30"
@@ -390,6 +437,36 @@ export function CellPortal({
               </div>
             </div>
           )}
+
+          {/* Supervised Members Non-Performance Alerts */}
+          <div className="p-6 border border-rose-500/10 bg-rose-500/5 rounded-3xl mt-6">
+            <h3 className="text-md font-bold text-rose-450 flex items-center gap-2 mb-2">
+              <AlertCircle size={18} className="text-rose-400 shrink-0" />
+              Non-Performance Flags: Supervised Members ({nonPerformingMembers.length})
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Registered members flagged for zero confirmed giving records AND zero attendance check-ins within the selected timeframe.
+            </p>
+            {nonPerformingMembers.length === 0 ? (
+              <div className="text-xs text-slate-500 italic py-4 text-center">
+                All cell members are performing actively. No flags generated.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {nonPerformingMembers.map(member => (
+                  <div key={member.id} className="p-4 bg-slate-950/80 border border-slate-850 rounded-2xl flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-slate-205 block">{member.name}</span>
+                      <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">@{member.username}</span>
+                    </div>
+                    <span className="px-2 py-0.5 bg-rose-550/10 text-rose-400 border border-rose-500/10 rounded-lg text-[9px] font-bold uppercase tracking-wider animate-pulse">
+                      Inactive Flag
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Member Assessment Ledger */}
           <div className="p-6 glass-panel rounded-3xl">
