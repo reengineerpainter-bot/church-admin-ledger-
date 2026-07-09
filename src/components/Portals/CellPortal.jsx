@@ -258,8 +258,9 @@ export function CellPortal({
         </div>
         <div className="flex flex-wrap items-center gap-3 shrink-0">
           <button
-            onClick={() => setShowAddMember(!showAddMember)}
+            onDoubleClick={() => setShowAddMember(!showAddMember)}
             className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-900/30 cursor-pointer border-none"
+            title="Double-click to Provision Member"
           >
             <UserPlus size={14} />
             {showAddMember ? 'View Cell Dashboard' : 'Provision Member'}
@@ -701,10 +702,11 @@ export function CellPortal({
         let rows = [];
 
         if (revealedReport === 'givings') {
-          reportTitle = `Cell ${cellName} Total Givings Audit Report`;
+          reportTitle = `${cellName} Total Givings Audit Report`;
           headers = ['Member', 'Category', 'Segment', 'Method', 'Amount', 'Date & Time'];
-          rows = cellLedger
+          rows = [...cellLedger]
             .filter(item => item.status === 'Confirmed')
+            .sort((a, b) => b.totalAmount - a.totalAmount)
             .map(item => [
               item.memberName,
               item.category || 'Tithe',
@@ -714,17 +716,18 @@ export function CellPortal({
               new Date(item.createdAt).toLocaleString()
             ]);
         } else if (revealedReport === 'souls') {
-          reportTitle = `Cell ${cellName} Souls Won Outreach Report`;
+          reportTitle = `${cellName} Souls Won Outreach Report`;
           headers = ['Member Name', 'Souls Won', 'Date & Time'];
-          rows = cellLedger
+          rows = [...cellLedger]
             .filter(item => item.status === 'Confirmed' && item.newMembersBroughtIn > 0)
+            .sort((a, b) => b.newMembersBroughtIn - a.newMembersBroughtIn)
             .map(item => [
               item.memberName,
               `+${item.newMembersBroughtIn}`,
               new Date(item.createdAt).toLocaleString()
             ]);
         } else if (revealedReport === 'members') {
-          reportTitle = `Cell ${cellName} Supervised Members Attendance Report`;
+          reportTitle = `${cellName} Supervised Members Attendance Report`;
           headers = ['Member Name', 'Username', 'Title', 'Sunday Attendance', 'Wednesday Attendance', 'Status'];
           rows = activeMembers.map(m => {
             const att = m.attendance || { sundayInPerson: false, wednesdayOnline: false };

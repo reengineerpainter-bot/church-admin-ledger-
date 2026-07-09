@@ -381,8 +381,9 @@ export function AdminPortal({
         </div>
         <div className="flex flex-wrap items-center gap-3 shrink-0">
           <button
-            onClick={() => setShowAddLeader(!showAddLeader)}
+            onDoubleClick={() => setShowAddLeader(!showAddLeader)}
             className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-900/30 cursor-pointer border-none"
+            title="Double-click to Provision Chapter Leader"
           >
             <UserPlus size={14} />
             {showAddLeader ? 'View Dashboards' : 'Provision Chapter Leader'}
@@ -955,25 +956,28 @@ export function AdminPortal({
         if (revealedReport === 'givings') {
           reportTitle = 'Global Total Givings Audit Report';
           headers = ['Chapter', 'Cell Group', 'Member', 'Category', 'Segment', 'Method', 'Amount', 'Date & Time'];
-          rows = confirmedLedger.map(item => {
-            const chName = chapters.find(c => c.id === item.chapterId)?.name || 'Unknown';
-            const cellName = cells.find(c => c.id === item.cellId)?.name || 'Unknown';
-            return [
-              chName,
-              cellName,
-              item.memberName,
-              item.category || 'Tithe',
-              item.segment || 'Local',
-              item.paymentMethod,
-              `$${item.totalAmount}`,
-              new Date(item.createdAt).toLocaleString()
-            ];
-          });
+          rows = [...confirmedLedger]
+            .sort((a, b) => b.totalAmount - a.totalAmount)
+            .map(item => {
+              const chName = chapters.find(c => c.id === item.chapterId)?.name || 'Unknown';
+              const cellName = cells.find(c => c.id === item.cellId)?.name || 'Unknown';
+              return [
+                chName,
+                cellName,
+                item.memberName,
+                item.category || 'Tithe',
+                item.segment || 'Local',
+                item.paymentMethod,
+                `$${item.totalAmount}`,
+                new Date(item.createdAt).toLocaleString()
+              ];
+            });
         } else if (revealedReport === 'souls') {
           reportTitle = 'Total Souls Won Outreach Report';
           headers = ['Chapter', 'Cell Group', 'Member', 'Souls Won', 'Date & Time'];
-          rows = confirmedLedger
+          rows = [...confirmedLedger]
             .filter(item => item.newMembersBroughtIn > 0)
+            .sort((a, b) => b.newMembersBroughtIn - a.newMembersBroughtIn)
             .map(item => {
               const chName = chapters.find(c => c.id === item.chapterId)?.name || 'Unknown';
               const cellName = cells.find(c => c.id === item.cellId)?.name || 'Unknown';
@@ -992,14 +996,16 @@ export function AdminPortal({
             const chCellsCount = cells.filter(c => c.chapterId === ch.id).length;
             const chMembersCount = users.filter(u => u.chapterId === ch.id && u.role === 'member' && u.status === 'Active').length;
             const leader = users.find(u => u.chapterId === ch.id && u.role === 'chapter_leader')?.name || 'Vacant';
-            return [
-              ch.name,
-              ch.headquarters,
-              leader,
-              chCellsCount,
-              chMembersCount
-            ];
-          });
+            return { ch, chCellsCount, chMembersCount, leader };
+          })
+          .sort((a, b) => b.chMembersCount - a.chMembersCount)
+          .map(item => [
+            item.ch.name,
+            item.ch.headquarters,
+            item.leader,
+            item.chCellsCount,
+            item.chMembersCount
+          ]);
         } else if (revealedReport === 'members') {
           reportTitle = 'Active Membership Directory Report';
           headers = ['Member Name', 'Username', 'Title', 'Chapter', 'Cell Group', 'Status'];

@@ -350,8 +350,9 @@ export function ChapterPortal({
         </div>
         <div className="flex flex-wrap items-center gap-3 shrink-0">
           <button
-            onClick={() => setShowAddLeader(!showAddLeader)}
+            onDoubleClick={() => setShowAddLeader(!showAddLeader)}
             className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-900/30 cursor-pointer border-none"
+            title="Double-click to Provision Cell Leader"
           >
             <UserPlus size={14} />
             {showAddLeader ? 'View Dashboards' : 'Provision Cell Leader'}
@@ -822,25 +823,28 @@ export function ChapterPortal({
         let rows = [];
 
         if (revealedReport === 'givings') {
-          reportTitle = `Chapter ${chapterName} Total Givings Audit Report`;
+          reportTitle = `${chapterName} Total Givings Audit Report`;
           headers = ['Cell Group', 'Member', 'Category', 'Segment', 'Method', 'Amount', 'Date & Time'];
-          rows = confirmedLedger.map(item => {
-            const cellName = cells.find(c => c.id === item.cellId)?.name || 'Unknown';
-            return [
-              cellName,
-              item.memberName,
-              item.category || 'Tithe',
-              item.segment || 'Local',
-              item.paymentMethod,
-              `$${item.totalAmount}`,
-              new Date(item.createdAt).toLocaleString()
-            ];
-          });
+          rows = [...confirmedLedger]
+            .sort((a, b) => b.totalAmount - a.totalAmount)
+            .map(item => {
+              const cellName = cells.find(c => c.id === item.cellId)?.name || 'Unknown';
+              return [
+                cellName,
+                item.memberName,
+                item.category || 'Tithe',
+                item.segment || 'Local',
+                item.paymentMethod,
+                `$${item.totalAmount}`,
+                new Date(item.createdAt).toLocaleString()
+              ];
+            });
         } else if (revealedReport === 'souls') {
-          reportTitle = `Chapter ${chapterName} Souls Won Outreach Report`;
+          reportTitle = `${chapterName} Souls Won Outreach Report`;
           headers = ['Cell Group', 'Member', 'Souls Won', 'Date & Time'];
-          rows = confirmedLedger
+          rows = [...confirmedLedger]
             .filter(item => item.newMembersBroughtIn > 0)
+            .sort((a, b) => b.newMembersBroughtIn - a.newMembersBroughtIn)
             .map(item => {
               const cellName = cells.find(c => c.id === item.cellId)?.name || 'Unknown';
               return [
@@ -851,22 +855,24 @@ export function ChapterPortal({
               ];
             });
         } else if (revealedReport === 'cells') {
-          reportTitle = `Chapter ${chapterName} Active Cell Groups Scope Report`;
+          reportTitle = `${chapterName} Active Cell Groups Scope Report`;
           headers = ['Cell Group Name', 'Leader Name', 'Current Member Base', 'Total Giving Contribution'];
           rows = chapterCells.map(cell => {
             const cellMembersCount = users.filter(u => u.cellId === cell.id && u.role === 'member' && u.status === 'Active').length;
             const cellGiving = confirmedLedger
               .filter(item => item.cellId === cell.id)
               .reduce((sum, item) => sum + item.totalAmount, 0);
-            return [
-              cell.name,
-              cell.leaderName || 'Vacant',
-              cellMembersCount,
-              `$${cellGiving}`
-            ];
-          });
+            return { cell, cellMembersCount, cellGiving };
+          })
+          .sort((a, b) => b.cellGiving - a.cellGiving)
+          .map(item => [
+            item.cell.name,
+            item.cell.leaderName || 'Vacant',
+            item.cellMembersCount,
+            `$${item.cellGiving}`
+          ]);
         } else if (revealedReport === 'members') {
-          reportTitle = `Chapter ${chapterName} Active Membership Fellowship Report`;
+          reportTitle = `${chapterName} Active Membership Fellowship Report`;
           headers = ['Member Name', 'Username', 'Title', 'Cell Group', 'Status'];
           rows = chapterUsers
             .filter(u => u.role === 'member' && u.status === 'Active')
