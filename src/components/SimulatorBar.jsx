@@ -19,7 +19,7 @@ export function SimulatorBar({
   onReset, 
   updateUser, 
   onLogout, 
-  theme = 'dark', 
+  theme = 'light', 
   onToggleTheme,
   showEditProfile,
   setShowEditProfile

@@ -14,7 +14,7 @@ export function App() {
   const [showEditProfile, setShowEditProfile] = React.useState(false);
 
   const [theme, setTheme] = React.useState(() => {
-    return localStorage.getItem('theme') || 'dark';
+    return localStorage.getItem('theme') || 'light';
   });
 
   React.useEffect(() => {
