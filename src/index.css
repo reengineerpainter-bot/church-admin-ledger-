@@ -45,3 +45,167 @@
 .animate-pulse-soft {
   animation: pulse-soft 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+/* Premium Light Mode Styles */
+.light-mode {
+  color-scheme: light;
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+.light-mode body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Backgrounds mapping */
+.light-mode .bg-slate-950 {
+  background-color: #f8fafc !important;
+}
+.light-mode .bg-slate-950\/40,
+.light-mode .bg-slate-950\/60 {
+  background-color: rgba(248, 250, 252, 0.6) !important;
+}
+.light-mode .bg-slate-900,
+.light-mode .bg-slate-900\/60,
+.light-mode .bg-slate-900\/50,
+.light-mode .bg-slate-900\/30 {
+  background-color: #ffffff !important;
+}
+
+/* Glass panel */
+.light-mode .glass-panel {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Borders */
+.light-mode .border-slate-800,
+.light-mode .border-slate-850,
+.light-mode .border-slate-900 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Inputs & selects */
+.light-mode input,
+.light-mode select,
+.light-mode textarea {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+.light-mode input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Specific select dropdown fix */
+.light-mode select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Text colors mapping */
+.light-mode .text-slate-100,
+.light-mode .text-slate-200,
+.light-mode .text-slate-300 {
+  color: #0f172a !important;
+}
+.light-mode .text-slate-350,
+.light-mode .text-slate-400,
+.light-mode .text-slate-450 {
+  color: #334155 !important;
+}
+.light-mode .text-slate-500,
+.light-mode .text-slate-550,
+.light-mode .text-slate-600 {
+  color: #64748b !important;
+}
+
+/* Interactive simulation label card in SimulatorBar */
+.light-mode .bg-slate-950.border-slate-850.text-slate-500 {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+/* Alerts / Pastels mapping */
+/* Emerald/Green */
+.light-mode .bg-emerald-950\/30 {
+  background-color: #f0fdf4 !important;
+}
+.light-mode .border-emerald-500\/20 {
+  border-color: #bbf7d0 !important;
+}
+.light-mode .text-emerald-400 {
+  color: #166534 !important;
+}
+
+/* Rose/Red */
+.light-mode .bg-rose-500\/10,
+.light-mode .bg-rose-950\/30 {
+  background-color: #fff1f2 !important;
+}
+.light-mode .border-rose-500\/20,
+.light-mode .border-rose-950\/30 {
+  border-color: #fecdd3 !important;
+}
+.light-mode .text-rose-400 {
+  color: #991b1b !important;
+}
+
+/* Amber/Yellow */
+.light-mode .bg-amber-500\/5,
+.light-mode .bg-amber-950\/30 {
+  background-color: #fffbeb !important;
+}
+.light-mode .border-amber-500\/15,
+.light-mode .border-amber-500\/20,
+.light-mode .border-amber-500\/10 {
+  border-color: #fef08a !important;
+}
+.light-mode .text-amber-400 {
+  color: #854d0e !important;
+}
+
+/* Indigo/Blue */
+.light-mode .bg-indigo-500\/10,
+.light-mode .bg-indigo-950\/30 {
+  background-color: #e0e7ff !important;
+}
+.light-mode .border-indigo-500\/25,
+.light-mode .border-indigo-500\/20 {
+  border-color: #c7d2fe !important;
+}
+.light-mode .text-indigo-400 {
+  color: #3730a3 !important;
+}
+
+/* Table styling hover and background overrides */
+.light-mode tr.hover\:bg-slate-900\/40:hover {
+  background-color: #f1f5f9 !important;
+}
+.light-mode tr.border-slate-900 {
+  border-color: #e2e8f0 !important;
+}
+.light-mode .bg-slate-900\/20 {
+  background-color: #f1f5f9 !important;
+}
+
+/* SVG charts light mode theme */
+.light-mode svg line {
+  stroke: #cbd5e1 !important;
+}
+.light-mode svg text {
+  fill: #475569 !important;
+}
+
+/* Custom Scrollbars in Light Mode */
+.light-mode ::-webkit-scrollbar-track {
+  background-color: #f8fafc;
+}
+.light-mode ::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+}
+.light-mode ::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+}

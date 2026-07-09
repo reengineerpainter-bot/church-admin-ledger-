@@ -12,6 +12,22 @@ export function App() {
   const state = useAppState();
   const { currentUser, currentUserId, logout } = state;
 
+  const [theme, setTheme] = React.useState(() => {
+    return localStorage.getItem('theme') || 'dark';
+  });
+
+  React.useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'light') {
+      root.classList.add('light-mode');
+      root.classList.remove('dark');
+    } else {
+      root.classList.remove('light-mode');
+      root.classList.add('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
   // Auto logout after 3 minutes of inactivity
   React.useEffect(() => {
     if (currentUserId === 'logged_out') return;
@@ -194,6 +210,8 @@ export function App() {
         onReset={state.resetData}
         updateUser={state.updateUser}
         onLogout={state.logout}
+        theme={theme}
+        onToggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
       />
 
       <main className="max-w-7xl mx-auto px-4 mt-6">

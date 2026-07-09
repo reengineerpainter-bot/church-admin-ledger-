@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Users, Shield, RotateCcw, Activity, Terminal, ChevronDown, ChevronUp, User, LogOut, Download } from 'lucide-react';
+import { Users, Shield, RotateCcw, Activity, Terminal, ChevronDown, ChevronUp, User, LogOut, Download, Sun, Moon } from 'lucide-react';
 import { EditUserModal } from './Common/EditUserModal';
 
-export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, onSwitchUser, onReset, updateUser, onLogout }) {
+export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, onSwitchUser, onReset, updateUser, onLogout, theme = 'dark', onToggleTheme }) {
   const [isOpen, setIsOpen] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
@@ -257,6 +257,15 @@ export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, o
             >
               <Terminal size={14} />
               Audit Logs
+            </button>
+
+            <button
+              onClick={onToggleTheme}
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200 rounded-xl text-xs font-bold transition-all"
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+            >
+              {theme === 'dark' ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-indigo-400" />}
+              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
             </button>
 
             <button
