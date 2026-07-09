@@ -5,7 +5,7 @@ import { CredentialForm } from './CredentialForm';
 import { UserDirectory } from './UserDirectory';
 import { 
   TrendingUp, Users, Map, Grid, CheckCircle, XCircle, 
-  UserPlus, UserCheck, AlertTriangle, Trophy, Calendar, Sparkles, AlertCircle
+  UserPlus, UserCheck, AlertTriangle, Trophy, Calendar, Sparkles, AlertCircle, FileText
 } from 'lucide-react';
 import { RecordGivingForm } from '../Common/RecordGivingForm';
 import { RecordSoulForm } from '../Common/RecordSoulForm';
@@ -163,6 +163,20 @@ export function AdminPortal({
   
   const soulsFiltered = souls.filter(s => s.status === 'Approved' && filterByTimeframe(s.recordedAt || s.createdAt || new Date()));
   const totalSoulsWon = confirmedLedgerFiltered.reduce((sum, item) => sum + item.newMembersBroughtIn, 0) + soulsFiltered.length;
+
+  // --- PERSONAL METRICS COMPUTATIONS ---
+  const mySubmissions = ledger.filter(item => item.memberId === currentUser.id);
+  const myConfirmed = mySubmissions.filter(item => item.status === 'Confirmed');
+  const mySubmissionsFiltered = mySubmissions.filter(item => filterByTimeframe(item.serviceDate));
+  const myConfirmedFiltered = myConfirmed.filter(item => filterByTimeframe(item.serviceDate));
+
+  const myPersonalGiving = myConfirmedFiltered.reduce((sum, item) => sum + (item.amount || item.totalAmount || 0), 0);
+
+  const mySouls = souls.filter(s => s.recordedBy === currentUser.id);
+  const mySoulsFiltered = mySouls.filter(s => s.status === 'Approved' && filterByTimeframe(s.recordedAt || s.createdAt || new Date()));
+  const myPersonalSouls = myConfirmedFiltered.reduce((sum, item) => sum + item.newMembersBroughtIn, 0) + mySoulsFiltered.length;
+
+  const myPersonalSubmissions = mySubmissionsFiltered.length;
 
   // Evaluate underperforming chapters
   const nonPerformingChapters = chapters.filter(chapter => {
@@ -502,6 +516,37 @@ export function AdminPortal({
               status="default"
               onClick={() => setRevealedReport('members')}
             />
+          </div>
+
+          {/* My Personal Overview */}
+          <div className="p-6 bg-slate-900/30 border border-slate-800/80 rounded-3xl mt-6">
+            <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2 animate-pulse-soft">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+              My Personal Overview & Analytics (Pastor)
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <StatCard
+                title="My Personal Giving"
+                value={`$${myPersonalGiving.toLocaleString()}`}
+                icon={TrendingUp}
+                description="Your confirmed giving records for this timeframe"
+                status="info"
+              />
+              <StatCard
+                title="My Personal Outreach"
+                value={`${myPersonalSouls} Souls`}
+                icon={Sparkles}
+                description="Approved souls won and brought by you"
+                status="success"
+              />
+              <StatCard
+                title="My Personal Submissions"
+                value={`${myPersonalSubmissions} Entries`}
+                icon={FileText}
+                description="Your submitted entries in this timeframe"
+                status="default"
+              />
+            </div>
           </div>
 
           {/* Credential Approvals Queue */}
