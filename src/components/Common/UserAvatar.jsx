@@ -8,6 +8,7 @@ export function UserAvatar({ user, size = 'md', className = '' }) {
     lg: 'w-12 h-12 text-md rounded-2xl',
     xl: 'w-16 h-16 text-lg rounded-2xl',
     xxl: 'w-24 h-24 text-2xl rounded-3xl',
+    xxxl: 'w-32 h-32 text-3xl rounded-[2rem]',
   };
 
   const selectedSize = sizeClasses[size] || sizeClasses.md;

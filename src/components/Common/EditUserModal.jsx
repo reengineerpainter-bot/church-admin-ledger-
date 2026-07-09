@@ -2,15 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { User, Key, Globe, LayoutGrid, X, Shield, CheckCircle, AlertTriangle, Camera } from 'lucide-react';
 import { UserAvatar } from './UserAvatar';
 
-const PRESET_AVATARS = [
-  `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%234f46e5" rx="30"/><text x="50" y="65" font-size="50" text-anchor="middle">🧑‍💼</text></svg>`,
-  `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%2310b981" rx="30"/><text x="50" y="65" font-size="50" text-anchor="middle">👩‍💼</text></svg>`,
-  `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23f59e0b" rx="30"/><text x="50" y="65" font-size="50" text-anchor="middle">👨‍💻</text></svg>`,
-  `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23ec4899" rx="30"/><text x="50" y="65" font-size="50" text-anchor="middle">👩‍💻</text></svg>`,
-  `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%238b5cf6" rx="30"/><text x="50" y="65" font-size="50" text-anchor="middle">👑</text></svg>`,
-  `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%2306b6d4" rx="30"/><text x="50" y="65" font-size="50" text-anchor="middle">🌟</text></svg>`,
-];
-
 export function EditUserModal({
   isOpen,
   onClose,
@@ -178,13 +169,13 @@ export function EditUserModal({
             </div>
           )}
 
-          {/* Profile Picture Uploader & Presets */}
-          <div className="flex flex-col items-center gap-4 bg-slate-950 p-4 border border-slate-850 rounded-2xl">
-            <div className="relative group cursor-pointer">
-              <label htmlFor="avatar-upload" className="cursor-pointer">
-                <UserAvatar user={{ name, avatarUrl }} size="xxl" className="ring-4 ring-indigo-500/20 group-hover:opacity-85 transition-opacity" />
-                <div className="absolute inset-0 bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
-                  <Camera size={24} />
+          {/* Profile Picture Uploader (Real Pictures Only) */}
+          <div className="flex flex-col items-center gap-4 bg-slate-950 p-6 border border-slate-850 rounded-3xl">
+            <div className="relative group cursor-pointer w-32 h-32">
+              <label htmlFor="avatar-upload" className="cursor-pointer block w-full h-full">
+                <UserAvatar user={{ name, avatarUrl }} size="xxxl" className="ring-4 ring-indigo-500/20 group-hover:opacity-85 transition-opacity w-full h-full" />
+                <div className="absolute inset-0 bg-black/40 rounded-[2rem] opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                  <Camera size={28} />
                 </div>
               </label>
               <input
@@ -197,28 +188,17 @@ export function EditUserModal({
             </div>
             
             <div className="text-center w-full">
-              <span className="block text-[10px] text-slate-500 font-semibold tracking-wider uppercase mb-2">Or Choose a Preset Avatar</span>
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                {PRESET_AVATARS.map((preset, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setAvatarUrl(preset)}
-                    className={`w-10 h-10 rounded-xl border-2 transition-all p-0.5 overflow-hidden bg-slate-900 ${avatarUrl === preset ? 'border-indigo-500 scale-110 shadow-lg' : 'border-slate-800 hover:border-slate-600'}`}
-                  >
-                    <img src={preset} className="w-full h-full object-cover rounded-lg" alt={`preset-${idx}`} />
-                  </button>
-                ))}
-                {avatarUrl && (
-                  <button
-                    type="button"
-                    onClick={() => setAvatarUrl('')}
-                    className="px-2.5 py-1 text-[10px] font-bold text-rose-455 bg-rose-500/10 border border-rose-500/20 rounded-lg hover:bg-rose-500/20 transition-all select-none cursor-pointer"
-                  >
-                    Clear Photo
-                  </button>
-                )}
-              </div>
+              <span className="block text-[10px] text-slate-500 font-semibold tracking-wider uppercase mb-1.5">Real Profile Photo</span>
+              <p className="text-[11px] text-slate-400 font-medium mb-3">Click on the image circle to upload a clear face photo from your device.</p>
+              {avatarUrl && (
+                <button
+                  type="button"
+                  onClick={() => setAvatarUrl('')}
+                  className="px-3.5 py-1.5 text-xs font-bold text-rose-455 bg-rose-500/10 border border-rose-500/20 rounded-xl hover:bg-rose-500/20 transition-all select-none cursor-pointer"
+                >
+                  Remove Profile Picture
+                </button>
+              )}
             </div>
           </div>
 
