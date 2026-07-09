@@ -241,9 +241,9 @@ export function CellPortal({
         <div className="flex items-center gap-4">
           <button 
             type="button"
-            onClick={onEditProfile}
+            onDoubleClick={onEditProfile}
             className="relative group rounded-2xl overflow-hidden hover:scale-105 active:scale-95 transition-all ring-4 ring-indigo-500/10 shrink-0 border-none cursor-pointer p-0"
-            title="Click to Edit Profile"
+            title="Double-click to Edit Profile"
           >
             <UserAvatar user={currentUser} size="lg" />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
@@ -252,7 +252,7 @@ export function CellPortal({
           </button>
           <div>
             <span className="text-xs text-indigo-400 font-extrabold uppercase tracking-wider">Cell Leader Portal ({cellName})</span>
-            <h2 className="text-2xl font-extrabold text-slate-100 mt-1">{chapterName} &rarr; Home Fellowship</h2>
+            <h2 className="text-2xl font-extrabold text-slate-100 mt-1">{chapterName} &rarr; Cell Group</h2>
             <p className="text-slate-400 text-sm mt-1">Audit weekly member receipt uploads and provision member credentials.</p>
           </div>
         </div>

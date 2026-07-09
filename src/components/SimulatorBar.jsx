@@ -3,6 +3,12 @@ import { Users, RotateCcw, Terminal, ChevronDown, ChevronUp, User, LogOut, Downl
 import { EditUserModal } from './Common/EditUserModal';
 import { UserAvatar } from './Common/UserAvatar';
 
+const getFormattedName = (u) => {
+  if (!u) return '';
+  const cleanName = u.name.replace(/^(Cell Leader|CL|Member)\s+/i, '');
+  return `${u.title || 'Bro'} ${cleanName}`;
+};
+
 export function SimulatorBar({ 
   currentUser, 
   authUserId, 
@@ -160,13 +166,13 @@ export function SimulatorBar({
               <span>Simulate Profile:</span>
             </div>
 
-            <div className="relative flex-grow sm:flex-grow-0 flex items-center gap-2.5">
+            <div className="flex-grow sm:flex-grow-0 flex items-center gap-2.5">
               {/* Clickable Profile picture to edit profile */}
               <button
                 type="button"
-                onClick={() => setShowEditProfile(true)}
+                onDoubleClick={() => setShowEditProfile(true)}
                 className="relative group shrink-0 rounded-xl overflow-hidden hover:scale-105 active:scale-95 transition-all ring-2 ring-indigo-500/20 cursor-pointer border-none p-0 w-8 h-8"
-                title="Edit My Profile"
+                title="Double-click to Edit My Profile"
               >
                 <UserAvatar user={currentUser} size="sm" className="w-full h-full" />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
@@ -174,101 +180,107 @@ export function SimulatorBar({
                 </div>
               </button>
 
-              <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-full sm:w-60 flex items-center justify-between gap-3 px-4 py-2 bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-xl text-sm font-medium transition-all shadow-inner"
-              >
-                <div className="flex items-center gap-2 text-left truncate">
-                  <span className="font-bold truncate text-slate-200">{currentUser.name}</span>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded border uppercase font-extrabold shrink-0 ${getRoleBadgeColor(currentUser.role)}`}>
-                    {currentUser.role === 'admin' ? 'Pastor' : currentUser.role.replace('_', ' ')}
-                  </span>
-                </div>
-                {isOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
-              </button>
-
-              {isOpen && (
-                <div className="absolute right-0 left-0 mt-2 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl z-50 overflow-hidden max-h-96 overflow-y-auto">
-                {adminUsers.length > 0 && (
-                  <div className="p-2 border-b border-slate-850 bg-slate-900/40">
-                    <span className="text-[10px] text-slate-500 font-extrabold tracking-wider uppercase px-2 py-1 block">Pastor (Root Authority)</span>
-                    {adminUsers.map(u => (
-                      <button
-                        key={u.id}
-                        onClick={() => { onSwitchUser(u.id); setIsOpen(false); }}
-                        className={`w-full text-left px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-between ${currentUser?.id === u.id ? 'bg-indigo-650 text-white' : 'text-slate-350 hover:bg-slate-900 hover:text-slate-100'}`}
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <UserAvatar user={u} size="xs" className="shrink-0" />
-                          <span className="truncate">{u.name}</span>
-                        </div>
-                        <span className="text-[9px] opacity-70">Global Access</span>
-                      </button>
-                    ))}
+              <div className="relative flex-grow sm:flex-grow-0">
+                <button
+                  onClick={() => setIsOpen(!isOpen)}
+                  className="w-full sm:w-60 flex items-center justify-between gap-3 px-4 py-2 bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-205 rounded-xl text-sm font-medium transition-all shadow-inner"
+                >
+                  <div className="flex items-center gap-2 text-left truncate">
+                    <span className="font-bold truncate text-slate-200">{getFormattedName(currentUser)}</span>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded border uppercase font-extrabold shrink-0 ${getRoleBadgeColor(currentUser.role)}`}>
+                      {currentUser.role === 'admin' ? 'Pastor' : currentUser.role.replace('_', ' ')}
+                    </span>
                   </div>
-                )}
+                  {isOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                </button>
 
-                {/* Chapter Leaders */}
-                {clUsers.length > 0 && (
-                  <div className="p-2 border-b border-slate-850">
-                    <span className="text-[10px] text-slate-500 font-extrabold tracking-wider uppercase px-2 py-1 block">Chapter Leaders (Regional)</span>
-                    {clUsers.map(u => (
-                      <button
-                        key={u.id}
-                        onClick={() => { onSwitchUser(u.id); setIsOpen(false); }}
-                        className={`w-full text-left px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-between ${currentUser?.id === u.id ? 'bg-indigo-650 text-white' : 'text-slate-350 hover:bg-slate-900 hover:text-slate-100'}`}
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <UserAvatar user={u} size="xs" className="shrink-0" />
-                          <span className="truncate">{u.name}</span>
+                {isOpen && (
+                  <>
+                    {/* Click overlay to close */}
+                    <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+                    <div className="absolute right-0 left-0 mt-2 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl z-50 overflow-hidden max-h-96 overflow-y-auto">
+                      {adminUsers.length > 0 && (
+                        <div className="p-2 border-b border-slate-850 bg-slate-900/40">
+                          <span className="text-[10px] text-slate-500 font-extrabold tracking-wider uppercase px-2 py-1 block">Pastor (Root Authority)</span>
+                          {adminUsers.map(u => (
+                            <button
+                              key={u.id}
+                              onClick={() => { onSwitchUser(u.id); setIsOpen(false); }}
+                              className={`w-full text-left px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-between ${currentUser?.id === u.id ? 'bg-indigo-650 text-white' : 'text-slate-350 hover:bg-slate-900 hover:text-slate-100'}`}
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <UserAvatar user={u} size="xs" className="shrink-0" />
+                                <span className="truncate">{getFormattedName(u)}</span>
+                              </div>
+                              <span className="text-[9px] opacity-70">Global Access</span>
+                            </button>
+                          ))}
                         </div>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-900 font-bold">Chapter {u.chapterId.toUpperCase()}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                      )}
 
-                {/* Cell Leaders */}
-                {cellUsers.length > 0 && (
-                  <div className="p-2 border-b border-slate-850">
-                    <span className="text-[10px] text-slate-500 font-extrabold tracking-wider uppercase px-2 py-1 block">Cell Leaders (Micro)</span>
-                    {cellUsers.map(u => (
-                      <button
-                        key={u.id}
-                        onClick={() => { onSwitchUser(u.id); setIsOpen(false); }}
-                        className={`w-full text-left px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-between ${currentUser?.id === u.id ? 'bg-indigo-650 text-white' : 'text-slate-350 hover:bg-slate-900 hover:text-slate-100'}`}
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <UserAvatar user={u} size="xs" className="shrink-0" />
-                          <span className="truncate">{u.name}</span>
+                      {/* Chapter Leaders */}
+                      {clUsers.length > 0 && (
+                        <div className="p-2 border-b border-slate-850">
+                          <span className="text-[10px] text-slate-500 font-extrabold tracking-wider uppercase px-2 py-1 block">Chapter Leaders (Regional)</span>
+                          {clUsers.map(u => (
+                            <button
+                              key={u.id}
+                              onClick={() => { onSwitchUser(u.id); setIsOpen(false); }}
+                              className={`w-full text-left px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-between ${currentUser?.id === u.id ? 'bg-indigo-650 text-white' : 'text-slate-350 hover:bg-slate-900 hover:text-slate-100'}`}
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <UserAvatar user={u} size="xs" className="shrink-0" />
+                                <span className="truncate">{getFormattedName(u)}</span>
+                              </div>
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-900 font-bold">Chapter {u.chapterId.toUpperCase()}</span>
+                            </button>
+                          ))}
                         </div>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-900 font-bold">{u.cellId}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                      )}
 
-                {/* Registered Members */}
-                {memberUsers.length > 0 && (
-                  <div className="p-2">
-                    <span className="text-[10px] text-slate-500 font-extrabold tracking-wider uppercase px-2 py-1 block">Registered Members (Personal)</span>
-                    {memberUsers.map(u => (
-                      <button
-                        key={u.id}
-                        onClick={() => { onSwitchUser(u.id); setIsOpen(false); }}
-                        className={`w-full text-left px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-between ${currentUser?.id === u.id ? 'bg-indigo-650 text-white' : 'text-slate-350 hover:bg-slate-900 hover:text-slate-100'}`}
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <UserAvatar user={u} size="xs" className="shrink-0" />
-                          <span className="truncate">{u.name}</span>
+                      {/* Cell Leaders */}
+                      {cellUsers.length > 0 && (
+                        <div className="p-2 border-b border-slate-850">
+                          <span className="text-[10px] text-slate-500 font-extrabold tracking-wider uppercase px-2 py-1 block">Cell Leaders (Micro)</span>
+                          {cellUsers.map(u => (
+                            <button
+                              key={u.id}
+                              onClick={() => { onSwitchUser(u.id); setIsOpen(false); }}
+                              className={`w-full text-left px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-between ${currentUser?.id === u.id ? 'bg-indigo-650 text-white' : 'text-slate-350 hover:bg-slate-900 hover:text-slate-100'}`}
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <UserAvatar user={u} size="xs" className="shrink-0" />
+                                <span className="truncate">{getFormattedName(u)}</span>
+                              </div>
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-900 font-bold">{u.cellId}</span>
+                            </button>
+                          ))}
                         </div>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-900 font-bold">{u.cellId}</span>
-                      </button>
-                    ))}
-                  </div>
+                      )}
+
+                      {/* Registered Members */}
+                      {memberUsers.length > 0 && (
+                        <div className="p-2">
+                          <span className="text-[10px] text-slate-500 font-extrabold tracking-wider uppercase px-2 py-1 block">Registered Members (Personal)</span>
+                          {memberUsers.map(u => (
+                            <button
+                              key={u.id}
+                              onClick={() => { onSwitchUser(u.id); setIsOpen(false); }}
+                              className={`w-full text-left px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-between ${currentUser?.id === u.id ? 'bg-indigo-650 text-white' : 'text-slate-350 hover:bg-slate-900 hover:text-slate-100'}`}
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <UserAvatar user={u} size="xs" className="shrink-0" />
+                                <span className="truncate">{getFormattedName(u)}</span>
+                              </div>
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-900 font-bold">{u.cellId}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
-                </div>
-              )}
+              </div>
             </div>
           </div>
         ) : (

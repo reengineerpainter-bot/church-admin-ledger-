@@ -364,9 +364,9 @@ export function AdminPortal({
         <div className="flex items-center gap-4">
           <button 
             type="button"
-            onClick={onEditProfile}
+            onDoubleClick={onEditProfile}
             className="relative group rounded-2xl overflow-hidden hover:scale-105 active:scale-95 transition-all ring-4 ring-indigo-500/10 shrink-0 border-none cursor-pointer p-0"
-            title="Click to Edit Profile"
+            title="Double-click to Edit Profile"
           >
             <UserAvatar user={currentUser} size="lg" />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
