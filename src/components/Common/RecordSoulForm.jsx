@@ -112,8 +112,8 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
               onChange={(e) => setSex(e.target.value)}
               className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-colors"
             >
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
+              <option value="Male" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Male</option>
+              <option value="Female" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Female</option>
             </select>
           </div>
 
@@ -156,9 +156,9 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
                 onChange={(e) => { setSelectedChapterId(e.target.value); setSelectedCellId(''); }}
                 className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-colors"
               >
-                <option value="">-- Select Chapter --</option>
+                <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>-- Select Chapter --</option>
                 {chapters.map(ch => (
-                  <option key={ch.id} value={ch.id}>{ch.name}</option>
+                  <option key={ch.id} value={ch.id} className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>{ch.name}</option>
                 ))}
               </select>
             </div>
@@ -171,9 +171,9 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
                 disabled={!selectedChapterId}
                 className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-colors disabled:opacity-50"
               >
-                <option value="">-- Select Cell (None) --</option>
+                <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>-- Select Cell (None) --</option>
                 {availableCells.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id} className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>{c.name}</option>
                 ))}
               </select>
             </div>
@@ -188,9 +188,9 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
               onChange={(e) => setSelectedCellId(e.target.value)}
               className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-colors"
             >
-              <option value="">-- Select Cell (None/General Chapter) --</option>
+              <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>-- Select Cell (None/General Chapter) --</option>
               {availableCells.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id} className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>{c.name}</option>
               ))}
             </select>
           </div>

@@ -5,29 +5,17 @@ import {
   TrendingUp, Calendar, Send, CheckCircle2, Clock, 
   XCircle, FileText, Upload, Sparkles, Award, AlertCircle
 } from 'lucide-react';
+import { RecordGivingForm } from '../Common/RecordGivingForm';
 import { RecordSoulForm } from '../Common/RecordSoulForm';
 import { TimeframeFilter } from '../Common/TimeframeFilter';
 
 export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedgerEntry, updateUser, submitSoulRecord, souls }) {
-  const [serviceDate, setServiceDate] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('Bank Transfer');
-  const [newMembersBroughtIn, setNewMembersBroughtIn] = useState(0);
-  
-  const [segment, setSegment] = useState('Local');
-  const [category, setCategory] = useState('Tithe');
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
-
   // Attendance State
   const initialAttendance = currentUser.attendance || { sundayInPerson: false, wednesdayOnline: false };
   const [sundayInPerson, setSundayInPerson] = useState(initialAttendance.sundayInPerson);
   const [wednesdayOnline, setWednesdayOnline] = useState(initialAttendance.wednesdayOnline);
   const [attendanceSuccess, setAttendanceSuccess] = useState(false);
 
-  const [dragActive, setDragActive] = useState(false);
-  const [receiptFile, setReceiptFile] = useState(null);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
   const [revealedReport, setRevealedReport] = useState(null); // 'givings' | 'souls' | 'submissions' | null
   const [timeframe, setTimeframe] = useState('monthly');
   const [customStart, setCustomStart] = useState('');
@@ -144,17 +132,22 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
     printWindow.document.close();
   };
 
-  // Auto-fill today's date & sync attendance
-  useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    setServiceDate(today);
-  }, []);
-
+  // Auto-fill attendance
   useEffect(() => {
     const att = currentUser.attendance || { sundayInPerson: false, wednesdayOnline: false };
     setSundayInPerson(att.sundayInPerson);
     setWednesdayOnline(att.wednesdayOnline);
   }, [currentUser]);
+
+  const handleAttendanceSubmit = (e) => {
+    e.preventDefault();
+    setAttendanceSuccess(false);
+    updateUser(currentUser.id, {
+      attendance: { sundayInPerson, wednesdayOnline }
+    });
+    setAttendanceSuccess(true);
+    setTimeout(() => setAttendanceSuccess(false), 2000);
+  };
 
   const cellName = cells.find(c => c.id === currentUser.cellId)?.name || 'Unknown Cell';
   const chapterName = chapters.find(ch => ch.id === currentUser.chapterId)?.name || 'Unknown Chapter';
@@ -187,79 +180,6 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
       const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
       return { label, value: item.amount || item.totalAmount || 0 };
     });
-
-  // Drag and drop handlers
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setReceiptFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setReceiptFile(e.target.files[0]);
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess(false);
-
-    const numAmount = Number(amount) || 0;
-    if (numAmount <= 0) {
-      setError('Total giving amount must be greater than $0.');
-      return;
-    }
-
-    if (!receiptFile) {
-      setError('Please upload a Proof of Payment receipt file.');
-      return;
-    }
-
-    const res = submitLedgerEntry(
-      serviceDate,
-      segment,
-      category,
-      numAmount,
-      description.trim(),
-      paymentMethod,
-      receiptFile.name,
-      newMembersBroughtIn
-    );
-
-    if (res && res.success) {
-      setSuccess(true);
-      setReceiptFile(null);
-      setAmount('');
-      setDescription('');
-      setNewMembersBroughtIn(0);
-      setTimeout(() => setSuccess(false), 4000);
-    }
-  };
-
-  const handleAttendanceSubmit = (e) => {
-    e.preventDefault();
-    setAttendanceSuccess(false);
-    updateUser(currentUser.id, {
-      attendance: { sundayInPerson, wednesdayOnline }
-    });
-    setAttendanceSuccess(true);
-    setTimeout(() => setAttendanceSuccess(false), 2000);
-  };
 
   const getStatusBadge = (status) => {
     if (status === 'Confirmed') return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
@@ -345,193 +265,20 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Left: Weekly Submission Form */}
-        <div className="lg:col-span-3 bg-slate-900/40 border border-slate-800 p-6 rounded-3xl">
-          <h3 className="text-md font-bold text-slate-100 mb-4 flex items-center gap-2">
-            <Send size={16} className="text-indigo-400" />
-            Weekly Self-Service Submission
-          </h3>
-
-          {error && (
-            <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-xl">
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl flex items-center gap-2 font-bold animate-pulse-soft">
-              <CheckCircle2 size={16} /> Submission uploaded successfully. Awaiting cell leader review!
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Row: Date & Payment */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Service Date</label>
-                <div className="relative">
-                  <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                  <input
-                    type="date"
-                    value={serviceDate}
-                    onChange={(e) => setServiceDate(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Payment Method</label>
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none"
-                >
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="Card">Card Payment</option>
-                  <option value="Mobile Money">Mobile Money</option>
-                  <option value="Cash">Cash</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Contribution Segment and Category Selection */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Local / Haven</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => { setSegment('Local'); setCategory('Tithe'); }}
-                    className={`flex-1 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all ${segment === 'Local' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'}`}
-                  >
-                    Local
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setSegment('Haven'); setCategory('PCO Seed'); }}
-                    className={`flex-1 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all ${segment === 'Haven' ? 'bg-indigo-650 border-indigo-550 text-white' : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-205'}`}
-                  >
-                    Haven
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Giving Category</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none"
-                >
-                  {segment === 'Local' ? (
-                    <>
-                      <option value="Tithe">Tithe</option>
-                      <option value="Offering">Offering</option>
-                      <option value="Partnership">Partnership</option>
-                      <option value="Church Hosting">Church Hosting</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="PCO Seed">PCO Seed</option>
-                      <option value="Welfare">Welfare</option>
-                      <option value="Others">Others</option>
-                    </>
-                  )}
-                </select>
-              </div>
-            </div>
-
-            {/* Amount input */}
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Amount ($)</label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-semibold">$</span>
-                  <input
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    placeholder="Enter giving amount"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="w-full pl-8 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Description note textarea */}
-            <div className="bg-slate-950 border border-slate-850 p-4 rounded-2xl">
-              <label className="block text-slate-450 text-[10px] font-bold uppercase tracking-wider mb-2">Add Additional Description</label>
-              <textarea
-                rows="2"
-                placeholder="Write any additional details about this giving (optional)..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full p-3 bg-slate-905 border border-slate-800 focus:border-indigo-500 text-slate-105 rounded-xl text-xs outline-none resize-none transition-colors"
-              />
-            </div>
-
-            {/* Souls counter & receipt upload grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-              <div className="sm:col-span-1">
-                <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">New Souls Brought In</label>
-                <input
-                  type="number"
-                  placeholder="0"
-                  min="0"
-                  value={newMembersBroughtIn}
-                  onChange={(e) => setNewMembersBroughtIn(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none"
-                />
-              </div>
-
-              {/* Receipt File Upload */}
-              <div className="sm:col-span-2">
-                <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Proof of Payment File</label>
-                <div
-                  onDragEnter={handleDrag}
-                  onDragOver={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDrop={handleDrop}
-                  className={`border border-dashed rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer transition-all ${dragActive ? 'border-indigo-500 bg-indigo-500/5' : 'border-slate-800 bg-slate-950 hover:border-slate-700'}`}
-                  onClick={() => document.getElementById('receipt-upload').click()}
-                >
-                  <input
-                    id="receipt-upload"
-                    type="file"
-                    className="hidden"
-                    onChange={handleFileChange}
-                    accept="image/*,application/pdf"
-                  />
-                  <Upload size={16} className="text-slate-500 mb-1" />
-                  <span className="text-[10px] text-slate-400 font-medium text-center">
-                    {receiptFile ? (
-                      <span className="text-indigo-400 font-bold truncate block max-w-[200px]">{receiptFile.name}</span>
-                    ) : (
-                      'Drag receipt file here or click to browse'
-                    )}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-650 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-md transition-all duration-300"
-            >
-              Submit Weekly Record
-            </button>
-          </form>
-
-          <div className="mt-6 pt-6 border-t border-slate-800">
-            <RecordSoulForm
-              currentUser={currentUser}
-              chapters={chapters}
-              cells={cells}
-              onSubmit={submitSoulRecord}
-            />
-          </div>
+        <div className="lg:col-span-3 flex flex-col gap-6">
+          <RecordGivingForm
+            currentUser={currentUser}
+            onSubmit={submitLedgerEntry}
+            onUpdateUser={updateUser}
+            showAttendance={false}
+            showNewSouls={true}
+          />
+          <RecordSoulForm
+            currentUser={currentUser}
+            chapters={chapters}
+            cells={cells}
+            onSubmit={submitSoulRecord}
+          />
         </div>
 
         {/* Right: Personal Growth Tracker */}

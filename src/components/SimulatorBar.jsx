@@ -1,11 +1,20 @@
 import React, { useState } from 'react';
-import { Users, Shield, RotateCcw, Activity, Terminal, ChevronDown, ChevronUp, User, LogOut } from 'lucide-react';
+import { Users, Shield, RotateCcw, Activity, Terminal, ChevronDown, ChevronUp, User, LogOut, Download } from 'lucide-react';
 import { EditUserModal } from './Common/EditUserModal';
 
 export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, onSwitchUser, onReset, updateUser, onLogout }) {
   const [isOpen, setIsOpen] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+
+  const handleDownloadLogs = () => {
+    const text = logs.map(log => `[${log.time}] > ${log.text}`).join('\n');
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `system_audit_logs_${Date.now()}.txt`;
+    link.click();
+  };
 
   // Group users by role with hierarchical visibility constraints based on the authenticated operator:
   const getVisibleUsers = () => {
@@ -279,7 +288,17 @@ export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, o
                 <Activity size={12} className="text-indigo-400 animate-pulse-soft" />
                 SYSTEM AUDIT LOGS (CREDENTIALS & FINANCIAL ACTIONS)
               </span>
-              <button onClick={() => setShowLogs(false)} className="text-slate-500 hover:text-slate-350 font-bold uppercase text-[9px]">Close</button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleDownloadLogs}
+                  className="text-indigo-400 hover:text-indigo-350 font-bold uppercase text-[9px] flex items-center gap-1 transition-colors"
+                  title="Download Logs as TXT File"
+                >
+                  <Download size={10} />
+                  Download TXT
+                </button>
+                <button onClick={() => setShowLogs(false)} className="text-slate-500 hover:text-slate-350 font-bold uppercase text-[9px]">Close</button>
+              </div>
             </div>
             {logs.map((log) => (
               <div key={log.id} className="flex items-start gap-2">

@@ -183,9 +183,9 @@ export function CredentialForm({
                 }}
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <option value="">Select Chapter...</option>
+                <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Select Chapter...</option>
                 {chapters.map(ch => (
-                  <option key={ch.id} value={ch.id}>{ch.name}</option>
+                  <option key={ch.id} value={ch.id} className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>{ch.name}</option>
                 ))}
               </select>
             </div>
@@ -204,9 +204,9 @@ export function CredentialForm({
                 onChange={(e) => setCellId(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <option value="">Select Cell...</option>
+                <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Select Cell...</option>
                 {filteredCells.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id} className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>{c.name}</option>
                 ))}
               </select>
             </div>

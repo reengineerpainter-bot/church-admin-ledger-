@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Send, Calendar, DollarSign, FileText, CheckCircle2 } from 'lucide-react';
 
-export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser }) {
+export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser, showAttendance = true, showNewSouls = false }) {
   const [serviceDate, setServiceDate] = useState(new Date().toISOString().split('T')[0]);
   const [segment, setSegment] = useState('Local');
   const [category, setCategory] = useState('Tithe');
@@ -12,6 +12,7 @@ export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser }) {
   const [dragActive, setDragActive] = useState(false);
   const [sundayInPerson, setSundayInPerson] = useState(false);
   const [wednesdayOnline, setWednesdayOnline] = useState(false);
+  const [newMembersBroughtIn, setNewMembersBroughtIn] = useState(0);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
@@ -73,7 +74,7 @@ export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser }) {
       description.trim(),
       paymentMethod,
       receiptFile.name,
-      0
+      newMembersBroughtIn
     );
 
     if (res && res.success) {
@@ -81,9 +82,10 @@ export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser }) {
       setReceiptFile(null);
       setAmount('');
       setDescription('');
+      setNewMembersBroughtIn(0);
       setError('');
       
-      if (onUpdateUser) {
+      if (onUpdateUser && showAttendance) {
         onUpdateUser(currentUser.id, {
           attendance: { sundayInPerson, wednesdayOnline }
         });
@@ -134,10 +136,10 @@ export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser }) {
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-colors"
             >
-              <option value="Bank Transfer">Bank Transfer</option>
-              <option value="Card">Card Payment</option>
-              <option value="Mobile Money">Mobile Money</option>
-              <option value="Cash">Cash</option>
+              <option value="Bank Transfer" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Bank Transfer</option>
+              <option value="Card" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Card Payment</option>
+              <option value="Mobile Money" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Mobile Money</option>
+              <option value="Cash" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Cash</option>
             </select>
           </div>
         </div>
@@ -172,59 +174,77 @@ export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser }) {
             >
               {segment === 'Local' ? (
                 <>
-                  <option value="Tithe">Tithe</option>
-                  <option value="Offering">Offering</option>
-                  <option value="Partnership">Partnership</option>
-                  <option value="Church Hosting">Church Hosting</option>
+                  <option value="Tithe" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Tithe</option>
+                  <option value="Offering" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Offering</option>
+                  <option value="Partnership" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Partnership</option>
+                  <option value="Church Hosting" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Church Hosting</option>
                 </>
               ) : (
                 <>
-                  <option value="PCO Seed">PCO Seed</option>
-                  <option value="Welfare">Welfare</option>
-                  <option value="Others">Others</option>
+                  <option value="PCO Seed" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>PCO Seed</option>
+                  <option value="Welfare" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Welfare</option>
+                  <option value="Others" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Others</option>
                 </>
               )}
             </select>
           </div>
         </div>
 
-        <div>
-          <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Giving Amount ($)</label>
-          <div className="relative">
-            <DollarSign size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-            <input
-              type="number"
-              placeholder="0.00"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-colors"
-            />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+          <div className={showNewSouls ? "sm:col-span-1" : "sm:col-span-3"}>
+            <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Giving Amount ($)</label>
+            <div className="relative">
+              <DollarSign size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input
+                type="number"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-colors"
+              />
+            </div>
           </div>
+
+          {showNewSouls && (
+            <div className="sm:col-span-2">
+              <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">New Souls Brought In</label>
+              <input
+                type="number"
+                placeholder="0"
+                min="0"
+                value={newMembersBroughtIn}
+                onChange={(e) => setNewMembersBroughtIn(Math.max(0, parseInt(e.target.value) || 0))}
+                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-colors"
+              />
+            </div>
+          )}
         </div>
 
-        <div className="p-3 bg-slate-950/60 border border-slate-850 rounded-xl space-y-2">
-          <span className="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Attendance Verification</span>
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={sundayInPerson}
-                onChange={(e) => setSundayInPerson(e.target.checked)}
-                className="w-3.5 h-3.5 accent-indigo-500 rounded cursor-pointer"
-              />
-              <span>I was in church on Sunday</span>
-            </label>
-            <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={wednesdayOnline}
-                onChange={(e) => setWednesdayOnline(e.target.checked)}
-                className="w-3.5 h-3.5 accent-indigo-500 rounded cursor-pointer"
-              />
-              <span>I joined the online service on Wednesday weekly</span>
-            </label>
+        {showAttendance && (
+          <div className="p-3 bg-slate-950/60 border border-slate-850 rounded-xl space-y-2">
+            <span className="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Attendance Verification</span>
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={sundayInPerson}
+                  onChange={(e) => setSundayInPerson(e.target.checked)}
+                  className="w-3.5 h-3.5 accent-indigo-500 rounded cursor-pointer"
+                />
+                <span>I was in church on Sunday</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={wednesdayOnline}
+                  onChange={(e) => setWednesdayOnline(e.target.checked)}
+                  className="w-3.5 h-3.5 accent-indigo-500 rounded cursor-pointer"
+                />
+                <span>I joined the online service on Wednesday weekly</span>
+              </label>
+            </div>
           </div>
-        </div>
+        )}
 
         <div>
           <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Add Additional Description</label>

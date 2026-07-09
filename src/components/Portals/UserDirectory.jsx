@@ -102,10 +102,10 @@ export function UserDirectory({
                 onChange={(e) => setRoleFilter(e.target.value)}
                 className="bg-transparent text-slate-300 text-xs font-bold outline-none cursor-pointer"
               >
-                <option value="all">All Roles</option>
-                <option value="chapter_leader">Chapter Leaders</option>
-                <option value="cell_leader">Cell Leaders</option>
-                <option value="member">Members</option>
+                <option value="all" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>All Roles</option>
+                <option value="chapter_leader" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Chapter Leaders</option>
+                <option value="cell_leader" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Cell Leaders</option>
+                <option value="member" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Members</option>
               </select>
             </div>
           )}
@@ -117,10 +117,10 @@ export function UserDirectory({
               onChange={(e) => setStatusFilter(e.target.value)}
               className="bg-transparent text-slate-300 text-xs font-bold outline-none cursor-pointer"
             >
-              <option value="all">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Pending_Higher_Approval">Pending Approval</option>
-              <option value="Rejected">Rejected / Disabled</option>
+              <option value="all" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>All Statuses</option>
+              <option value="Active" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Active</option>
+              <option value="Pending_Higher_Approval" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Pending Approval</option>
+              <option value="Rejected" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Rejected / Disabled</option>
             </select>
           </div>
         </div>

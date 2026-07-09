@@ -10,7 +10,40 @@ import { LoginScreen } from './components/Common/LoginScreen';
 
 export function App() {
   const state = useAppState();
-  const { currentUser, currentUserId } = state;
+  const { currentUser, currentUserId, logout } = state;
+
+  // Auto logout after 3 minutes of inactivity
+  React.useEffect(() => {
+    if (currentUserId === 'logged_out') return;
+
+    const TIMEOUT_DURATION = 3 * 60 * 1000; // 3 minutes
+    let inactivityTimer;
+
+    const resetTimer = () => {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        logout();
+      }, TIMEOUT_DURATION);
+    };
+
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
+
+    // Initialize timer
+    resetTimer();
+
+    // Attach listeners
+    events.forEach(event => {
+      window.addEventListener(event, resetTimer);
+    });
+
+    // Cleanup
+    return () => {
+      clearTimeout(inactivityTimer);
+      events.forEach(event => {
+        window.removeEventListener(event, resetTimer);
+      });
+    };
+  }, [currentUserId, logout]);
 
   // Render correct dashboard depending on role and approval status
   const renderDashboard = () => {

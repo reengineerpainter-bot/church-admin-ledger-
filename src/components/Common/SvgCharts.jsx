@@ -317,7 +317,7 @@ export function DonutChart({ data = [], size = 200, strokeWidth = 20 }) {
             fill="#94a3b8" 
             textAnchor="middle" 
             fontSize="10" 
-            textTransform="uppercase" 
+            style={{ textTransform: 'uppercase' }} 
             letterSpacing="1"
           >
             Total

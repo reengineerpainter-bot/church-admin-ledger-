@@ -236,10 +236,10 @@ export function EditUserModal({
                     }}
                     className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-xs outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <option value="admin">Pastor / Global Admin</option>
-                    <option value="chapter_leader">Chapter Leader</option>
-                    <option value="cell_leader">Cell Leader</option>
-                    <option value="member">Registered Member</option>
+                    <option value="admin" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Pastor / Global Admin</option>
+                    <option value="chapter_leader" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Chapter Leader</option>
+                    <option value="cell_leader" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Cell Leader</option>
+                    <option value="member" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Registered Member</option>
                   </select>
                 </div>
 
@@ -251,9 +251,9 @@ export function EditUserModal({
                     onChange={(e) => setStatus(e.target.value)}
                     className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-xs outline-none"
                   >
-                    <option value="Active">Active</option>
-                    <option value="Pending_Higher_Approval">Pending Confirmation</option>
-                    <option value="Rejected">Rejected / Disabled</option>
+                    <option value="Active" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Active</option>
+                    <option value="Pending_Higher_Approval" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Pending Confirmation</option>
+                    <option value="Rejected" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Rejected / Disabled</option>
                   </select>
                 </div>
               </div>
@@ -275,9 +275,9 @@ export function EditUserModal({
                         }}
                         className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 text-slate-200 rounded-lg text-xs outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        <option value="">None / Unassigned</option>
+                        <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>None / Unassigned</option>
                         {chapters.map(ch => (
-                          <option key={ch.id} value={ch.id}>{ch.name}</option>
+                          <option key={ch.id} value={ch.id} className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>{ch.name}</option>
                         ))}
                       </select>
                     </div>
@@ -295,9 +295,9 @@ export function EditUserModal({
                           onChange={(e) => setCellId(e.target.value)}
                           className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 text-slate-200 rounded-lg text-xs outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                          <option value="">None / Unassigned</option>
+                          <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>None / Unassigned</option>
                           {cells.filter(c => c.chapterId === chapterId).map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
+                            <option key={c.id} value={c.id} className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>{c.name}</option>
                           ))}
                         </select>
                       </div>
