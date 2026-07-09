@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Users, Shield, RotateCcw, Activity, Terminal, ChevronDown, ChevronUp, User, LogOut, Download, Sun, Moon } from 'lucide-react';
+import { Users, Shield, RotateCcw, Activity, Terminal, ChevronDown, ChevronUp, User, LogOut, Download, Sun, Moon, MoreVertical } from 'lucide-react';
 import { EditUserModal } from './Common/EditUserModal';
 
 export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, onSwitchUser, onReset, updateUser, onLogout, theme = 'dark', onToggleTheme }) {
   const [isOpen, setIsOpen] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   const handleDownloadLogs = () => {
     const text = logs.map(log => `[${log.time}] > ${log.text}`).join('\n');
@@ -243,48 +244,90 @@ export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, o
           <div className="hidden md:flex items-center gap-2">
             {currentUser && (
               <button
-                onClick={() => setShowEditProfile(true)}
-                className="flex items-center gap-1.5 px-3 py-2 bg-slate-950 border border-slate-800 hover:border-indigo-500/25 hover:text-indigo-400 rounded-xl text-xs text-slate-400 font-bold transition-all"
-              >
-                <User size={14} />
-                Edit Profile
-              </button>
-            )}
-
-            <button
-              onClick={() => setShowLogs(!showLogs)}
-              className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-xs font-bold transition-colors ${showLogs ? 'bg-indigo-500/10 border-indigo-500 text-indigo-400' : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'}`}
-            >
-              <Terminal size={14} />
-              Audit Logs
-            </button>
-
-            <button
-              onClick={onToggleTheme}
-              className="flex items-center gap-1.5 px-3 py-2 bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200 rounded-xl text-xs font-bold transition-all"
-              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-            >
-              {theme === 'dark' ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-indigo-400" />}
-              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-            </button>
-
-            <button
-              onClick={onReset}
-              className="flex items-center gap-1.5 px-3 py-2 bg-slate-950 border border-slate-850 hover:border-red-500/20 hover:text-red-400 rounded-xl text-xs text-slate-400 font-bold transition-all"
-            >
-              <RotateCcw size={14} />
-              Reset State
-            </button>
-
-            {currentUser && (
-              <button
                 onClick={onLogout}
-                className="flex items-center gap-1.5 px-3 py-2 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-400 rounded-xl text-xs font-bold transition-all"
+                className="flex items-center gap-1.5 px-3 py-2 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-400 rounded-xl text-xs font-bold transition-all mr-1"
               >
                 <LogOut size={14} />
                 Log Out
               </button>
             )}
+
+            <div className="relative">
+              <button
+                onClick={() => setShowMoreMenu(!showMoreMenu)}
+                className={`flex items-center justify-center p-2 rounded-xl border transition-all ${showMoreMenu ? 'bg-indigo-500/10 border-indigo-500 text-indigo-400' : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'}`}
+                title="More Actions"
+              >
+                <MoreVertical size={16} />
+              </button>
+
+              {showMoreMenu && (
+                <>
+                  {/* Click overlay to close */}
+                  <div className="fixed inset-0 z-10" onClick={() => setShowMoreMenu(false)} />
+                  
+                  {/* Dropdown Menu */}
+                  <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl z-20 py-1.5 glass-panel overflow-hidden">
+                    {currentUser && (
+                      <button
+                        onClick={() => {
+                          setShowEditProfile(true);
+                          setShowMoreMenu(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-xs font-semibold text-slate-350 hover:bg-slate-900/60 hover:text-slate-100 flex items-center gap-2.5 transition-colors border-none cursor-pointer"
+                      >
+                        <User size={13} className="text-slate-500" />
+                        Edit Profile
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        setShowLogs(!showLogs);
+                        setShowMoreMenu(false);
+                      }}
+                      className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 transition-colors border-none cursor-pointer ${showLogs ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-300 hover:bg-slate-900/60 hover:text-slate-100'}`}
+                    >
+                      <Terminal size={13} className="text-slate-500" />
+                      {showLogs ? 'Hide Audit Logs' : 'View Audit Logs'}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        onToggleTheme();
+                        setShowMoreMenu(false);
+                      }}
+                      className="w-full px-4 py-2 text-left text-xs font-semibold text-slate-300 hover:bg-slate-900/60 hover:text-slate-100 flex items-center gap-2.5 transition-colors border-none cursor-pointer"
+                    >
+                      {theme === 'dark' ? (
+                        <>
+                          <Sun size={13} className="text-amber-500" />
+                          Switch to Light Mode
+                        </>
+                      ) : (
+                        <>
+                          <Moon size={13} className="text-indigo-500" />
+                          Switch to Dark Mode
+                        </>
+                      )}
+                    </button>
+
+                    <div className="border-t border-slate-800/80 my-1" />
+
+                    <button
+                      onClick={() => {
+                        onReset();
+                        setShowMoreMenu(false);
+                      }}
+                      className="w-full px-4 py-2 text-left text-xs font-bold text-rose-450 hover:bg-rose-500/10 flex items-center gap-2.5 transition-colors border-none cursor-pointer"
+                    >
+                      <RotateCcw size={13} className="text-rose-450" />
+                      Reset Simulation
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
