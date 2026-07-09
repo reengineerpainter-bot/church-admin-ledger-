@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { User, Key, Globe, LayoutGrid, X, Shield, CheckCircle, AlertTriangle } from 'lucide-react';
+import { User, Key, Globe, LayoutGrid, X, Shield, CheckCircle, AlertTriangle, Camera } from 'lucide-react';
+import { UserAvatar } from './UserAvatar';
+
+const PRESET_AVATARS = [
+  `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%234f46e5" rx="30"/><text x="50" y="65" font-size="50" text-anchor="middle">🧑‍💼</text></svg>`,
+  `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%2310b981" rx="30"/><text x="50" y="65" font-size="50" text-anchor="middle">👩‍💼</text></svg>`,
+  `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23f59e0b" rx="30"/><text x="50" y="65" font-size="50" text-anchor="middle">👨‍💻</text></svg>`,
+  `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23ec4899" rx="30"/><text x="50" y="65" font-size="50" text-anchor="middle">👩‍💻</text></svg>`,
+  `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%238b5cf6" rx="30"/><text x="50" y="65" font-size="50" text-anchor="middle">👑</text></svg>`,
+  `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%2306b6d4" rx="30"/><text x="50" y="65" font-size="50" text-anchor="middle">🌟</text></svg>`,
+];
 
 export function EditUserModal({
   isOpen,
@@ -19,6 +29,7 @@ export function EditUserModal({
   const [cellId, setCellId] = useState('');
   const [status, setStatus] = useState('Active');
   const [title, setTitle] = useState('Bro');
+  const [avatarUrl, setAvatarUrl] = useState('');
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -34,6 +45,7 @@ export function EditUserModal({
       setCellId(user.cellId || '');
       setStatus(user.status || 'Active');
       setTitle(user.title || 'Bro');
+      setAvatarUrl(user.avatarUrl || '');
       setError('');
       setSuccess(false);
     }
@@ -43,6 +55,21 @@ export function EditUserModal({
 
   // Filter cells based on selected chapter
   const filteredCells = cells.filter(cell => cell.chapterId === chapterId);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setError('Image file must be under 2MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -66,7 +93,8 @@ export function EditUserModal({
       name: name.trim(),
       username: username.trim().toLowerCase(),
       tempPassword: password.trim(),
-      title: title
+      title: title,
+      avatarUrl: avatarUrl
     };
 
     // If administrative mode is active, allow changing configuration attributes based on permissions
@@ -149,6 +177,50 @@ export function EditUserModal({
               <span>Profile updated successfully!</span>
             </div>
           )}
+
+          {/* Profile Picture Uploader & Presets */}
+          <div className="flex flex-col items-center gap-4 bg-slate-950 p-4 border border-slate-850 rounded-2xl">
+            <div className="relative group cursor-pointer">
+              <label htmlFor="avatar-upload" className="cursor-pointer">
+                <UserAvatar user={{ name, avatarUrl }} size="xxl" className="ring-4 ring-indigo-500/20 group-hover:opacity-85 transition-opacity" />
+                <div className="absolute inset-0 bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                  <Camera size={24} />
+                </div>
+              </label>
+              <input
+                id="avatar-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </div>
+            
+            <div className="text-center w-full">
+              <span className="block text-[10px] text-slate-500 font-semibold tracking-wider uppercase mb-2">Or Choose a Preset Avatar</span>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {PRESET_AVATARS.map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setAvatarUrl(preset)}
+                    className={`w-10 h-10 rounded-xl border-2 transition-all p-0.5 overflow-hidden bg-slate-900 ${avatarUrl === preset ? 'border-indigo-500 scale-110 shadow-lg' : 'border-slate-800 hover:border-slate-600'}`}
+                  >
+                    <img src={preset} className="w-full h-full object-cover rounded-lg" alt={`preset-${idx}`} />
+                  </button>
+                ))}
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setAvatarUrl('')}
+                    className="px-2.5 py-1 text-[10px] font-bold text-rose-455 bg-rose-500/10 border border-rose-500/20 rounded-lg hover:bg-rose-500/20 transition-all select-none cursor-pointer"
+                  >
+                    Clear Photo
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
 
           {/* Honorific Title prefix selection */}
           <div>

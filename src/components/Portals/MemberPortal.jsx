@@ -8,6 +8,7 @@ import {
 import { RecordGivingForm } from '../Common/RecordGivingForm';
 import { RecordSoulForm } from '../Common/RecordSoulForm';
 import { TimeframeFilter } from '../Common/TimeframeFilter';
+import { UserAvatar } from '../Common/UserAvatar';
 
 export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedgerEntry, updateUser, submitSoulRecord, souls }) {
   // Attendance State
@@ -112,7 +113,7 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
     html += `<style>body {font-family: system-ui, -apple-system, sans-serif; padding: 30px; color: #1e293b;} h2 {color: #4f46e5; margin-bottom: 5px;} .meta {font-size: 11px; color: #64748b; margin-bottom: 25px;} table {width: 100%; border-collapse: collapse;} th, td {border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 12px;} th {background-color: #f8fafc; color: #475569; font-weight: bold;} tr:nth-child(even) {background-color: #f8fafc;}</style>`;
     html += `</head><body>`;
     html += `<h2>${title}</h2>`;
-    html += `<div class="meta">The Haven Administration | Generated: ${new Date().toLocaleString()}</div>`;
+    html += `<div class="meta">Church ADMIN & LEDGER Administration | Generated: ${new Date().toLocaleString()}</div>`;
     html += `<table><thead><tr>`;
     headers.forEach(h => {
       html += `<th>${h}</th>`;
@@ -197,12 +198,15 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
     <div className="space-y-6">
       {/* Welcome Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 glass-panel rounded-3xl">
-        <div>
-          <span className="text-xs text-emerald-400 font-extrabold uppercase tracking-wider">Member Portal</span>
-          <h2 className="text-2xl font-extrabold text-slate-100 mt-1">
-            {currentUser.title || 'Bro'} {currentUser.name}
-          </h2>
-          <p className="text-slate-400 text-sm mt-1">Cell: <span className="text-indigo-300 font-bold">{cellName}</span> | Chapter: <span className="text-indigo-300 font-bold">{chapterName}</span></p>
+        <div className="flex items-center gap-4">
+          <UserAvatar user={currentUser} size="lg" className="shrink-0" />
+          <div>
+            <span className="text-xs text-emerald-400 font-extrabold uppercase tracking-wider">Member Portal</span>
+            <h2 className="text-2xl font-extrabold text-slate-100 mt-1">
+              {currentUser.title || 'Bro'} {currentUser.name}
+            </h2>
+            <p className="text-slate-400 text-sm mt-1">Cell: <span className="text-indigo-300 font-bold">{cellName}</span> | Chapter: <span className="text-indigo-300 font-bold">{chapterName}</span></p>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-3 shrink-0">
           <TimeframeFilter 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Filter, Shield, Edit, User, MapPin, Grid, CheckCircle2, AlertCircle } from 'lucide-react';
 import { EditUserModal } from '../Common/EditUserModal';
+import { UserAvatar } from '../Common/UserAvatar';
 
 export function UserDirectory({
   currentUser,
@@ -147,9 +148,7 @@ export function UserDirectory({
               return (
                 <tr key={u.id} className="hover:bg-slate-900/30 transition-colors">
                   <td className="px-5 py-3.5 text-slate-100 font-bold flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-slate-850 flex items-center justify-center text-[10px] font-extrabold text-indigo-400">
-                      {u.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                    </div>
+                    <UserAvatar user={u} size="xs" className="shrink-0" />
                     {u.name}
                   </td>
                   <td className="px-5 py-3.5 font-semibold text-slate-400">@{u.username}</td>

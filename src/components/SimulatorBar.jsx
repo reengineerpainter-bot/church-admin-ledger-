@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Users, Shield, RotateCcw, Activity, Terminal, ChevronDown, ChevronUp, User, LogOut, Download, Sun, Moon, MoreVertical } from 'lucide-react';
 import { EditUserModal } from './Common/EditUserModal';
+import { UserAvatar } from './Common/UserAvatar';
 
 export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, onSwitchUser, onReset, updateUser, onLogout, theme = 'dark', onToggleTheme }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -96,8 +97,8 @@ export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, o
               ⛪
             </div>
             <div>
-              <span className="font-extrabold text-lg text-slate-100 tracking-tight">The <span className="text-indigo-400">Haven</span></span>
-              <span className="text-[10px] text-slate-400 block -mt-1 font-semibold tracking-widest uppercase">Admin & Ledger</span>
+              <span className="font-extrabold text-lg text-slate-100 tracking-tight">Church <span className="text-indigo-400">ADMIN & LEDGER</span></span>
+              <span className="text-[10px] text-slate-400 block -mt-1 font-semibold tracking-widest uppercase">Structural Hierarchy Console</span>
             </div>
           </div>
 
@@ -152,7 +153,7 @@ export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, o
                 className="w-full sm:w-72 flex items-center justify-between gap-3 px-4 py-2 bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-xl text-sm font-medium transition-all shadow-inner"
               >
                 <div className="flex items-center gap-2 text-left truncate">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
+                  <UserAvatar user={currentUser} size="xs" className="shrink-0" />
                   <span className="font-bold truncate">{currentUser.name}</span>
                   <span className={`text-[9px] px-1.5 py-0.5 rounded border uppercase font-extrabold shrink-0 ${getRoleBadgeColor(currentUser.role)}`}>
                     {currentUser.role === 'admin' ? 'Pastor' : currentUser.role.replace('_', ' ')}
@@ -172,7 +173,10 @@ export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, o
                         onClick={() => { onSwitchUser(u.id); setIsOpen(false); }}
                         className={`w-full text-left px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-between ${currentUser?.id === u.id ? 'bg-indigo-650 text-white' : 'text-slate-350 hover:bg-slate-900 hover:text-slate-100'}`}
                       >
-                        <span>{u.name}</span>
+                        <div className="flex items-center gap-2 truncate">
+                          <UserAvatar user={u} size="xs" className="shrink-0" />
+                          <span className="truncate">{u.name}</span>
+                        </div>
                         <span className="text-[9px] opacity-70">Global Access</span>
                       </button>
                     ))}
@@ -189,7 +193,10 @@ export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, o
                         onClick={() => { onSwitchUser(u.id); setIsOpen(false); }}
                         className={`w-full text-left px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-between ${currentUser?.id === u.id ? 'bg-indigo-650 text-white' : 'text-slate-350 hover:bg-slate-900 hover:text-slate-100'}`}
                       >
-                        <span>{u.name}</span>
+                        <div className="flex items-center gap-2 truncate">
+                          <UserAvatar user={u} size="xs" className="shrink-0" />
+                          <span className="truncate">{u.name}</span>
+                        </div>
                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-900 font-bold">Chapter {u.chapterId.toUpperCase()}</span>
                       </button>
                     ))}
@@ -206,7 +213,10 @@ export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, o
                         onClick={() => { onSwitchUser(u.id); setIsOpen(false); }}
                         className={`w-full text-left px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-between ${currentUser?.id === u.id ? 'bg-indigo-650 text-white' : 'text-slate-350 hover:bg-slate-900 hover:text-slate-100'}`}
                       >
-                        <span>{u.name}</span>
+                        <div className="flex items-center gap-2 truncate">
+                          <UserAvatar user={u} size="xs" className="shrink-0" />
+                          <span className="truncate">{u.name}</span>
+                        </div>
                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-900 font-bold">{u.cellId}</span>
                       </button>
                     ))}
@@ -223,7 +233,10 @@ export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, o
                         onClick={() => { onSwitchUser(u.id); setIsOpen(false); }}
                         className={`w-full text-left px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-between ${currentUser?.id === u.id ? 'bg-indigo-650 text-white' : 'text-slate-350 hover:bg-slate-900 hover:text-slate-100'}`}
                       >
-                        <span>{u.name}</span>
+                        <div className="flex items-center gap-2 truncate">
+                          <UserAvatar user={u} size="xs" className="shrink-0" />
+                          <span className="truncate">{u.name}</span>
+                        </div>
                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-900 font-bold">{u.cellId}</span>
                       </button>
                     ))}
