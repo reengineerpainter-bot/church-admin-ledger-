@@ -85,7 +85,7 @@ export function CredentialForm({
   };
 
   return (
-    <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800 p-6 rounded-2xl">
+    <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800 p-4 sm:p-6 rounded-2xl">
       <h3 className="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
         <User size={18} className="text-indigo-400" />
         Create {getRoleLabel()} Credentials

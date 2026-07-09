@@ -55,7 +55,7 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
   };
 
   return (
-    <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl shadow-inner">
+    <div className="bg-slate-900/40 border border-slate-800 p-4 sm:p-6 rounded-3xl shadow-inner">
       <h3 className="text-md font-bold text-slate-100 mb-4 flex items-center gap-2">
         <Sparkles size={16} className="text-indigo-400" />
         Record Soul Won & Brought to Church

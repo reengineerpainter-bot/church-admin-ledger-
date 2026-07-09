@@ -196,7 +196,7 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
   return (
     <div className="space-y-6">
       {/* Welcome Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 glass-panel rounded-3xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 glass-panel rounded-3xl">
         <div>
           <span className="text-xs text-emerald-400 font-extrabold uppercase tracking-wider">Member Portal</span>
           <h2 className="text-2xl font-extrabold text-slate-100 mt-1">
@@ -284,7 +284,7 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
         {/* Right: Personal Growth Tracker */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           {/* Consistency Trend Chart */}
-          <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl">
+          <div className="bg-slate-900/40 border border-slate-800 p-4 sm:p-6 rounded-3xl">
             <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2">
               <TrendingUp size={16} className="text-indigo-400" />
               Personal Giving Trend
@@ -302,7 +302,7 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
           </div>
 
           {/* Weekly Attendance Check-in Card */}
-          <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl shadow-lg">
+          <div className="bg-slate-900/40 border border-slate-800 p-4 sm:p-6 rounded-3xl shadow-lg">
             <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2">
               <Calendar size={16} className="text-indigo-400" />
               Weekly Service Check-in

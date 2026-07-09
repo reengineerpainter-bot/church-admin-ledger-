@@ -358,7 +358,7 @@ export function AdminPortal({
   return (
     <div className="space-y-6">
       {/* Welcome Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 glass-panel rounded-3xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 glass-panel rounded-3xl">
         <div>
           <span className="text-xs text-indigo-400 font-extrabold uppercase tracking-wider">Pastor Portal</span>
           <h2 className="text-2xl font-extrabold text-slate-100 mt-1">Global Root Administration</h2>
@@ -519,7 +519,7 @@ export function AdminPortal({
           </div>
 
           {/* My Personal Overview */}
-          <div className="p-6 bg-slate-900/30 border border-slate-800/80 rounded-3xl mt-6">
+          <div className="p-4 sm:p-6 bg-slate-900/30 border border-slate-800/80 rounded-3xl mt-6">
             <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2 animate-pulse-soft">
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
               My Personal Overview & Analytics (Pastor)

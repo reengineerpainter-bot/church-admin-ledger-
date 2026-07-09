@@ -42,7 +42,7 @@ export function LoginScreen({ onLogin, users }) {
   ];
 
   return (
-    <div className="max-w-md mx-auto my-12 p-8 bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-3xl shadow-2xl flex flex-col gap-6">
+    <div className="max-w-md mx-auto my-6 sm:my-12 p-5 sm:p-8 bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-3xl shadow-2xl flex flex-col gap-5 sm:gap-6">
       {/* Brand Header */}
       <div className="text-center">
         <div className="inline-flex w-14 h-14 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 items-center justify-center text-indigo-400 mb-3 shadow-inner">
