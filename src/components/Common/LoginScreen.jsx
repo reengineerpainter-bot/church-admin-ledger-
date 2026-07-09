@@ -29,7 +29,8 @@ export function LoginScreen({ onLogin, users }) {
 
   const handleQuickFill = (uName, role) => {
     setUsername(uName);
-    setPassword('password');
+    const matchedUser = users?.find(u => u.username.toLowerCase() === uName.toLowerCase());
+    setPassword(matchedUser?.tempPassword || 'password');
     setError('');
   };
 

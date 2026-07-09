@@ -1,12 +1,25 @@
 import React, { useState } from 'react';
-import { Users, Shield, RotateCcw, Activity, Terminal, ChevronDown, ChevronUp, User, LogOut, Download, Sun, Moon, MoreVertical } from 'lucide-react';
+import { Users, RotateCcw, Terminal, ChevronDown, ChevronUp, User, LogOut, Download, Sun, Moon, MoreVertical, Camera, Activity } from 'lucide-react';
 import { EditUserModal } from './Common/EditUserModal';
 import { UserAvatar } from './Common/UserAvatar';
 
-export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, onSwitchUser, onReset, updateUser, onLogout, theme = 'dark', onToggleTheme }) {
+export function SimulatorBar({ 
+  currentUser, 
+  authUserId, 
+  authUser, 
+  users, 
+  logs, 
+  onSwitchUser, 
+  onReset, 
+  updateUser, 
+  onLogout, 
+  theme = 'dark', 
+  onToggleTheme,
+  showEditProfile,
+  setShowEditProfile
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
-  const [showEditProfile, setShowEditProfile] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   const handleDownloadLogs = () => {
@@ -147,14 +160,26 @@ export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, o
               <span>Simulate Profile:</span>
             </div>
 
-            <div className="relative flex-grow sm:flex-grow-0">
+            <div className="relative flex-grow sm:flex-grow-0 flex items-center gap-2.5">
+              {/* Clickable Profile picture to edit profile */}
+              <button
+                type="button"
+                onClick={() => setShowEditProfile(true)}
+                className="relative group shrink-0 rounded-xl overflow-hidden hover:scale-105 active:scale-95 transition-all ring-2 ring-indigo-500/20 cursor-pointer border-none p-0 w-8 h-8"
+                title="Edit My Profile"
+              >
+                <UserAvatar user={currentUser} size="sm" className="w-full h-full" />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                  <Camera size={10} />
+                </div>
+              </button>
+
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full sm:w-72 flex items-center justify-between gap-3 px-4 py-2 bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-xl text-sm font-medium transition-all shadow-inner"
+                className="w-full sm:w-60 flex items-center justify-between gap-3 px-4 py-2 bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-xl text-sm font-medium transition-all shadow-inner"
               >
                 <div className="flex items-center gap-2 text-left truncate">
-                  <UserAvatar user={currentUser} size="xs" className="shrink-0" />
-                  <span className="font-bold truncate">{currentUser.name}</span>
+                  <span className="font-bold truncate text-slate-200">{currentUser.name}</span>
                   <span className={`text-[9px] px-1.5 py-0.5 rounded border uppercase font-extrabold shrink-0 ${getRoleBadgeColor(currentUser.role)}`}>
                     {currentUser.role === 'admin' ? 'Pastor' : currentUser.role.replace('_', ' ')}
                   </span>
@@ -281,18 +306,6 @@ export function SimulatorBar({ currentUser, authUserId, authUser, users, logs, o
                   
                   {/* Dropdown Menu */}
                   <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl z-20 py-1.5 glass-panel overflow-hidden">
-                    {currentUser && (
-                      <button
-                        onClick={() => {
-                          setShowEditProfile(true);
-                          setShowMoreMenu(false);
-                        }}
-                        className="w-full px-4 py-2 text-left text-xs font-semibold text-slate-350 hover:bg-slate-900/60 hover:text-slate-100 flex items-center gap-2.5 transition-colors border-none cursor-pointer"
-                      >
-                        <User size={13} className="text-slate-500" />
-                        Edit Profile
-                      </button>
-                    )}
 
                     <button
                       onClick={() => {

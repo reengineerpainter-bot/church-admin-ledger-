@@ -3,14 +3,14 @@ import { StatCard } from '../Common/StatCard';
 import { LineChart } from '../Common/SvgCharts';
 import { 
   TrendingUp, Calendar, Send, CheckCircle2, Clock, 
-  XCircle, FileText, Upload, Sparkles, Award, AlertCircle
+  XCircle, FileText, Upload, Sparkles, Award, AlertCircle, Camera
 } from 'lucide-react';
 import { RecordGivingForm } from '../Common/RecordGivingForm';
 import { RecordSoulForm } from '../Common/RecordSoulForm';
 import { TimeframeFilter } from '../Common/TimeframeFilter';
 import { UserAvatar } from '../Common/UserAvatar';
 
-export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedgerEntry, updateUser, submitSoulRecord, souls }) {
+export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedgerEntry, updateUser, submitSoulRecord, souls, onEditProfile }) {
   // Attendance State
   const initialAttendance = currentUser.attendance || { sundayInPerson: false, wednesdayOnline: false };
   const [sundayInPerson, setSundayInPerson] = useState(initialAttendance.sundayInPerson);
@@ -199,7 +199,17 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
       {/* Welcome Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 glass-panel rounded-3xl">
         <div className="flex items-center gap-4">
-          <UserAvatar user={currentUser} size="lg" className="shrink-0" />
+          <button 
+            type="button"
+            onClick={onEditProfile}
+            className="relative group rounded-2xl overflow-hidden hover:scale-105 active:scale-95 transition-all ring-4 ring-indigo-500/10 shrink-0 border-none cursor-pointer p-0"
+            title="Click to Edit Profile"
+          >
+            <UserAvatar user={currentUser} size="lg" />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+              <Camera size={16} />
+            </div>
+          </button>
           <div>
             <span className="text-xs text-emerald-400 font-extrabold uppercase tracking-wider">Member Portal</span>
             <h2 className="text-2xl font-extrabold text-slate-100 mt-1">
@@ -209,14 +219,6 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3 shrink-0">
-          <TimeframeFilter 
-            value={timeframe} 
-            onChange={setTimeframe} 
-            customStart={customStart}
-            onChangeStart={setCustomStart}
-            customEnd={customEnd}
-            onChangeEnd={setCustomEnd}
-          />
           <div className="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 px-4 py-2 rounded-2xl">
             <Award size={18} className="text-indigo-400" />
             <div>
@@ -238,6 +240,21 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
           </div>
         </div>
       )}
+
+      {/* Timeframe Filter for Metrics & Summary */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+        <div className="text-xs text-slate-500 font-extrabold uppercase tracking-wider">
+          My Overview & Analytics Summary
+        </div>
+        <TimeframeFilter 
+          value={timeframe} 
+          onChange={setTimeframe} 
+          customStart={customStart}
+          onChangeStart={setCustomStart}
+          customEnd={customEnd}
+          onChangeEnd={setCustomEnd}
+        />
+      </div>
 
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

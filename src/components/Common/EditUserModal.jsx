@@ -38,7 +38,7 @@ export function EditUserModal({
     if (user) {
       setName(user.name || '');
       setUsername(user.username || '');
-      setPassword(user.tempPassword || 'Pass123!');
+      setPassword(user.tempPassword || 'password');
       setRole(user.role || 'member');
       setChapterId(user.chapterId || '');
       setCellId(user.cellId || '');

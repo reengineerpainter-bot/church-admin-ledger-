@@ -11,6 +11,7 @@ import { LoginScreen } from './components/Common/LoginScreen';
 export function App() {
   const state = useAppState();
   const { currentUser, currentUserId, logout } = state;
+  const [showEditProfile, setShowEditProfile] = React.useState(false);
 
   const [theme, setTheme] = React.useState(() => {
     return localStorage.getItem('theme') || 'dark';
@@ -133,6 +134,7 @@ export function App() {
             submitLedgerEntry={state.submitLedgerEntry}
             verifyLedgerEntry={state.verifyLedgerEntry}
             souls={state.souls}
+            onEditProfile={() => setShowEditProfile(true)}
           />
         );
       case 'chapter_leader':
@@ -155,6 +157,7 @@ export function App() {
             submitLedgerEntry={state.submitLedgerEntry}
             verifyLedgerEntry={state.verifyLedgerEntry}
             souls={state.souls}
+            onEditProfile={() => setShowEditProfile(true)}
           />
         );
       case 'cell_leader':
@@ -173,6 +176,7 @@ export function App() {
             rejectSoul={state.rejectSoul}
             submitLedgerEntry={state.submitLedgerEntry}
             souls={state.souls}
+            onEditProfile={() => setShowEditProfile(true)}
           />
         );
       case 'member':
@@ -186,6 +190,7 @@ export function App() {
             updateUser={state.updateUser}
             submitSoulRecord={state.submitSoulRecord}
             souls={state.souls}
+            onEditProfile={() => setShowEditProfile(true)}
           />
         );
       default:
@@ -212,6 +217,8 @@ export function App() {
         onLogout={state.logout}
         theme={theme}
         onToggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+        showEditProfile={showEditProfile}
+        setShowEditProfile={setShowEditProfile}
       />
 
       <main className="max-w-7xl mx-auto px-4 mt-6">

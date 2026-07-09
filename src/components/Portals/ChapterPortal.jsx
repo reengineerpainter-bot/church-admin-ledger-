@@ -5,7 +5,7 @@ import { CredentialForm } from './CredentialForm';
 import { UserDirectory } from './UserDirectory';
 import { 
   TrendingUp, Users, Grid, CheckCircle, XCircle, 
-  UserPlus, UserCheck, AlertTriangle, ShieldCheck, Plus, Sparkles, AlertCircle, Calendar, FileText
+  UserPlus, UserCheck, AlertTriangle, ShieldCheck, Plus, Sparkles, AlertCircle, Calendar, FileText, Camera
 } from 'lucide-react';
 import { RecordGivingForm } from '../Common/RecordGivingForm';
 import { RecordSoulForm } from '../Common/RecordSoulForm';
@@ -29,7 +29,8 @@ export function ChapterPortal({
   rejectSoul,
   submitLedgerEntry,
   verifyLedgerEntry,
-  souls
+  souls,
+  onEditProfile
 }) {
   const [showAddLeader, setShowAddLeader] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'directory'
@@ -330,7 +331,17 @@ export function ChapterPortal({
       {/* Welcome Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 glass-panel rounded-3xl">
         <div className="flex items-center gap-4">
-          <UserAvatar user={currentUser} size="lg" className="shrink-0" />
+          <button 
+            type="button"
+            onClick={onEditProfile}
+            className="relative group rounded-2xl overflow-hidden hover:scale-105 active:scale-95 transition-all ring-4 ring-indigo-500/10 shrink-0 border-none cursor-pointer p-0"
+            title="Click to Edit Profile"
+          >
+            <UserAvatar user={currentUser} size="lg" />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+              <Camera size={16} />
+            </div>
+          </button>
           <div>
             <span className="text-xs text-indigo-400 font-extrabold uppercase tracking-wider">Chapter Leader Portal ({chapterName})</span>
             <h2 className="text-2xl font-extrabold text-slate-100 mt-1">Senior Care Group Administration</h2>
@@ -338,17 +349,9 @@ export function ChapterPortal({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3 shrink-0">
-          <TimeframeFilter 
-            value={timeframe} 
-            onChange={setTimeframe} 
-            customStart={customStart}
-            onChangeStart={setCustomStart}
-            customEnd={customEnd}
-            onChangeEnd={setCustomEnd}
-          />
           <button
             onClick={() => setShowAddLeader(!showAddLeader)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-900/30"
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-900/30 cursor-pointer border-none"
           >
             <UserPlus size={14} />
             {showAddLeader ? 'View Dashboards' : 'Provision Cell Leader'}
@@ -448,6 +451,22 @@ export function ChapterPortal({
         </div>
       ) : (
         <>
+          {/* Timeframe Filter for Metrics & Summary */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2 bg-slate-900/20 p-4 rounded-3xl border border-slate-850">
+            <div>
+              <h3 className="text-sm font-bold text-slate-100">Chapter Overview & Analytics</h3>
+              <p className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">Filter chapter regional statistics by period</p>
+            </div>
+            <TimeframeFilter 
+              value={timeframe} 
+              onChange={setTimeframe} 
+              customStart={customStart}
+              onChangeStart={setCustomStart}
+              customEnd={customEnd}
+              onChangeEnd={setCustomEnd}
+            />
+          </div>
+
           {/* Metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
