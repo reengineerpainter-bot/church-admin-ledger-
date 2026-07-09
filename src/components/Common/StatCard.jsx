@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function StatCard({ title, value, icon: Icon, description, trend, status = 'default', onClick }) {
+export function StatCard({ title, value, icon: Icon, description, trend, status = 'default', onClick: onDoubleClick }) {
   const statusStyles = {
     success: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400',
     warning: 'border-amber-500/20 bg-amber-500/5 text-amber-400',
@@ -17,8 +17,8 @@ export function StatCard({ title, value, icon: Icon, description, trend, status 
 
   return (
     <div 
-      onClick={onClick}
-      className={`p-5 rounded-2xl border transition-all duration-300 ${onClick ? 'cursor-pointer hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-950/10' : ''} backdrop-blur-md ${statusStyles[status] || statusStyles.default}`}
+      onDoubleClick={onDoubleClick}
+      className={`p-5 rounded-2xl border transition-all duration-300 ${onDoubleClick ? 'cursor-pointer hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-950/10 select-none' : ''} backdrop-blur-md ${statusStyles[status] || statusStyles.default}`}
     >
       <div className="flex items-center justify-between mb-3">
         <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">{title}</span>
@@ -36,7 +36,11 @@ export function StatCard({ title, value, icon: Icon, description, trend, status 
           </span>
         )}
       </div>
-      {description && <p className="text-slate-500 text-xs mt-2 font-medium">{description}</p>}
+      {description && (
+        <p className="text-slate-500 text-xs mt-2 font-medium">
+          {description.replace(/^(Click|click)/, 'Double-click')}
+        </p>
+      )}
     </div>
   );
 }
