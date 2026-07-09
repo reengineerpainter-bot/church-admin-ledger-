@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Key, Globe, LayoutGrid, X, Shield, CheckCircle, AlertTriangle, Camera } from 'lucide-react';
+import { User, Key, Globe, LayoutGrid, X, Shield, CheckCircle, AlertTriangle, Camera, RotateCw } from 'lucide-react';
 import { UserAvatar } from './UserAvatar';
 
 export function EditUserModal({
@@ -21,6 +21,14 @@ export function EditUserModal({
   const [status, setStatus] = useState('Active');
   const [title, setTitle] = useState('Bro');
   const [avatarUrl, setAvatarUrl] = useState('');
+  
+  // Cropping states
+  const [cropImage, setCropImage] = useState(null);
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -56,10 +64,83 @@ export function EditUserModal({
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setAvatarUrl(reader.result);
+        setCropImage(reader.result);
+        setZoom(1);
+        setRotation(0);
+        setOffset({ x: 0, y: 0 });
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    const clientX = e.clientX || e.touches?.[0]?.clientX;
+    const clientY = e.clientY || e.touches?.[0]?.clientY;
+    setDragStart({ x: clientX - offset.x, y: clientY - offset.y });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    const clientX = e.clientX || e.touches?.[0]?.clientX;
+    const clientY = e.clientY || e.touches?.[0]?.clientY;
+    setOffset({
+      x: clientX - dragStart.x,
+      y: clientY - dragStart.y
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleApplyCrop = () => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+      
+      // Clean background
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, 256, 256);
+      
+      // Rotate and draw image from center
+      ctx.translate(128, 128);
+      ctx.rotate((rotation * Math.PI) / 180);
+      
+      const containerSize = 288;
+      let renderWidth, renderHeight;
+      const imageRatio = img.width / img.height;
+      
+      if (imageRatio > 1) {
+        renderWidth = containerSize;
+        renderHeight = containerSize / imageRatio;
+      } else {
+        renderWidth = containerSize * imageRatio;
+        renderHeight = containerSize;
+      }
+      
+      const drawWidth = renderWidth * zoom;
+      const drawHeight = renderHeight * zoom;
+      
+      const scaleFactor = 256 / containerSize;
+      ctx.translate(offset.x * scaleFactor, offset.y * scaleFactor);
+      
+      ctx.drawImage(
+        img,
+        -drawWidth * scaleFactor / 2,
+        -drawHeight * scaleFactor / 2,
+        drawWidth * scaleFactor,
+        drawHeight * scaleFactor
+      );
+      
+      const croppedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+      setAvatarUrl(croppedBase64);
+      setCropImage(null);
+    };
+    img.src = cropImage;
   };
 
   const handleSubmit = (e) => {
@@ -191,13 +272,27 @@ export function EditUserModal({
               <span className="block text-[10px] text-slate-500 font-semibold tracking-wider uppercase mb-1.5">Real Profile Photo</span>
               <p className="text-[11px] text-slate-400 font-medium mb-3">Click on the image circle to upload a clear face photo from your device.</p>
               {avatarUrl && (
-                <button
-                  type="button"
-                  onClick={() => setAvatarUrl('')}
-                  className="px-3.5 py-1.5 text-xs font-bold text-rose-455 bg-rose-500/10 border border-rose-500/20 rounded-xl hover:bg-rose-500/20 transition-all select-none cursor-pointer"
-                >
-                  Remove Profile Picture
-                </button>
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCropImage(avatarUrl);
+                      setZoom(1);
+                      setRotation(0);
+                      setOffset({ x: 0, y: 0 });
+                    }}
+                    className="px-3.5 py-1.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 rounded-xl text-xs font-bold transition-all cursor-pointer select-none"
+                  >
+                    Adjust / Crop
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAvatarUrl('')}
+                    className="px-3.5 py-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-455 hover:bg-rose-500/20 rounded-xl text-xs font-bold transition-all cursor-pointer select-none"
+                  >
+                    Remove Photo
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -378,6 +473,94 @@ export function EditUserModal({
           </div>
         </form>
       </div>
+
+      {/* Crop / Zoom Modal Overlay */}
+      {cropImage && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-955/95 backdrop-blur-md p-4 transition-all select-none">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm p-6 shadow-2xl flex flex-col gap-5">
+            <div className="flex items-center justify-between border-b border-slate-850 pb-3">
+              <div>
+                <h4 className="text-sm font-bold text-slate-100">Crop Profile Photo</h4>
+                <p className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">Drag to center | Slider to Zoom</p>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setCropImage(null)}
+                className="p-1 rounded-lg text-slate-500 hover:text-slate-350 hover:bg-slate-850 transition-colors cursor-pointer border-none"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Interactive Crop Frame */}
+            <div 
+              className="w-72 h-72 mx-auto bg-slate-955 relative overflow-hidden rounded-[2rem] border border-slate-855 flex items-center justify-center cursor-move select-none"
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onTouchStart={handleMouseDown}
+              onTouchMove={handleMouseMove}
+              onTouchEnd={handleMouseUp}
+            >
+              <img 
+                src={cropImage} 
+                alt="Drag & Zoom" 
+                className="max-w-none pointer-events-none"
+                style={{
+                  transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom}) rotate(${rotation}deg)`,
+                  transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+                  maxHeight: '100%',
+                  maxWidth: '100%',
+                }}
+              />
+              {/* Target Circular Mask boundary indicator */}
+              <div className="absolute inset-4 rounded-full border-2 border-dashed border-indigo-500/80 pointer-events-none ring-[200px] ring-black/40" />
+            </div>
+
+            {/* Range Zoom Slider */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-400">
+                <span>Scale: {Math.round(zoom * 100)}%</span>
+                <button
+                  type="button"
+                  onClick={() => setRotation(prev => (prev + 90) % 360)}
+                  className="flex items-center gap-1 text-[10px] px-2 py-1 bg-slate-850 hover:bg-slate-800 rounded-lg text-slate-300 transition-colors border-none cursor-pointer"
+                >
+                  <RotateCw size={10} /> Rotate 90°
+                </button>
+              </div>
+              <input 
+                type="range" 
+                min="1" 
+                max="3.5" 
+                step="0.02" 
+                value={zoom} 
+                onChange={(e) => setZoom(parseFloat(e.target.value))}
+                className="w-full h-1.5 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+              />
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setCropImage(null)}
+                className="flex-1 py-2 bg-slate-855 hover:bg-slate-800 text-slate-350 hover:text-slate-200 font-bold rounded-xl text-xs transition-colors cursor-pointer border-none"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleApplyCrop}
+                className="flex-1 py-2 bg-indigo-650 hover:bg-indigo-600 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-900/20 cursor-pointer border-none"
+              >
+                Apply Crop
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
