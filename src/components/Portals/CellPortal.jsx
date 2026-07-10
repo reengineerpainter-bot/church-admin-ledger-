@@ -280,7 +280,7 @@ export function CellPortal({
           onClick={() => { setActiveTab('directory'); setShowAddMember(false); }}
           className={`px-4 py-2 text-xs font-bold rounded-xl transition-all border-b-2 ${activeTab === 'directory' ? 'text-indigo-400 border-indigo-500 bg-indigo-500/5' : 'text-slate-400 border-transparent hover:text-slate-205'}`}
         >
-          Credentials & User Directory
+          Credentials & Members Directory
         </button>
         <button
           onClick={() => { setActiveTab('personal'); setShowAddMember(false); }}
