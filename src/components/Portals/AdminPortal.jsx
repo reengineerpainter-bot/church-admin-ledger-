@@ -1027,16 +1027,17 @@ export function AdminPortal({
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-slate-905 border border-slate-800 rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-slate-850">
+              <div className="flex items-center justify-between p-6 border-b border-slate-850 bg-slate-900/10">
                 <div>
                   <h3 className="text-lg font-bold text-slate-100">{reportTitle}</h3>
                   <p className="text-xs text-slate-500 mt-0.5">Summary of contributors and growth breakdown</p>
                 </div>
                 <button
                   onClick={() => setRevealedReport(null)}
-                  className="text-slate-400 hover:text-slate-200 text-xl font-bold p-1 rounded-lg"
+                  className="w-8 h-8 rounded-full bg-slate-950 border border-slate-800 hover:bg-slate-900 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-all cursor-pointer shadow-lg active:scale-90 shrink-0 text-lg font-bold"
+                  aria-label="Close modal"
                 >
                   &times;
                 </button>
