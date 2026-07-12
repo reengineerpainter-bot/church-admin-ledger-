@@ -327,7 +327,7 @@ export function ChapterPortal({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 border-t-4 border-emerald-500/70 rounded-t-3xl pt-2">
       {/* Welcome Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 glass-panel rounded-3xl">
         <div className="flex items-center gap-4">
@@ -760,14 +760,14 @@ export function ChapterPortal({
               ) : (
                 <div className="space-y-3">
                   {highPerformers.map(cell => (
-                    <div key={cell.cellId} className="p-4 bg-slate-950 border border-emerald-500/20 rounded-2xl flex items-center justify-between">
+                    <div key={cell.cellId} className="p-4 bg-slate-950/40 border border-emerald-500/20 rounded-2xl flex items-center justify-between hover:bg-slate-900/10 dark:hover:bg-slate-900/35 transition-all duration-200">
                       <div>
                         <div className="font-bold text-slate-200">{cell.name}</div>
                         <div className="text-[10px] text-slate-500 mt-1">Leader: {cell.leader}</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-xs font-bold text-emerald-400">Giving: ${cell.giving}</div>
-                        <div className="text-[10px] text-indigo-400 font-extrabold mt-0.5">Outreach: +{cell.souls} Souls</div>
+                        <div className="text-xs font-bold text-emerald-500 font-mono tabular-nums">Giving: ${cell.giving}</div>
+                        <div className="text-[10px] text-indigo-400 font-extrabold mt-0.5 font-mono tabular-nums">Outreach: +{cell.souls} Souls</div>
                       </div>
                     </div>
                   ))}
@@ -790,22 +790,22 @@ export function ChapterPortal({
               ) : (
                 <div className="space-y-3">
                   {deficitAlerts.map(cell => (
-                    <div key={cell.cellId} className="p-4 bg-slate-950 border border-rose-500/20 rounded-2xl">
+                    <div key={cell.cellId} className="p-4 bg-slate-950/40 border border-rose-500/20 rounded-2xl hover:bg-slate-900/10 dark:hover:bg-slate-900/35 transition-all duration-200">
                       <div className="flex items-center justify-between font-bold mb-2">
                         <span className="text-slate-200">{cell.name}</span>
-                        <span className="text-[10px] text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded font-extrabold">DEFICIT</span>
+                        <span className="text-[10px] text-rose-700 bg-rose-50 border border-rose-200/50 dark:text-rose-300 dark:bg-rose-950/40 dark:border-rose-900/30 px-2 py-0.5 rounded font-extrabold">DEFICIT</span>
                       </div>
                       <div className="text-[10px] text-slate-500 mb-2">Leader: {cell.leader}</div>
                       <div className="flex flex-wrap gap-1 mb-2">
                         {cell.alerts.map((al, idx) => (
-                          <span key={idx} className="text-[9px] font-bold bg-rose-950/40 text-rose-400 border border-rose-900 px-1.5 py-0.5 rounded-md">
+                          <span key={idx} className="text-[9px] font-bold bg-rose-50 text-rose-750 border border-rose-200/40 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900 px-1.5 py-0.5 rounded-md font-mono">
                             {al}
                           </span>
                         ))}
                       </div>
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 border-t border-slate-900 pt-2">
-                        <span>Giving: <strong className="text-slate-250">${cell.giving}</strong></span>
-                        <span>Outreach: <strong className="text-slate-250">+{cell.souls} souls</strong></span>
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 border-t border-slate-900/60 pt-2">
+                        <span>Giving: <strong className="text-slate-200 font-mono tabular-nums">${cell.giving}</strong></span>
+                        <span>Outreach: <strong className="text-slate-200 font-mono tabular-nums">+{cell.souls} souls</strong></span>
                       </div>
                     </div>
                   ))}

@@ -29,7 +29,7 @@ export function StatCard({ title, value, icon: Icon, description, trend, status 
         )}
       </div>
       <div className="flex items-baseline gap-2">
-        <span className="text-2xl sm:text-3xl font-bold text-slate-100">{value}</span>
+        <span className="text-2xl sm:text-3xl font-bold text-slate-100 font-mono tabular-nums">{value}</span>
         {trend && (
           <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${trendStyles[trend.type] || trendStyles.neutral}`}>
             {trend.type === 'up' ? '+' : ''}{trend.value}

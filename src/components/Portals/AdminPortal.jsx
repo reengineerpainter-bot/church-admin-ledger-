@@ -358,7 +358,7 @@ export function AdminPortal({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 border-t-4 border-amber-500/80 rounded-t-3xl pt-2">
       {/* Welcome Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 glass-panel rounded-3xl">
         <div className="flex items-center gap-4">
@@ -757,11 +757,11 @@ export function AdminPortal({
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-slate-500 font-semibold">Category:</span>
-                          <span className="text-indigo-400 font-bold">{item.category}</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200/50 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900/30 font-bold uppercase">{item.category}</span>
                         </div>
                         <div className="flex justify-between items-center border-t border-slate-900 pt-2 font-bold text-sm">
                           <span className="text-slate-300">Amount:</span>
-                          <span className="text-emerald-400">${item.totalAmount}</span>
+                          <span className="text-emerald-400 font-mono tabular-nums">${item.totalAmount}</span>
                         </div>
                         {item.description && (
                           <div className="border-t border-slate-900 pt-2">
@@ -881,7 +881,7 @@ export function AdminPortal({
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
                       {cellLeaderboard.map((cell, idx) => (
-                        <tr key={idx} className="hover:bg-slate-900/30">
+                        <tr key={idx} className="hover:bg-slate-900/10 dark:hover:bg-slate-900/30 transition-all duration-200">
                           <td className="py-2.5 text-slate-200 font-bold flex items-center gap-1.5">
                             <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[9px] ${idx === 0 ? 'bg-yellow-500/10 text-yellow-500' : idx === 1 ? 'bg-slate-300/10 text-slate-350' : 'bg-slate-800 text-slate-400'}`}>
                               {idx + 1}
@@ -889,7 +889,7 @@ export function AdminPortal({
                             {cell.name}
                           </td>
                           <td className="py-2.5 text-slate-400">{cell.chapter}</td>
-                          <td className="py-2.5 text-right font-extrabold text-indigo-400">{cell.souls}</td>
+                          <td className="py-2.5 text-right font-extrabold text-indigo-400 font-mono tabular-nums">{cell.souls}</td>
                         </tr>
                       ))}
                     </tbody>

@@ -229,13 +229,13 @@ export function CellPortal({
   });
 
   const getConsistencyBadge = (status) => {
-    if (status === 'Optimal') return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-    if (status === 'Irregular') return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-    return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+    if (status === 'Optimal') return 'bg-emerald-50 text-emerald-700 border-emerald-200/50 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/30';
+    if (status === 'Irregular') return 'bg-amber-50 text-amber-700 border-amber-200/50 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/30';
+    return 'bg-rose-50 text-rose-700 border-rose-200/50 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/30';
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 border-t-4 border-cyan-500/60 rounded-t-3xl pt-2">
       {/* Welcome Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 glass-panel rounded-3xl">
         <div className="flex items-center gap-4">
@@ -579,27 +579,30 @@ export function CellPortal({
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 font-medium">
                   {memberAssessment.map(member => (
-                    <tr key={member.id} className="hover:bg-slate-900/20">
+                    <tr 
+                      key={member.id} 
+                      className="hover:bg-slate-900/10 dark:hover:bg-slate-900/30 transition-all duration-200 ease-in-out"
+                    >
                       <td className="px-4 py-3 text-slate-100 font-bold">{member.name}</td>
                       <td className="px-4 py-3 text-slate-400">@{member.username}</td>
                       <td className="px-4 py-3 text-center">
                         {member.attendance.sundayInPerson ? (
-                          <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold uppercase text-[9px]">Attended</span>
+                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/50 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/30 font-bold uppercase text-[9px]">Attended</span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded bg-slate-900 text-slate-500 border border-slate-800 font-bold uppercase text-[9px]">Absent</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-200/50 dark:bg-slate-900 dark:text-slate-500 dark:border-slate-800 font-bold uppercase text-[9px]">Absent</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-center">
                         {member.attendance.wednesdayOnline ? (
-                          <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-bold uppercase text-[9px]">Joined</span>
+                          <span className="px-2 py-0.5 rounded bg-cyan-50 text-cyan-700 border border-cyan-200/50 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-900/30 font-bold uppercase text-[9px]">Joined</span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded bg-slate-900 text-slate-500 border border-slate-800 font-bold uppercase text-[9px]">Absent</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-200/50 dark:bg-slate-900 dark:text-slate-500 dark:border-slate-800 font-bold uppercase text-[9px]">Absent</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <span className="font-semibold text-slate-350">{member.totalEntries} weeks</span>
-                          <span className="text-[10px] text-slate-500">({member.ratio}%)</span>
+                          <span className="font-semibold text-slate-350 font-mono tabular-nums">{member.totalEntries} weeks</span>
+                          <span className="text-[10px] text-slate-500 font-mono">({member.ratio}%)</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -607,8 +610,8 @@ export function CellPortal({
                           {member.consistency}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right text-indigo-400 font-bold">${member.confirmedGiving.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-right text-emerald-400 font-bold">+{member.soulsWon} Souls</td>
+                      <td className="px-4 py-3 text-right text-indigo-400 font-bold font-mono tabular-nums">${member.confirmedGiving.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right text-emerald-400 font-bold font-mono tabular-nums">+{member.soulsWon} Souls</td>
                     </tr>
                   ))}
                   {memberAssessment.length === 0 && (

@@ -183,19 +183,19 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
     });
 
   const getStatusBadge = (status) => {
-    if (status === 'Confirmed') return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-    if (status === 'Pending_Cell_Review') return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-    return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+    if (status === 'Confirmed') return 'bg-emerald-50 text-emerald-700 border-emerald-200/50 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/30';
+    if (status === 'Pending_Cell_Review') return 'bg-amber-50 text-amber-700 border-amber-200/50 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/30';
+    return 'bg-rose-50 text-rose-700 border-rose-200/50 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/30';
   };
 
   const getStatusIcon = (status) => {
-    if (status === 'Confirmed') return <CheckCircle2 size={12} className="text-emerald-400" />;
-    if (status === 'Pending_Cell_Review') return <Clock size={12} className="text-amber-400" />;
-    return <XCircle size={12} className="text-rose-400" />;
+    if (status === 'Confirmed') return <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400" />;
+    if (status === 'Pending_Cell_Review') return <Clock size={12} className="text-amber-600 dark:text-amber-400" />;
+    return <XCircle size={12} className="text-rose-600 dark:text-rose-400" />;
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 border-t-4 border-indigo-500/60 rounded-t-3xl pt-2">
       {/* Welcome Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 glass-panel rounded-3xl">
         <div className="flex items-center gap-4">
@@ -386,20 +386,25 @@ export function MemberPortal({ currentUser, ledger, chapters, cells, submitLedge
             ) : (
               <div className="space-y-3">
                 {mySubmissions.map(item => (
-                  <div key={item.id} className="p-3 bg-slate-950 border border-slate-850 rounded-xl flex items-center justify-between text-xs">
+                  <div 
+                    key={item.id} 
+                    className="p-3 bg-slate-950/40 border border-slate-850 rounded-2xl flex items-center justify-between text-xs hover:bg-slate-900/30 transition-all duration-200 ease-in-out"
+                  >
                     <div className="flex flex-col gap-0.5">
                       <div className="flex items-center gap-1.5">
-                        <strong className="text-slate-105">${item.amount || item.totalAmount}</strong>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-900/50 font-bold uppercase">{item.category || 'Contribution'}</span>
+                        <strong className="text-slate-100 font-mono tabular-nums text-sm">${item.amount || item.totalAmount}</strong>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200/50 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900/30 font-bold uppercase tracking-wider">
+                          {item.category || 'Contribution'}
+                        </span>
                       </div>
-                      <span className="text-[10px] text-slate-500">Service: {item.serviceDate} • {item.segment || 'Local'}</span>
-                      <span className="text-[9px] text-slate-450 block font-semibold">Uploaded: {new Date(item.createdAt).toLocaleString()}</span>
+                      <span className="text-[10px] text-slate-500 font-medium">Service: <span className="font-mono">{item.serviceDate}</span> • {item.segment || 'Local'}</span>
+                      <span className="text-[9px] text-slate-400 block font-semibold">Uploaded: <span className="font-mono">{new Date(item.createdAt).toLocaleString()}</span></span>
                       {item.description && (
                         <span className="text-[10px] text-slate-400 italic mt-0.5">"{item.description}"</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono text-slate-400">{item.paymentMethod}</span>
+                      <span className="text-[10px] font-mono text-slate-500 font-semibold">{item.paymentMethod}</span>
                       <span className={`text-[9px] px-2 py-0.5 border rounded-full font-bold uppercase flex items-center gap-1 ${getStatusBadge(item.status)}`}>
                         {getStatusIcon(item.status)}
                         {item.status.replace(/_/g, ' ')}
