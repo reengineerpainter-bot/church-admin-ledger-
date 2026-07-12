@@ -358,7 +358,7 @@ export function AdminPortal({
   };
 
   return (
-    <div className="space-y-6 border-t-4 border-amber-500/80 rounded-t-3xl pt-2">
+    <div className="space-y-6 border-t-2 border-amber-500/80 rounded-t-3xl pt-2">
       {/* Welcome Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 glass-panel rounded-3xl">
         <div className="flex items-center gap-4">
@@ -1049,17 +1049,28 @@ export function AdminPortal({
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="text-slate-405 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
-                        {headers.map((h, i) => (
-                          <th key={i} className="px-4 py-3">{h}</th>
-                        ))}
+                        {headers.map((h, i) => {
+                          const isAmountHeader = h.toLowerCase().includes('amount') || h.toLowerCase().includes('souls') || h.toLowerCase().includes('giving') || h.toLowerCase().includes('contribution') || h.toLowerCase().includes('base');
+                          return (
+                            <th key={i} className={`px-6 py-3 ${isAmountHeader ? 'text-right' : ''}`}>{h}</th>
+                          );
+                        })}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-850 font-medium text-slate-300">
                       {rows.map((row, rIdx) => (
-                        <tr key={rIdx} className="hover:bg-slate-900/20 transition-colors">
-                          {row.map((val, cIdx) => (
-                            <td key={cIdx} className="px-4 py-3">{val}</td>
-                          ))}
+                        <tr key={rIdx} className="ledger-row transition-colors">
+                          {row.map((val, cIdx) => {
+                            const isNumeric = typeof val === 'string' && (val.startsWith('$') || val.startsWith('+') || /^\d+$/.test(val));
+                            return (
+                              <td 
+                                key={cIdx} 
+                                className={`px-6 py-3 ${isNumeric ? 'font-mono tabular-nums text-right text-indigo-400 font-bold' : ''}`}
+                              >
+                                {val}
+                              </td>
+                            );
+                          })}
                         </tr>
                       ))}
                       {rows.length === 0 && (
