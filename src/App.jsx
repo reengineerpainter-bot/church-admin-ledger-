@@ -44,6 +44,42 @@ export function App() {
     setGlobalSearchTerm('');
   }, [currentUserId]);
 
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  const handleTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    });
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    });
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distanceX = touchEnd.x - touchStart.x;
+    const distanceY = touchEnd.y - touchStart.y;
+    const minDistance = 50;
+
+    if (Math.abs(distanceX) > Math.abs(distanceY)) {
+      // Swipe right -> Open if started near left edge
+      if (distanceX > minDistance && touchStart.x < 40) {
+        setIsMobileSidebarOpen(true);
+      }
+      // Swipe left -> Close
+      if (distanceX < -minDistance && isMobileSidebarOpen) {
+        setIsMobileSidebarOpen(false);
+      }
+    }
+  };
+
   // Auto logout after 3 minutes of inactivity
   useEffect(() => {
     if (currentUserId === 'logged_out') return;
@@ -299,7 +335,12 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen flex bg-slate-950 text-slate-100 relative">
+    <div 
+      className="min-h-screen flex bg-slate-950 text-slate-100 relative"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* 1. Left Sidebar with Simulator Controls */}
       <Sidebar
         currentUser={currentUser}
