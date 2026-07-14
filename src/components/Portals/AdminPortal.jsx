@@ -610,6 +610,14 @@ export function AdminPortal({
               </tbody>
             </table>
           </div>
+
+          <div className="mt-6">
+            <RecordGivingForm
+              currentUser={currentUser}
+              onSubmit={submitLedgerEntry}
+              showAttendance={false}
+            />
+          </div>
         </div>
       )}
 

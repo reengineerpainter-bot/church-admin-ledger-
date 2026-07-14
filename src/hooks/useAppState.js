@@ -132,8 +132,9 @@ export function useAppState() {
     const newId = `u_${Date.now()}`;
     let status = 'Pending_Higher_Approval';
 
-    // Pastor creates Chapter Leaders -> Instantly Active
-    if (currentUser.role === 'admin' && role === 'chapter_leader') {
+    // Higher authority creates credentials -> Instantly Active
+    const isHigherAdmin = ['admin', 'group_pastor', 'pastor'].includes(currentUser.role);
+    if (isHigherAdmin) {
       status = 'Active';
     }
 
@@ -153,7 +154,7 @@ export function useAppState() {
     setUsers(prev => [...prev, newUser]);
     
     if (status === 'Active') {
-      addLog(`${currentUser.name} created and instantly activated Chapter Leader credentials for ${name}.`);
+      addLog(`${currentUser.name} created and instantly activated credentials for ${name} (${role.toUpperCase()}).`);
     } else {
       const pendingTier = role === 'cell_leader' ? 'Pastor Confirmation' : 'Chapter Leader Confirmation';
       addLog(`${currentUser.name} created credentials for ${name} (${role}). Status: Awaiting ${pendingTier}.`);

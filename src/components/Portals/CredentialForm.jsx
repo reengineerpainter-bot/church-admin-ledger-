@@ -19,18 +19,59 @@ export function CredentialForm({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  const [selectedRole, setSelectedRole] = useState(targetRole || 'chapter_leader');
+
+  useEffect(() => {
+    if (targetRole) {
+      setSelectedRole(targetRole);
+    }
+  }, [targetRole]);
+
   // Initialize chapter/cell locks
   useEffect(() => {
+    const isHigherAdmin = ['admin', 'group_pastor', 'pastor'].includes(creatorRole);
     if (creatorRole === 'chapter_leader') {
       setChapterId(currentChapterId);
     } else if (creatorRole === 'cell_leader') {
       setChapterId(currentChapterId);
       setCellId(currentCellId);
+    } else if (isHigherAdmin) {
+      // Don't lock chapters/cells for global administrators
     }
   }, [creatorRole, currentChapterId, currentCellId]);
 
   // Filter cells based on chosen chapter
   const filteredCells = cells.filter(cell => cell.chapterId === chapterId);
+
+  const getSelectableRoles = () => {
+    if (creatorRole === 'admin') {
+      return [
+        { value: 'group_pastor', label: 'Group Pastor (L2)' },
+        { value: 'pastor', label: 'Pastor (L3)' },
+        { value: 'chapter_leader', label: 'Chapter Leader (L4)' },
+        { value: 'cell_leader', label: 'Cell Leader (L5)' },
+        { value: 'member', label: 'Member (L6)' }
+      ];
+    }
+    if (creatorRole === 'group_pastor') {
+      return [
+        { value: 'pastor', label: 'Pastor (L3)' },
+        { value: 'chapter_leader', label: 'Chapter Leader (L4)' },
+        { value: 'cell_leader', label: 'Cell Leader (L5)' },
+        { value: 'member', label: 'Member (L6)' }
+      ];
+    }
+    if (creatorRole === 'pastor') {
+      return [
+        { value: 'chapter_leader', label: 'Chapter Leader (L4)' },
+        { value: 'cell_leader', label: 'Cell Leader (L5)' },
+        { value: 'member', label: 'Member (L6)' }
+      ];
+    }
+    return [];
+  };
+
+  const selectableRoles = getSelectableRoles();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -42,13 +83,13 @@ export function CredentialForm({
       return;
     }
 
-    if (targetRole === 'chapter_leader' && !chapterId) {
+    if (selectedRole === 'chapter_leader' && !chapterId) {
       setError('Please select a chapter for the leader.');
       return;
     }
 
-    if (targetRole === 'cell_leader' && (!chapterId || !cellId)) {
-      setError('Please select a chapter and a cell for the leader.');
+    if ((selectedRole === 'cell_leader' || selectedRole === 'member') && (!chapterId || !cellId)) {
+      setError('Please select a chapter and a cell.');
       return;
     }
 
@@ -57,7 +98,7 @@ export function CredentialForm({
       username.trim().toLowerCase(), 
       name.trim(), 
       password, 
-      targetRole, 
+      selectedRole, 
       chapterId, 
       cellId,
       title
@@ -70,7 +111,8 @@ export function CredentialForm({
       setName('');
       setUsername('');
       setPassword('');
-      if (creatorRole === 'admin') {
+      const isHigherAdmin = ['admin', 'group_pastor', 'pastor'].includes(creatorRole);
+      if (isHigherAdmin) {
         setChapterId('');
         setCellId('');
       }
@@ -79,14 +121,18 @@ export function CredentialForm({
   };
 
   const getRoleLabel = () => {
-    if (targetRole === 'chapter_leader') return 'Chapter Leader';
-    if (targetRole === 'cell_leader') return 'Cell Leader';
+    if (selectedRole === 'group_pastor') return 'Group Pastor';
+    if (selectedRole === 'pastor') return 'Pastor';
+    if (selectedRole === 'chapter_leader') return 'Chapter Leader';
+    if (selectedRole === 'cell_leader') return 'Cell Leader';
     return 'Registered Member';
   };
 
+  const isHigherAdmin = ['admin', 'group_pastor', 'pastor'].includes(creatorRole);
+
   return (
     <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800 p-4 sm:p-6 rounded-2xl">
-      <h3 className="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
+      <h3 className="text-lg font-bold text-slate-105 mb-4 flex items-center gap-2">
         <User size={18} className="text-indigo-400" />
         Create {getRoleLabel()} Credentials
       </h3>
@@ -105,6 +151,28 @@ export function CredentialForm({
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Role Selector (Only for Higher Admin Authorities) */}
+        {selectableRoles.length > 0 && (
+          <div>
+            <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Assign Workspace Role</label>
+            <div className="relative">
+              <select
+                value={selectedRole}
+                onChange={(e) => {
+                  setSelectedRole(e.target.value);
+                  setChapterId('');
+                  setCellId('');
+                }}
+                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all"
+              >
+                {selectableRoles.map(r => (
+                  <option key={r.value} value={r.value} className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>{r.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
         {/* Title Prefix Selector */}
         <div>
           <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Honorific Title</label>
@@ -126,13 +194,13 @@ export function CredentialForm({
         <div>
           <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Full Name</label>
           <div className="relative">
-            <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-505" />
             <input
               type="text"
               placeholder="e.g. Brother Thomas Smith"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-101 rounded-xl text-sm outline-none transition-all"
             />
           </div>
         </div>
@@ -169,14 +237,14 @@ export function CredentialForm({
         </div>
 
         {/* Chapter Selection */}
-        {targetRole !== 'member' && (
+        {selectedRole !== 'member' && selectedRole !== 'group_pastor' && (
           <div>
             <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Chapter Assignment</label>
             <div className="relative">
               <Globe size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
               <select
                 value={chapterId}
-                disabled={creatorRole !== 'admin'}
+                disabled={!isHigherAdmin && creatorRole !== 'admin'}
                 onChange={(e) => {
                   setChapterId(e.target.value);
                   setCellId(''); // Reset cell selection
@@ -193,11 +261,11 @@ export function CredentialForm({
         )}
 
         {/* Cell Selection */}
-        {targetRole === 'cell_leader' && (
+        {(selectedRole === 'cell_leader' || selectedRole === 'member') && (
           <div>
             <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Home Cell Group</label>
             <div className="relative">
-              <LayoutGrid size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <LayoutGrid size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-505" />
               <select
                 value={cellId}
                 disabled={creatorRole === 'cell_leader'}
@@ -218,9 +286,9 @@ export function CredentialForm({
 
         {/* Informational Text */}
         <div className="text-xs text-slate-500 leading-relaxed pt-1">
-          {targetRole === 'chapter_leader' ? (
-            <span>* Created credentials for Chapter Leaders are <strong className="text-emerald-400">Instantly Activated</strong> since they are directly under the Pastor.</span>
-          ) : targetRole === 'cell_leader' ? (
+          {selectedRole === 'group_pastor' || selectedRole === 'pastor' || selectedRole === 'chapter_leader' ? (
+            <span>* Created credentials are <strong className="text-emerald-450">Instantly Activated</strong> since they are provisioned by a Zonal Authority.</span>
+          ) : selectedRole === 'cell_leader' ? (
             <span>* Saved as <strong className="text-amber-400">Pending Pastor Confirmation</strong>. Credentials will not be active until approved by the Pastor.</span>
           ) : (
             <span>* Saved as <strong className="text-amber-400">Pending Chapter Leader Confirmation</strong>. Credentials will not be active until approved by your Chapter Leader.</span>
