@@ -145,7 +145,7 @@ export function Sidebar({
           <div className="relative">
             <button
               onClick={() => setIsProfileSwitcherOpen(!isProfileSwitcherOpen)}
-              className="w-full flex items-center justify-between gap-3 px-3 py-2 bg-slate-955 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] custom-focus cursor-pointer"
+              className="w-full flex items-center justify-between gap-3 px-3 py-2 bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] custom-focus cursor-pointer"
             >
               <div className="flex items-center gap-2 text-left truncate">
                 <UserAvatar user={currentUser} size="xs" className="shrink-0" />
@@ -160,7 +160,7 @@ export function Sidebar({
             {isProfileSwitcherOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsProfileSwitcherOpen(false)} />
-                <div className="absolute right-0 left-0 mt-2 bg-slate-955 border border-slate-800 rounded-xl shadow-2xl z-50 overflow-hidden max-h-80 overflow-y-auto">
+                <div className="absolute right-0 left-0 mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-50 overflow-hidden max-h-80 overflow-y-auto animate-dropdown">
                   
                   {/* Pastors (L1 - L3) */}
                   {adminUsers.length > 0 && (
@@ -282,7 +282,7 @@ export function Sidebar({
       </nav>
 
       {/* 3. System logs / Console Drawer */}
-      <div className="border-t border-slate-800 bg-slate-955/30 flex flex-col shrink-0">
+      <div className="border-t border-slate-800 bg-slate-950/30 flex flex-col shrink-0">
         <button
           onClick={() => setShowLogs(!showLogs)}
           className={`flex items-center justify-between px-6 py-3.5 text-xs font-bold transition-colors border-none cursor-pointer ${showLogs ? 'text-indigo-400 bg-slate-950/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30'}`}
