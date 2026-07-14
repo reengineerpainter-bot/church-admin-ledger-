@@ -129,6 +129,34 @@ export function useAppState() {
       return { success: false, error: 'Username already exists' };
     }
 
+    // Guard: Only one active leader credential per structure location
+    const isActiveUser = (u) => u.status === 'Active' || u.status === 'Pending_Higher_Approval' || u.status === 'Pending_Deletion';
+
+    if (role === 'group_pastor' && targetChapterId) {
+      const existing = users.find(u => u.role === 'group_pastor' && u.chapterId === targetChapterId && isActiveUser(u));
+      if (existing) {
+        return { success: false, error: 'This group church location already has an active or pending credential.' };
+      }
+    }
+    if (role === 'pastor' && targetChapterId) {
+      const existing = users.find(u => u.role === 'pastor' && u.chapterId === targetChapterId && isActiveUser(u));
+      if (existing) {
+        return { success: false, error: 'This church location already has an active or pending credential.' };
+      }
+    }
+    if (role === 'chapter_leader' && targetChapterId) {
+      const existing = users.find(u => u.role === 'chapter_leader' && u.chapterId === targetChapterId && isActiveUser(u));
+      if (existing) {
+        return { success: false, error: 'This chapter location already has an active or pending credential.' };
+      }
+    }
+    if (role === 'cell_leader' && targetCellId) {
+      const existing = users.find(u => u.role === 'cell_leader' && u.cellId === targetCellId && isActiveUser(u));
+      if (existing) {
+        return { success: false, error: 'This cell location already has an active or pending credential.' };
+      }
+    }
+
     const newId = `u_${Date.now()}`;
     let status = 'Pending_Higher_Approval';
 
@@ -258,6 +286,43 @@ export function useAppState() {
       );
       if (exists) {
         return { success: false, error: 'Username already taken.' };
+      }
+    }
+
+    const targetUser = users.find(u => u.id === userId);
+    if (targetUser) {
+      const mergedRole = updatedData.role !== undefined ? updatedData.role : targetUser.role;
+      const mergedChapterId = updatedData.chapterId !== undefined ? updatedData.chapterId : targetUser.chapterId;
+      const mergedCellId = updatedData.cellId !== undefined ? updatedData.cellId : targetUser.cellId;
+      const mergedStatus = updatedData.status !== undefined ? updatedData.status : targetUser.status;
+
+      const isActiveStatus = (statusVal) => statusVal === 'Active' || statusVal === 'Pending_Higher_Approval' || statusVal === 'Pending_Deletion';
+
+      if (isActiveStatus(mergedStatus)) {
+        if (mergedRole === 'group_pastor' && mergedChapterId) {
+          const duplicate = users.find(u => u.id !== userId && u.role === 'group_pastor' && u.chapterId === mergedChapterId && isActiveStatus(u.status));
+          if (duplicate) {
+            return { success: false, error: 'This group church location already has an active or pending credential.' };
+          }
+        }
+        if (mergedRole === 'pastor' && mergedChapterId) {
+          const duplicate = users.find(u => u.id !== userId && u.role === 'pastor' && u.chapterId === mergedChapterId && isActiveStatus(u.status));
+          if (duplicate) {
+            return { success: false, error: 'This church location already has an active or pending credential.' };
+          }
+        }
+        if (mergedRole === 'chapter_leader' && mergedChapterId) {
+          const duplicate = users.find(u => u.id !== userId && u.role === 'chapter_leader' && u.chapterId === mergedChapterId && isActiveStatus(u.status));
+          if (duplicate) {
+            return { success: false, error: 'This chapter location already has an active or pending credential.' };
+          }
+        }
+        if (mergedRole === 'cell_leader' && mergedCellId) {
+          const duplicate = users.find(u => u.id !== userId && u.role === 'cell_leader' && u.cellId === mergedCellId && isActiveStatus(u.status));
+          if (duplicate) {
+            return { success: false, error: 'This cell location already has an active or pending credential.' };
+          }
+        }
       }
     }
 
