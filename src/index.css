@@ -213,15 +213,107 @@
 
 /* Gold Standard Ledger Row & Grid Overhauls */
 .ledger-row {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .ledger-row:hover {
-  background-color: rgba(30, 41, 59, 0.4) !important; /* dark mode default hover */
+  background-color: rgba(30, 41, 59, 0.6) !important; /* dark mode default hover */
 }
 
 .light-mode .ledger-row:hover {
-  background-color: rgba(248, 250, 252, 0.75) !important; /* bg-slate-50/70 hover state in light mode */
+  background-color: rgba(241, 245, 249, 0.8) !important; /* light mode hover state */
   color: #0f172a !important;
 }
+
+/* Premium Typography & Tabular Numbers */
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+  font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
+/* Role-Based Hierarchy Visual Borders & Glows */
+.theme-level1 {
+  border-top: 4px solid #f59e0b !important; /* Zonal Pastor Gold Gradient border representation */
+  box-shadow: 0 -4px 20px -5px rgba(245, 158, 11, 0.15);
+}
+.theme-level2 {
+  border-top: 4px solid #475569 !important; /* Group Pastor Slate */
+}
+.theme-level3 {
+  border-top: 4px solid #3b82f6 !important; /* Pastor Steel Blue */
+}
+.theme-level4 {
+  border-top: 4px solid #10b981 !important; /* Chapter Leader Emerald Green */
+}
+.theme-level5 {
+  border-top: 4px solid #06b6d4 !important; /* Cell Leader Cyan */
+}
+.theme-level6 {
+  border-top: 4px solid #6366f1 !important; /* Member Indigo */
+}
+
+/* Soft Badges */
+.badge-indigo-soft {
+  background-color: rgba(99, 102, 241, 0.1) !important;
+  color: #818cf8 !important;
+  border: 1px solid rgba(99, 102, 241, 0.2) !important;
+}
+.light-mode .badge-indigo-soft {
+  background-color: #e0e7ff !important;
+  color: #3730a3 !important;
+  border-color: #c7d2fe !important;
+}
+
+.badge-emerald-soft {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.2) !important;
+}
+.light-mode .badge-emerald-soft {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+  border-color: #a7f3d0 !important;
+}
+
+.badge-amber-soft {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.2) !important;
+}
+.light-mode .badge-amber-soft {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: #fde68a !important;
+}
+
+.badge-rose-soft {
+  background-color: rgba(244, 63, 94, 0.1) !important;
+  color: #fb7185 !important;
+  border: 1px solid rgba(244, 63, 94, 0.2) !important;
+}
+.light-mode .badge-rose-soft {
+  background-color: #ffe4e6 !important;
+  color: #9f1239 !important;
+  border-color: #fecdd3 !important;
+}
+
+.badge-slate-soft {
+  background-color: rgba(148, 163, 184, 0.1) !important;
+  color: #94a3b8 !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+}
+.light-mode .badge-slate-soft {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Custom Input Focus Ring Shadow */
+.custom-focus:focus,
+.custom-focus:focus-within {
+  outline: none !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
+}
+
 

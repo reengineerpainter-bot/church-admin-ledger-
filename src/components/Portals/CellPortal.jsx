@@ -25,10 +25,11 @@ export function CellPortal({
   rejectSoul,
   submitLedgerEntry,
   souls,
-  onEditProfile
+  onEditProfile,
+  activeModule = 'dashboard',
+  globalSearchTerm = ''
 }) {
   const [showAddMember, setShowAddMember] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'directory'
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [revealedReport, setRevealedReport] = useState(null); // 'givings' | 'souls' | 'members' | null
   const [timeframe, setTimeframe] = useState('monthly');
@@ -191,7 +192,6 @@ export function CellPortal({
   });
 
   // --- FINANCIAL VERIFICATION QUEUE ---
-  // Submissions by cell members awaiting cell leader audit
   const pendingSubmissions = cellLedger.filter(item => item.status === 'Pending_Cell_Review');
 
   // Souls pending approval under this Cell Leader
@@ -202,7 +202,6 @@ export function CellPortal({
   });
 
   // --- MEMBER ASSESSMENT LEDGER ---
-  // Track individual member performance, outreach, and consistency
   const memberAssessment = activeMembers.map(member => {
     const memberSubmissions = cellLedger.filter(item => item.memberId === member.id);
     const confirmedSubs = memberSubmissions.filter(item => item.status === 'Confirmed');
@@ -229,20 +228,35 @@ export function CellPortal({
   });
 
   const getConsistencyBadge = (status) => {
-    if (status === 'Optimal') return 'bg-emerald-50 text-emerald-700 border-emerald-200/50 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/30';
-    if (status === 'Irregular') return 'bg-amber-50 text-amber-700 border-amber-200/50 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/30';
-    return 'bg-rose-50 text-rose-700 border-rose-200/50 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/30';
+    if (status === 'Optimal') return 'badge-emerald-soft';
+    if (status === 'Irregular') return 'badge-amber-soft';
+    return 'badge-rose-soft';
   };
 
+  const filterBySearch = (items, fields) => {
+    if (!globalSearchTerm) return items;
+    const term = globalSearchTerm.toLowerCase();
+    return items.filter(item => 
+      fields.some(field => {
+        const val = item[field];
+        return val && String(val).toLowerCase().includes(term);
+      })
+    );
+  };
+
+  const filteredAssessment = filterBySearch(memberAssessment, ['name', 'username', 'consistency']);
+  const filteredSouls = filterBySearch(souls.filter(s => s.status === 'Approved' && s.cellId === cellId), ['name', 'sex', 'reporterName', 'profession', 'phone']);
+
   return (
-    <div className="space-y-6 border-t-2 border-cyan-500/60 rounded-t-3xl pt-2">
-      {/* Welcome Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 glass-panel rounded-3xl">
+    <div className="space-y-6">
+      
+      {/* Welcome Bar / Level Info (Cell Leader Cyan Theme) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 glass-panel rounded-3xl border-t-2 border-cyan-500/60">
         <div className="flex items-center gap-4">
           <button 
             type="button"
             onDoubleClick={onEditProfile}
-            className="relative group rounded-2xl overflow-hidden hover:scale-105 active:scale-95 transition-all ring-4 ring-indigo-500/10 shrink-0 border-none cursor-pointer p-0"
+            className="relative group rounded-2xl overflow-hidden hover:scale-105 active:scale-95 transition-all ring-4 ring-cyan-500/10 shrink-0 border-none cursor-pointer p-0"
             title="Double-click to Edit Profile"
           >
             <UserAvatar user={currentUser} size="lg" />
@@ -251,85 +265,19 @@ export function CellPortal({
             </div>
           </button>
           <div>
-            <span className="text-xs text-indigo-400 font-extrabold uppercase tracking-wider">Cell Leader Portal ({cellName})</span>
-            <h2 className="text-2xl font-extrabold text-slate-100 mt-1">{chapterName} &rarr; Cell Group</h2>
-            <p className="text-slate-400 text-sm mt-1">Audit weekly member receipt uploads and provision member credentials.</p>
+            <span className="text-xs text-cyan-400 font-extrabold uppercase tracking-wide">Cell Leader (L5) &rarr; {cellName}</span>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-100 tracking-tight mt-1 bg-gradient-to-r from-cyan-400 to-indigo-500 bg-clip-text text-transparent">{chapterName} &rarr; Cell Group</h2>
+            <p className="text-slate-400 text-xs mt-1">Audit weekly member receipt uploads and provision member credentials.</p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3 shrink-0">
-          <button
-            onDoubleClick={() => setShowAddMember(!showAddMember)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-900/30 cursor-pointer border-none"
-            title="Double-click to Provision Member"
-          >
-            <UserPlus size={14} />
-            {showAddMember ? 'View Cell Dashboard' : 'Provision Member'}
-          </button>
-        </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-1">
-        <button
-          onClick={() => { setActiveTab('dashboard'); setShowAddMember(false); }}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all border-b-2 ${activeTab === 'dashboard' && !showAddMember ? 'text-indigo-400 border-indigo-500 bg-indigo-500/5' : 'text-slate-400 border-transparent hover:text-slate-205'}`}
-        >
-          Overview & Analytics
-        </button>
-        <button
-          onClick={() => { setActiveTab('directory'); setShowAddMember(false); }}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all border-b-2 ${activeTab === 'directory' ? 'text-indigo-400 border-indigo-500 bg-indigo-500/5' : 'text-slate-400 border-transparent hover:text-slate-205'}`}
-        >
-          Credentials & Members Directory
-        </button>
-        <button
-          onClick={() => { setActiveTab('personal'); setShowAddMember(false); }}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all border-b-2 ${activeTab === 'personal' ? 'text-indigo-400 border-indigo-500 bg-indigo-500/5' : 'text-slate-400 border-transparent hover:text-slate-205'}`}
-        >
-          My Personal Input
-        </button>
-      </div>
-
-      {showAddMember ? (
-        <div className="max-w-3xl mx-auto">
-          <CredentialForm
-            creatorRole={currentUser.role}
-            targetRole="member"
-            chapters={chapters}
-            cells={cells}
-            currentChapterId={currentUser.chapterId}
-            currentCellId={cellId}
-            onSubmit={createCredential}
-          />
-        </div>
-      ) : activeTab === 'directory' ? (
-        <UserDirectory
-          currentUser={currentUser}
-          users={users}
-          chapters={chapters}
-          cells={cells}
-          updateUser={updateUser}
-        />
-      ) : activeTab === 'personal' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <RecordGivingForm
-            currentUser={currentUser}
-            onSubmit={submitLedgerEntry}
-            onUpdateUser={updateUser}
-          />
-          <RecordSoulForm
-            currentUser={currentUser}
-            chapters={chapters}
-            cells={cells}
-            onSubmit={submitSoulRecord}
-          />
-        </div>
-      ) : (
+      {activeModule === 'dashboard' && (
         <>
-          {/* Timeframe Filter for Metrics & Summary */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2 bg-slate-900/20 p-4 rounded-3xl border border-slate-850">
+          {/* Timeframe Filter */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2 bg-slate-900/20 p-4 rounded-3xl border border-slate-800">
             <div>
-              <h3 className="text-sm font-bold text-slate-100">Cell Overview & Analytics</h3>
+              <h3 className="text-sm font-bold text-slate-100 tracking-tight">Cell Overview & Analytics</h3>
               <p className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">Filter fellowship statistics by period</p>
             </div>
             <TimeframeFilter 
@@ -348,7 +296,7 @@ export function CellPortal({
               title="Cell Total Giving"
               value={`$${totalCellGiving.toLocaleString()}`}
               icon={TrendingUp}
-              description={`Click to reveal giving contributors in ${cellName}`}
+              description={`Double-click to reveal giving contributors in ${cellName}`}
               status="info"
               onClick={() => setRevealedReport('givings')}
             />
@@ -356,7 +304,7 @@ export function CellPortal({
               title="Cell Souls Won"
               value={totalCellSouls}
               icon={Trophy}
-              description="Click to reveal member outreach tallies"
+              description="Double-click to reveal member outreach tallies"
               status="success"
               onClick={() => setRevealedReport('souls')}
             />
@@ -364,7 +312,7 @@ export function CellPortal({
               title="Supervised Members"
               value={activeMembers.length}
               icon={Users}
-              description={`Click to reveal attendance check-in status details`}
+              description={`Double-click to reveal attendance check-in status details`}
               status="default"
               onClick={() => setRevealedReport('members')}
             />
@@ -381,30 +329,214 @@ export function CellPortal({
                 title="My Personal Giving"
                 value={`$${myPersonalGiving.toLocaleString()}`}
                 icon={TrendingUp}
-                description="Your confirmed giving records for this timeframe"
+                description="Your Tithes and Offering receipts confirmed"
                 status="info"
               />
               <StatCard
                 title="My Personal Outreach"
                 value={`${myPersonalSouls} Souls`}
                 icon={Sparkles}
-                description="Approved souls won and brought by you"
+                description="Approved souls brought by you"
                 status="success"
               />
               <StatCard
                 title="My Personal Submissions"
                 value={`${myPersonalSubmissions} Entries`}
                 icon={FileText}
-                description="Your submitted entries in this timeframe"
                 status="default"
               />
             </div>
           </div>
+        </>
+      )}
 
-          {/* Interactive Pending Verification Queue */}
+      {activeModule === 'ledger' && (
+        <div className="p-6 glass-panel rounded-3xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-md font-bold text-slate-100 flex items-center gap-2 tracking-tight">
+                <FileText size={16} className="text-cyan-500" />
+                Member Assessment Ledger
+              </h3>
+              <p className="text-xs text-slate-500">Weekly giving activity, attendance consistency, and cell growth metrics.</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => exportToTxt('Cell Member Assessment Ledger', ['Name', 'Username', 'Total Entries', 'Giving', 'Souls Won', 'Consistency'], memberAssessment.map(m => [m.name, `@${m.username}`, m.totalEntries, `$${m.confirmedGiving}`, m.soulsWon, m.consistency]))}
+                className="px-3 py-1.5 bg-slate-950 border border-slate-800 text-slate-300 font-bold rounded-xl text-xs hover:border-slate-700 active:scale-95 transition-all cursor-pointer"
+              >
+                Export TXT
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/40">
+            <table className="w-full text-left text-xs border-collapse min-w-[700px]">
+              <thead>
+                <tr className="text-slate-550 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
+                  <th className="px-4 py-3">Member Name</th>
+                  <th className="px-4 py-3">Username</th>
+                  <th className="px-4 py-3 text-center">Sunday In-Person</th>
+                  <th className="px-4 py-3 text-center">Wednesday Online</th>
+                  <th className="px-4 py-3 text-center">Submissions (Last 4 Weeks)</th>
+                  <th className="px-4 py-3">Consistency Level</th>
+                  <th className="px-4 py-3 text-right">Confirmed Giving</th>
+                  <th className="px-4 py-3 text-right">Souls Won</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-850 font-medium">
+                {filteredAssessment.map(member => (
+                  <tr 
+                    key={member.id} 
+                    className="ledger-row transition-all duration-200"
+                  >
+                    <td className="px-4 py-3 text-slate-100 font-bold">{member.name}</td>
+                    <td className="px-4 py-3 text-slate-450">@{member.username}</td>
+                    <td className="px-4 py-3 text-center">
+                      {member.attendance.sundayInPerson ? (
+                        <span className="px-2 py-0.5 rounded badge-emerald-soft text-[9px] font-bold uppercase">Attended</span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded badge-slate-soft text-[9px] font-bold uppercase">Absent</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {member.attendance.wednesdayOnline ? (
+                        <span className="px-2 py-0.5 rounded badge-emerald-soft text-[9px] font-bold uppercase">Joined</span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded badge-slate-soft text-[9px] font-bold uppercase">Absent</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="font-semibold text-slate-350 font-mono tabular-nums">{member.totalEntries} weeks</span>
+                        <span className="text-[10px] text-slate-500 font-mono">({member.ratio}%)</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`text-[9px] px-2 py-0.5 border rounded uppercase font-bold ${getConsistencyBadge(member.consistency)}`}>
+                        {member.consistency}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right text-indigo-400 font-bold font-mono tabular-nums">${member.confirmedGiving.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right text-emerald-400 font-bold font-mono tabular-nums">+{member.soulsWon} Souls</td>
+                  </tr>
+                ))}
+                {filteredAssessment.length === 0 && (
+                  <tr>
+                    <td colSpan="8" className="text-center text-slate-600 py-10 italic">No cell member records found matching active filters.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {activeModule === 'souls' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 p-6 glass-panel rounded-3xl space-y-4">
+            <div>
+              <h3 className="text-md font-bold text-slate-100 flex items-center gap-2 tracking-tight">
+                <Trophy size={16} className="text-cyan-500" />
+                Cell Soul Outreach Tracker
+              </h3>
+              <p className="text-xs text-slate-500">Outreach database additions recorded inside {cellName}.</p>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/40">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="text-slate-500 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
+                    <th className="px-6 py-3.5">Soul Name</th>
+                    <th className="px-6 py-3.5">Sex</th>
+                    <th className="px-6 py-3.5">Profession</th>
+                    <th className="px-6 py-3.5">Phone Number</th>
+                    <th className="px-6 py-3.5">Recorded By</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-850 font-medium">
+                  {filteredSouls.map(soul => (
+                    <tr key={soul.id} className="ledger-row">
+                      <td className="px-6 py-3 text-slate-105 font-bold">{soul.name}</td>
+                      <td className="px-6 py-3">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 font-bold border border-indigo-900">{soul.sex}</span>
+                      </td>
+                      <td className="px-6 py-3 text-slate-400">{soul.profession}</td>
+                      <td className="px-6 py-3 font-mono text-slate-450">{soul.phone}</td>
+                      <td className="px-6 py-3 text-slate-350">{soul.reporterName}</td>
+                    </tr>
+                  ))}
+                  {filteredSouls.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="text-center text-slate-650 py-12 italic">No outreach records match search constraints.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <RecordSoulForm
+              currentUser={currentUser}
+              chapters={chapters}
+              cells={cells}
+              onSubmit={submitSoulRecord}
+            />
+          </div>
+        </div>
+      )}
+
+      {activeModule === 'deficits' && (
+        <div className="p-6 border border-rose-500/10 bg-rose-500/5 rounded-3xl">
+          <h3 className="text-md font-bold text-rose-400 flex items-center gap-2 mb-2 tracking-tight">
+            <AlertCircle size={18} className="text-rose-450 shrink-0 animate-pulse" />
+            Non-Performance Flags: Cell Members ({nonPerformingMembers.length})
+          </h3>
+          <p className="text-xs text-slate-500 mb-4">
+            Registered cell members flagged for zero confirmed giving records AND zero attendance check-ins within the selected timeframe.
+          </p>
+          {nonPerformingMembers.length === 0 ? (
+            <div className="text-xs text-slate-500 italic py-4 text-center">
+              All active cell members are performing actively. No flags generated.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {nonPerformingMembers.map(member => (
+                <div key={member.id} className="p-4 bg-slate-950 border border-slate-850 rounded-2xl flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-slate-205 block">{member.name}</span>
+                    <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">@{member.username}</span>
+                  </div>
+                  <span className="px-2 py-0.5 bg-rose-550/10 text-rose-400 border border-rose-500/10 rounded-lg text-[9px] font-bold uppercase tracking-wider animate-pulse">
+                    Inactive Flag
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeModule === 'audits' && (
+        <div className="space-y-6">
+          
+          <div className="max-w-3xl">
+            <CredentialForm
+              creatorRole={currentUser.role}
+              targetRole="member"
+              chapters={chapters}
+              cells={cells}
+              currentChapterId={currentUser.chapterId}
+              currentCellId={cellId}
+              onSubmit={createCredential}
+            />
+          </div>
+
+          {/* Pending Submissions Queue */}
           {pendingSubmissions.length > 0 && (
             <div className="p-6 border border-amber-500/15 bg-amber-500/5 rounded-3xl">
-              <h3 className="text-md font-bold text-amber-400 flex items-center gap-2 mb-4">
+              <h3 className="text-md font-bold text-amber-400 flex items-center gap-2 mb-4 tracking-tight">
                 <AlertCircle size={18} />
                 Financial Audit Queue: Pending Cell Review
               </h3>
@@ -415,49 +547,32 @@ export function CellPortal({
                     <div>
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-bold text-slate-100">{item.memberName}</span>
-                        <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                        <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1 font-mono">
                           <Calendar size={12} />
                           {item.serviceDate}
                         </span>
                       </div>
                       
-                      {/* Segment & Category details */}
                       <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-900 mb-4 space-y-2 text-xs">
                         <div className="flex justify-between items-center">
-                          <span className="text-slate-500 font-semibold">Giving Segment:</span>
+                          <span className="text-slate-555 font-semibold">Giving Segment:</span>
                           <span className="text-slate-205 font-bold">{item.segment || 'Local'}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-slate-505 font-semibold">System Upload:</span>
-                          <span className="text-slate-350 font-semibold text-[11px]">{new Date(item.createdAt).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
                           <span className="text-slate-500 font-semibold">Giving Category:</span>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-900/50 font-bold uppercase">{item.category || 'Tithe'}</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded badge-indigo-soft font-bold uppercase">{item.category || 'Tithe'}</span>
                         </div>
-                        {item.description && (
-                          <div className="border-t border-slate-850 pt-2 text-[11px] text-slate-400">
-                            <span className="text-slate-500 block font-semibold mb-0.5">Additional Description:</span>
-                            <span className="italic">"{item.description}"</span>
-                          </div>
-                        )}
                         <div className="flex justify-between items-center border-t border-slate-850 pt-2 text-indigo-400 font-bold">
                           <span>Total Amount:</span>
-                          <span>${item.amount || item.totalAmount}</span>
+                          <span className="font-mono tabular-nums">${item.amount || item.totalAmount}</span>
                         </div>
-                      </div>
-
-                      <div className="flex items-center justify-between text-xs text-slate-400 mb-4">
-                        <span>Payment: <strong className="text-slate-300 font-semibold">{item.paymentMethod}</strong></span>
-                        <span>Outreach: <strong className="text-emerald-400 font-bold">+{item.newMembersBroughtIn} Souls</strong></span>
                       </div>
                     </div>
 
                     <div className="flex flex-col gap-2 border-t border-slate-900 pt-3">
-                      {/* Receipt File */}
                       <button
                         onClick={() => setSelectedReceipt(item)}
-                        className="flex items-center justify-center gap-1.5 py-1.5 border border-indigo-500/20 bg-indigo-500/5 text-indigo-400 hover:bg-indigo-505/10 rounded-lg text-xs font-bold transition-all active:scale-95"
+                        className="flex items-center justify-center gap-1.5 py-1.5 border border-indigo-500/20 bg-indigo-500/5 text-indigo-455 hover:bg-indigo-500/10 rounded-lg text-xs font-bold transition-all active:scale-95 cursor-pointer"
                       >
                         <Eye size={12} /> View Proof of Payment Receipt
                       </button>
@@ -465,13 +580,13 @@ export function CellPortal({
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => verifyLedgerEntry(item.id, true)}
-                          className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition-all active:scale-95"
+                          className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition-all active:scale-95 cursor-pointer border-none"
                         >
                           <CheckCircle size={12} /> Confirm Receipt
                         </button>
                         <button
                           onClick={() => verifyLedgerEntry(item.id, false)}
-                          className="px-3 py-1.5 border border-rose-500/30 hover:bg-rose-500/10 text-rose-400 rounded-lg text-xs font-bold transition-all active:scale-95"
+                          className="px-3 py-1.5 border border-rose-500/30 hover:bg-rose-500/10 text-rose-455 rounded-lg text-xs font-bold transition-all active:scale-95 cursor-pointer"
                         >
                           Reject
                         </button>
@@ -485,36 +600,36 @@ export function CellPortal({
 
           {/* Souls Pending Verification Queue */}
           {pendingSouls.length > 0 && (
-            <div className="p-6 border border-indigo-500/15 bg-indigo-500/5 rounded-3xl mt-4">
-              <h3 className="text-md font-bold text-indigo-400 flex items-center gap-2 mb-4">
+            <div className="p-6 border border-indigo-500/15 bg-indigo-500/5 rounded-3xl">
+              <h3 className="text-md font-bold text-indigo-400 flex items-center gap-2 mb-4 tracking-tight">
                 <Sparkles size={18} />
                 Souls Awaiting Confirmation ({pendingSouls.length})
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {pendingSouls.map(soul => (
-                  <div key={soul.id} className="p-4 bg-slate-950 border border-slate-850 rounded-2xl flex flex-col justify-between gap-3">
+                  <div key={soul.id} className="p-4 bg-slate-950 border border-slate-850 rounded-2xl flex flex-col justify-between gap-3 font-medium">
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-200">{soul.name}</span>
+                        <span className="font-bold text-slate-205">{soul.name}</span>
                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 font-bold border border-indigo-900">{soul.sex}</span>
                       </div>
                       <p className="text-[10px] text-slate-500 mt-1">Recorded by: <span className="text-slate-400 font-semibold">{soul.reporterName}</span></p>
-                      <div className="mt-2 text-xs space-y-1 text-slate-450 border-t border-slate-900 pt-2">
-                        <p><span className="text-slate-500 font-medium">Profession:</span> {soul.profession}</p>
-                        <p><span className="text-slate-500 font-medium">Phone:</span> {soul.phone}</p>
-                        <p><span className="text-slate-500 font-medium">Address:</span> {soul.address}</p>
+                      <div className="mt-2 text-xs space-y-1 text-slate-455 border-t border-slate-900 pt-2">
+                        <p><span className="text-slate-500 font-semibold">Profession:</span> {soul.profession}</p>
+                        <p><span className="text-slate-500 font-semibold">Phone:</span> {soul.phone}</p>
+                        <p><span className="text-slate-500 font-semibold">Address:</span> {soul.address}</p>
                       </div>
                     </div>
                     <div className="flex gap-2 border-t border-slate-900 pt-2.5">
                       <button
                         onClick={() => approveSoul(soul.id)}
-                        className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-[10px] transition-colors"
+                        className="flex-1 py-1.5 bg-emerald-650 hover:bg-emerald-600 text-white font-bold rounded-lg text-[10px] transition-colors cursor-pointer border-none"
                       >
                         Confirm & Activate
                       </button>
                       <button
                         onClick={() => rejectSoul(soul.id)}
-                        className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold rounded-lg text-[10px] transition-colors border border-rose-500/10"
+                        className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-455 font-bold rounded-lg text-[10px] transition-colors border border-rose-500/10 cursor-pointer"
                       >
                         Reject
                       </button>
@@ -524,181 +639,10 @@ export function CellPortal({
               </div>
             </div>
           )}
-
-          {/* Supervised Members Non-Performance Alerts */}
-          <div className="p-6 border border-rose-500/10 bg-rose-500/5 rounded-3xl mt-6">
-            <h3 className="text-md font-bold text-rose-450 flex items-center gap-2 mb-2">
-              <AlertCircle size={18} className="text-rose-400 shrink-0" />
-              Non-Performance Flags: Supervised Members ({nonPerformingMembers.length})
-            </h3>
-            <p className="text-xs text-slate-500 mb-4">
-              Registered members flagged for zero confirmed giving records AND zero attendance check-ins within the selected timeframe.
-            </p>
-            {nonPerformingMembers.length === 0 ? (
-              <div className="text-xs text-slate-500 italic py-4 text-center">
-                All cell members are performing actively. No flags generated.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {nonPerformingMembers.map(member => (
-                  <div key={member.id} className="p-4 bg-slate-950/80 border border-slate-850 rounded-2xl flex items-center justify-between">
-                    <div>
-                      <span className="text-xs font-bold text-slate-205 block">{member.name}</span>
-                      <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">@{member.username}</span>
-                    </div>
-                    <span className="px-2 py-0.5 bg-rose-550/10 text-rose-400 border border-rose-500/10 rounded-lg text-[9px] font-bold uppercase tracking-wider animate-pulse">
-                      Inactive Flag
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Member Assessment Ledger */}
-          <div className="p-6 glass-panel rounded-3xl">
-            <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2">
-              <FileText size={16} className="text-indigo-400" />
-              Member Assessment Ledger
-            </h3>
-            <p className="text-xs text-slate-500 mb-4">Weekly giving activity, attendance consistency, and cell growth metrics.</p>
-
-            <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/40">
-              <table className="w-full text-left text-xs border-collapse min-w-[700px]">
-                <thead>
-                  <tr className="text-slate-400 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
-                    <th className="px-4 py-3">Member Name</th>
-                    <th className="px-4 py-3">Username</th>
-                    <th className="px-4 py-3 text-center">Sunday In-Person</th>
-                    <th className="px-4 py-3 text-center">Wednesday Online</th>
-                    <th className="px-4 py-3 text-center">Submissions (Last 4 Weeks)</th>
-                    <th className="px-4 py-3">Consistency Level</th>
-                    <th className="px-4 py-3 text-right">Confirmed Giving</th>
-                    <th className="px-4 py-3 text-right">Souls Won</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60 font-medium">
-                  {memberAssessment.map(member => (
-                    <tr 
-                      key={member.id} 
-                      className="hover:bg-slate-900/10 dark:hover:bg-slate-900/30 transition-all duration-200 ease-in-out"
-                    >
-                      <td className="px-4 py-3 text-slate-100 font-bold">{member.name}</td>
-                      <td className="px-4 py-3 text-slate-400">@{member.username}</td>
-                      <td className="px-4 py-3 text-center">
-                        {member.attendance.sundayInPerson ? (
-                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/50 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/30 font-bold uppercase text-[9px]">Attended</span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-200/50 dark:bg-slate-900 dark:text-slate-500 dark:border-slate-800 font-bold uppercase text-[9px]">Absent</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {member.attendance.wednesdayOnline ? (
-                          <span className="px-2 py-0.5 rounded bg-cyan-50 text-cyan-700 border border-cyan-200/50 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-900/30 font-bold uppercase text-[9px]">Joined</span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-200/50 dark:bg-slate-900 dark:text-slate-500 dark:border-slate-800 font-bold uppercase text-[9px]">Absent</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <span className="font-semibold text-slate-350 font-mono tabular-nums">{member.totalEntries} weeks</span>
-                          <span className="text-[10px] text-slate-500 font-mono">({member.ratio}%)</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`text-[9px] px-2 py-0.5 border rounded uppercase font-bold ${getConsistencyBadge(member.consistency)}`}>
-                          {member.consistency}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right text-indigo-400 font-bold font-mono tabular-nums">${member.confirmedGiving.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-right text-emerald-400 font-bold font-mono tabular-nums">+{member.soulsWon} Souls</td>
-                    </tr>
-                  ))}
-                  {memberAssessment.length === 0 && (
-                    <tr>
-                      <td colSpan="6" className="text-center text-slate-500 italic py-6">No active members found in this cell group.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Audit Modal for Proof of Payment Receipt */}
-      {selectedReceipt && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 flex flex-col justify-between max-h-[90vh]">
-            <div>
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
-                <div>
-                  <h3 className="font-bold text-slate-100">{selectedReceipt.memberName}</h3>
-                  <span className="text-[10px] text-slate-500 font-mono">Receipt audit: {selectedReceipt.id}</span>
-                </div>
-                <button
-                  onClick={() => setSelectedReceipt(null)}
-                  className="text-slate-400 hover:text-slate-200 font-bold"
-                >
-                  &times;
-                </button>
-              </div>
-
-              {/* Simulated Receipt Preview */}
-              <div className="bg-slate-950 border border-slate-850 p-8 rounded-2xl flex flex-col items-center justify-center text-center gap-3 min-h-60 shadow-inner relative overflow-hidden">
-                {/* Decorative lines inside receipt */}
-                <div className="absolute top-0 bottom-0 left-0 right-0 opacity-5 bg-[linear-gradient(#4f46e5_1px,transparent_1px),linear-gradient(90deg,#4f46e5_1px,transparent_1px)] bg-[size:20px_20px]" />
-                
-                <div className="w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-2 relative z-10">
-                  <FileText size={24} />
-                </div>
-                <h4 className="font-bold text-slate-200 text-sm relative z-10">PROOF OF PAYMENT RECEIPT</h4>
-                <div className="text-xs text-slate-400 max-w-[340px] leading-relaxed relative z-10 w-full space-y-1.5 text-left">
-                  <div>Segment: <strong className="text-slate-200">{selectedReceipt.segment || 'Local'}</strong></div>
-                  <div>Category: <strong className="text-indigo-300 font-bold uppercase">{selectedReceipt.category || 'Tithe'}</strong></div>
-                  {selectedReceipt.description && (
-                    <div className="text-[10px] text-slate-400 italic mt-1 font-medium bg-slate-900/50 p-2.5 rounded-lg border border-slate-900">
-                      "{selectedReceipt.description}"
-                    </div>
-                  )}
-                  <div className="pt-2">Service Date: <strong className="text-slate-300">{selectedReceipt.serviceDate}</strong></div>
-                  <div className="text-[10px]">System Record Time: <strong className="text-slate-300">{new Date(selectedReceipt.createdAt).toLocaleString()}</strong></div>
-                  <div className="text-[10px]">Receipt: <strong className="text-indigo-450 font-mono">{selectedReceipt.receiptUrl}</strong></div>
-                  <div className="text-emerald-400 text-base font-extrabold mt-3 pt-1 border-t border-slate-900 text-center">
-                    Verified Amount: ${selectedReceipt.amount || selectedReceipt.totalAmount}
-                  </div>
-                </div>
-                <div className="mt-2 py-1 px-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold rounded-lg relative z-10 uppercase">
-                  Digital Receipt Signature Valid
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 border-t border-slate-800 pt-4 mt-6">
-              <button
-                onClick={() => {
-                  verifyLedgerEntry(selectedReceipt.id, true);
-                  setSelectedReceipt(null);
-                }}
-                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-colors active:scale-98"
-              >
-                Confirm Receipt & Approve
-              </button>
-              <button
-                onClick={() => {
-                  verifyLedgerEntry(selectedReceipt.id, false);
-                  setSelectedReceipt(null);
-                }}
-                className="py-2.5 px-4 border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 font-bold rounded-xl text-xs transition-colors active:scale-98"
-              >
-                Reject Entry
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
-      {/* Cell Analytics Reveal Modal */}
+      {/* Exporter modal */}
       {revealedReport && (() => {
         let reportTitle = '';
         let headers = [];
@@ -748,29 +692,26 @@ export function CellPortal({
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
             <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl animate-fade-in">
-              {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-slate-850 bg-slate-900/10">
+              <div className="flex items-center justify-between p-6 border-b border-slate-800 bg-slate-900/10">
                 <div>
                   <h3 className="text-lg font-bold text-slate-100">{reportTitle}</h3>
                   <p className="text-xs text-slate-500 mt-0.5">Summary of cell fellowship contributors and growth breakdown</p>
                 </div>
                 <button
                   onClick={() => setRevealedReport(null)}
-                  className="w-8 h-8 rounded-full bg-slate-950 border border-slate-800 hover:bg-slate-900 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-all cursor-pointer shadow-lg active:scale-90 shrink-0 text-lg font-bold"
-                  aria-label="Close modal"
+                  className="w-8 h-8 rounded-full bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-all cursor-pointer shadow-lg active:scale-90 shrink-0 text-lg font-bold"
                 >
                   &times;
                 </button>
               </div>
 
-              {/* Table Container */}
               <div className="flex-1 overflow-y-auto p-6">
-                <div className="overflow-x-auto rounded-2xl border border-slate-850 bg-slate-950/40">
+                <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/40">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="text-slate-405 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
+                      <tr className="text-slate-550 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
                         {headers.map((h, i) => {
-                          const isAmountHeader = h.toLowerCase().includes('amount') || h.toLowerCase().includes('souls') || h.toLowerCase().includes('giving') || h.toLowerCase().includes('contribution') || h.toLowerCase().includes('base');
+                          const isAmountHeader = h.toLowerCase().includes('amount') || h.toLowerCase().includes('souls') || h.toLowerCase().includes('giving');
                           return (
                             <th key={i} className={`px-6 py-3 ${isAmountHeader ? 'text-right' : ''}`}>{h}</th>
                           );
@@ -803,27 +744,26 @@ export function CellPortal({
                 </div>
               </div>
 
-              {/* Footer controls with download formats */}
-              <div className="flex items-center justify-between p-6 border-t border-slate-850 bg-slate-950/20">
-                <div className="text-[10px] text-slate-550 font-semibold uppercase">Export Format Options:</div>
+              <div className="flex items-center justify-between p-6 border-t border-slate-800 bg-slate-950/20">
+                <div className="text-[10px] text-slate-500 font-extrabold uppercase">Export Format Options:</div>
                 <div className="flex gap-2.5">
                   <button
                     onClick={() => exportToTxt(reportTitle, headers, rows)}
-                    className="px-3.5 py-2 bg-slate-950 border border-slate-800 text-slate-300 font-bold rounded-xl text-xs hover:border-slate-700 active:scale-95 transition-all"
+                    className="px-3.5 py-2 bg-slate-950 border border-slate-800 text-slate-350 font-bold rounded-xl text-xs hover:border-slate-700 active:scale-95 transition-all cursor-pointer"
                   >
                     Download TXT
                   </button>
                   <button
                     onClick={() => exportToWord(reportTitle, headers, rows)}
-                    className="px-3.5 py-2 bg-slate-950 border border-slate-800 text-slate-355 font-bold rounded-xl text-xs hover:border-slate-700 active:scale-95 transition-all"
+                    className="px-3.5 py-2 bg-slate-950 border border-slate-800 text-slate-355 font-bold rounded-xl text-xs hover:border-slate-700 active:scale-95 transition-all cursor-pointer"
                   >
-                    Download Word (.doc)
+                    Download Word
                   </button>
                   <button
                     onClick={() => triggerPrint(reportTitle, headers, rows)}
-                    className="px-3.5 py-2 bg-indigo-650 hover:bg-indigo-600 text-white font-bold rounded-xl text-xs active:scale-95 transition-all shadow-md shadow-indigo-900/20"
+                    className="px-3.5 py-2 bg-indigo-650 hover:bg-indigo-600 text-white font-bold rounded-xl text-xs active:scale-95 transition-all shadow-md cursor-pointer border-none"
                   >
-                    Print / Export PDF
+                    Print Report
                   </button>
                 </div>
               </div>
@@ -831,6 +771,80 @@ export function CellPortal({
           </div>
         );
       })()}
+
+      {/* Double click receipt auditing modal */}
+      {selectedReceipt && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 flex flex-col justify-between max-h-[90vh] shadow-2xl">
+            <div>
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                <div>
+                  <h3 className="font-bold text-slate-100">{selectedReceipt.memberName}</h3>
+                  <span className="text-[10px] text-slate-550 font-mono">Audit Transaction ID: {selectedReceipt.id}</span>
+                </div>
+                <button
+                  onClick={() => setSelectedReceipt(null)}
+                  className="text-slate-400 hover:text-slate-205 font-bold text-lg cursor-pointer bg-transparent border-none"
+                >
+                  &times;
+                </button>
+              </div>
+
+              {/* Simulated Receipt Preview */}
+              <div className="bg-slate-950 border border-slate-850 p-6 rounded-2xl flex flex-col items-center justify-center text-center gap-3 min-h-60 shadow-inner relative overflow-hidden">
+                <div className="absolute inset-0 opacity-5 bg-[linear-gradient(#6366f1_1px,transparent_1px),linear-gradient(90deg,#6366f1_1px,transparent_1px)] bg-[size:16px_16px]" />
+                <div className="w-12 h-12 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center border border-indigo-500/20">
+                  <FileText size={24} />
+                </div>
+                <span className="text-xs font-bold text-slate-300">RECEIPT ATTACHMENT DETAILS</span>
+                <div className="text-xs space-y-1.5 text-slate-400 text-left bg-slate-900/60 p-4 rounded-xl border border-slate-850 w-full font-medium">
+                  <div>Segment: <strong className="text-slate-205">{selectedReceipt.segment || 'Local'}</strong></div>
+                  <div>Category: <strong className="text-indigo-400 font-bold uppercase">{selectedReceipt.category || 'Tithe'}</strong></div>
+                  {selectedReceipt.description && (
+                    <div>Memo: <span className="text-slate-350 italic">"{selectedReceipt.description}"</span></div>
+                  )}
+                  <div className="pt-2 border-t border-slate-800/80">Service Date: <strong className="text-slate-300 font-mono">{selectedReceipt.serviceDate}</strong></div>
+                  <div>Payment: <strong className="text-slate-300">{selectedReceipt.paymentMethod}</strong></div>
+                  <div>File: <strong className="text-indigo-400 font-mono">{selectedReceipt.receiptUrl}</strong></div>
+                </div>
+                <div className="text-lg font-extrabold text-emerald-450 font-mono mt-2 tabular-nums">
+                  Verified Amount: ${selectedReceipt.amount || selectedReceipt.totalAmount}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 border-t border-slate-800 pt-4 mt-6">
+              {selectedReceipt.status !== 'Confirmed' ? (
+                <>
+                  <button
+                    onClick={() => {
+                      verifyLedgerEntry(selectedReceipt.id, true);
+                      setSelectedReceipt(null);
+                    }}
+                    className="flex-1 py-2 bg-emerald-650 hover:bg-emerald-600 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer border-none"
+                  >
+                    Confirm & Verify
+                  </button>
+                  <button
+                    onClick={() => {
+                      verifyLedgerEntry(selectedReceipt.id, false);
+                      setSelectedReceipt(null);
+                    }}
+                    className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-455 font-bold rounded-xl text-xs border border-rose-500/10 cursor-pointer"
+                  >
+                    Reject
+                  </button>
+                </>
+              ) : (
+                <div className="w-full p-2.5 bg-emerald-550/10 border border-emerald-500/20 text-emerald-450 text-xs rounded-xl font-bold text-center flex items-center justify-center gap-1.5">
+                  <CheckCircle size={14} /> Audit Completed (Confirmed)
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

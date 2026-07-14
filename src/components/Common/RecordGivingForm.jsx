@@ -124,7 +124,7 @@ export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser, showAtte
                 type="date"
                 value={serviceDate}
                 onChange={(e) => setServiceDate(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all"
               />
             </div>
           </div>
@@ -134,7 +134,7 @@ export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser, showAtte
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all"
+              className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all"
             >
               <option value="Bank Transfer" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Bank Transfer</option>
               <option value="Card" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Card Payment</option>
@@ -170,7 +170,7 @@ export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser, showAtte
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all"
+              className="w-full px-4 py-2.5 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all"
             >
               {segment === 'Local' ? (
                 <>
@@ -200,7 +200,7 @@ export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser, showAtte
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all font-mono tabular-nums"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all font-mono tabular-nums"
               />
             </div>
           </div>
@@ -214,7 +214,7 @@ export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser, showAtte
                 min="0"
                 value={newMembersBroughtIn}
                 onChange={(e) => setNewMembersBroughtIn(Math.max(0, parseInt(e.target.value) || 0))}
-                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all font-mono tabular-nums"
+                className="w-full px-4 py-2.5 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all font-mono tabular-nums"
               />
             </div>
           )}
@@ -253,7 +253,7 @@ export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser, showAtte
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            className="w-full px-4 py-2 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none resize-none transition-all"
+            className="w-full px-4 py-2 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none resize-none transition-all"
           />
         </div>
 

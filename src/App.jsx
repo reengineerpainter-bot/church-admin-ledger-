@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from './hooks/useAppState';
-import { SimulatorBar } from './components/SimulatorBar';
+import { Sidebar } from './components/Common/Sidebar';
+import { Topbar } from './components/Common/Topbar';
 import { AdminPortal } from './components/Portals/AdminPortal';
 import { ChapterPortal } from './components/Portals/ChapterPortal';
 import { CellPortal } from './components/Portals/CellPortal';
@@ -11,13 +12,15 @@ import { LoginScreen } from './components/Common/LoginScreen';
 export function App() {
   const state = useAppState();
   const { currentUser, currentUserId, logout } = state;
-  const [showEditProfile, setShowEditProfile] = React.useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [activeModule, setActiveModule] = useState('dashboard');
+  const [globalSearchTerm, setGlobalSearchTerm] = useState('');
 
-  const [theme, setTheme] = React.useState(() => {
+  const [theme, setTheme] = useState(() => {
     return localStorage.getItem('theme') || 'light';
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const root = document.documentElement;
     if (theme === 'light') {
       root.classList.add('light-mode');
@@ -30,7 +33,7 @@ export function App() {
   }, [theme]);
 
   // Auto logout after 3 minutes of inactivity
-  React.useEffect(() => {
+  useEffect(() => {
     if (currentUserId === 'logged_out') return;
 
     const TIMEOUT_DURATION = 3 * 60 * 1000; // 3 minutes
@@ -62,20 +65,82 @@ export function App() {
     };
   }, [currentUserId, logout]);
 
+  // Reset active module when current user profile changes
+  useEffect(() => {
+    setActiveModule('dashboard');
+    setGlobalSearchTerm('');
+  }, [currentUserId]);
+
+  // Calculate pending verifications count for topbar notifications and sidebar badge
+  const getPendingAuditsCount = () => {
+    if (!currentUser || currentUserId === 'logged_out') return 0;
+
+    switch (currentUser.role) {
+      case 'admin': {
+        const pendingCellLeaders = state.users.filter(
+          u => u.role === 'cell_leader' && u.status === 'Pending_Higher_Approval'
+        );
+        const pendingDeletions = state.users.filter(u => u.status === 'Pending_Deletion');
+        const pendingSouls = state.souls.filter(s => {
+          if (s.status !== 'Pending_Approval') return false;
+          const reporter = state.users.find(u => u.id === s.recordedBy);
+          return reporter && reporter.role === 'chapter_leader';
+        });
+        const pendingGivings = state.ledger.filter(item => {
+          if (item.status !== 'Pending_Cell_Review') return false;
+          const reporter = state.users.find(u => u.id === item.memberId);
+          return reporter && reporter.role === 'chapter_leader';
+        });
+        return pendingCellLeaders.length + pendingDeletions.length + pendingSouls.length + pendingGivings.length;
+      }
+      case 'chapter_leader': {
+        const pendingMembers = state.users.filter(
+          u => u.chapterId === currentUser.chapterId && u.status === 'Pending_Higher_Approval'
+        );
+        const pendingSouls = state.souls.filter(s => {
+          if (s.status !== 'Pending_Approval') return false;
+          const reporter = state.users.find(u => u.id === s.recordedBy);
+          return reporter && reporter.role === 'member' && reporter.chapterId === currentUser.chapterId;
+        });
+        const pendingGivings = state.ledger.filter(item => {
+          if (item.status !== 'Pending_Cell_Review') return false;
+          const reporter = state.users.find(u => u.id === item.memberId);
+          return reporter && reporter.role === 'cell_leader' && reporter.chapterId === currentUser.chapterId;
+        });
+        return pendingMembers.length + pendingSouls.length + pendingGivings.length;
+      }
+      case 'cell_leader': {
+        const cellLedger = state.ledger.filter(item => item.cellId === currentUser.cellId);
+        const pendingSubmissions = cellLedger.filter(item => item.status === 'Pending_Cell_Review');
+        const pendingSouls = state.souls.filter(s => {
+          if (s.status !== 'Pending_Approval') return false;
+          const reporter = state.users.find(u => u.id === s.recordedBy);
+          return reporter && reporter.role === 'member' && reporter.cellId === currentUser.cellId;
+        });
+        return pendingSubmissions.length + pendingSouls.length;
+      }
+      case 'member': {
+        const mySubmissions = state.ledger.filter(item => item.memberId === currentUser.id);
+        const pendingSubmissions = mySubmissions.filter(item => item.status === 'Pending_Cell_Review');
+        return pendingSubmissions.length;
+      }
+      default:
+        return 0;
+    }
+  };
+
+  const pendingAuditsCount = getPendingAuditsCount();
+
   // Render correct dashboard depending on role and approval status
   const renderDashboard = () => {
-    if (currentUserId === 'logged_out') {
-      return <LoginScreen onLogin={state.login} users={state.users} />;
-    }
-
     if (!currentUser) return null;
 
-    // If simulated user is pending approval
+    // Simulated user is pending approval
     if (currentUser.status === 'Pending_Higher_Approval') {
       const creator = state.users.find(u => u.id === currentUser.creatorId);
       const isCellLeader = currentUser.role === 'cell_leader';
       const approverRoleName = isCellLeader ? 'Pastor (Global Root)' : 'Chapter Leader (Regional)';
-      
+
       return (
         <div className="max-w-2xl mx-auto my-12 p-8 bg-slate-900 border border-amber-500/20 rounded-3xl text-center flex flex-col items-center gap-4 shadow-xl">
           <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 animate-pulse-soft">
@@ -91,7 +156,7 @@ export function App() {
             <div>&bull; Higher Approval Tier: <strong className="text-indigo-400">{approverRoleName}</strong></div>
           </div>
           <div className="text-xs text-amber-400 bg-amber-550/5 border border-amber-500/10 px-4 py-3 rounded-xl mt-4 leading-relaxed font-semibold">
-            &gt;_ To activate these credentials, use the simulator bar at the top to log in as the approving authority, navigate to the verification queues, and click "Confirm".
+            &gt;_ To activate these credentials, use the simulator sidebar on the left to log in as the approving authority, navigate to the "Audits" console, and click "Confirm".
           </div>
         </div>
       );
@@ -105,7 +170,7 @@ export function App() {
           </div>
           <h2 className="text-xl font-bold text-slate-100 uppercase tracking-wide">Credentials Rejected</h2>
           <p className="text-sm text-slate-400">
-            The credential credentials for <strong className="text-slate-250">@{currentUser.username}</strong> have been rejected by the administrator tier above them.
+            The credentials for <strong className="text-slate-250">@{currentUser.username}</strong> have been rejected by the administrator tier above them.
           </p>
         </div>
       );
@@ -135,6 +200,8 @@ export function App() {
             verifyLedgerEntry={state.verifyLedgerEntry}
             souls={state.souls}
             onEditProfile={() => setShowEditProfile(true)}
+            activeModule={activeModule}
+            globalSearchTerm={globalSearchTerm}
           />
         );
       case 'chapter_leader':
@@ -158,6 +225,8 @@ export function App() {
             verifyLedgerEntry={state.verifyLedgerEntry}
             souls={state.souls}
             onEditProfile={() => setShowEditProfile(true)}
+            activeModule={activeModule}
+            globalSearchTerm={globalSearchTerm}
           />
         );
       case 'cell_leader':
@@ -177,6 +246,8 @@ export function App() {
             submitLedgerEntry={state.submitLedgerEntry}
             souls={state.souls}
             onEditProfile={() => setShowEditProfile(true)}
+            activeModule={activeModule}
+            globalSearchTerm={globalSearchTerm}
           />
         );
       case 'member':
@@ -191,6 +262,8 @@ export function App() {
             submitSoulRecord={state.submitSoulRecord}
             souls={state.souls}
             onEditProfile={() => setShowEditProfile(true)}
+            activeModule={activeModule}
+            globalSearchTerm={globalSearchTerm}
           />
         );
       default:
@@ -202,10 +275,14 @@ export function App() {
     }
   };
 
+  if (currentUserId === 'logged_out') {
+    return <LoginScreen onLogin={state.login} users={state.users} />;
+  }
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-20">
-      {/* Dynamic top profile switcher */}
-      <SimulatorBar
+    <div className="min-h-screen flex bg-slate-950 text-slate-100">
+      {/* 1. Left Sidebar with Simulator Controls */}
+      <Sidebar
         currentUser={currentUser}
         authUserId={state.authUserId}
         authUser={state.authUser}
@@ -213,17 +290,30 @@ export function App() {
         logs={state.logs}
         onSwitchUser={state.switchUser}
         onReset={state.resetData}
-        updateUser={state.updateUser}
         onLogout={state.logout}
         theme={theme}
         onToggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
-        showEditProfile={showEditProfile}
-        setShowEditProfile={setShowEditProfile}
+        activeModule={activeModule}
+        setActiveModule={setActiveModule}
+        pendingAuditsCount={pendingAuditsCount}
       />
 
-      <main className="max-w-7xl mx-auto px-4 mt-6">
-        {renderDashboard()}
-      </main>
+      {/* 2. Top Bar and Main Workspace Viewport */}
+      <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
+        <Topbar
+          currentUser={currentUser}
+          globalSearchTerm={globalSearchTerm}
+          setGlobalSearchTerm={setGlobalSearchTerm}
+          pendingAuditsCount={pendingAuditsCount}
+          setActiveModule={setActiveModule}
+          onLogout={state.logout}
+          onEditProfile={() => setShowEditProfile(true)}
+        />
+
+        <main className="flex-grow p-6">
+          {renderDashboard()}
+        </main>
+      </div>
     </div>
   );
 }

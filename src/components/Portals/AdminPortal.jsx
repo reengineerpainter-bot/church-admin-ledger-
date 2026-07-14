@@ -31,10 +31,11 @@ export function AdminPortal({
   submitLedgerEntry,
   verifyLedgerEntry,
   souls,
-  onEditProfile
+  onEditProfile,
+  activeModule = 'dashboard',
+  globalSearchTerm = ''
 }) {
   const [showAddLeader, setShowAddLeader] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'directory'
   const [newChapterName, setNewChapterName] = useState('');
   const [newChapterHq, setNewChapterHq] = useState('');
   const [chapterSuccess, setChapterSuccess] = useState(false);
@@ -42,6 +43,7 @@ export function AdminPortal({
   const [timeframe, setTimeframe] = useState('monthly');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
 
   const filterByTimeframe = (dateStr) => {
     if (!dateStr) return false;
@@ -223,63 +225,43 @@ export function AdminPortal({
   const weeklyGivingData = Object.keys(weeklyTotalsMap)
     .sort()
     .map(date => {
-      // Shorten date to e.g. "Jun 14"
       const d = new Date(date);
       const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
       return { label, value: weeklyTotalsMap[date] };
     });
 
-  // 2. Giving type breakdown
-  let breakdownTotals = {
-    tithe: 0,
-    offering: 0,
-    partnership: 0,
-    hosting: 0,
-    pcoSeed: 0,
-    welfare: 0,
-    others: 0
-  };
+  // 2. Contribution allocation breakdown
+  const categoryTotalsMap = {};
   confirmedLedger.forEach(item => {
-    const cat = item.category ? item.category.toLowerCase() : '';
-    const amt = item.amount || item.totalAmount || 0;
-    if (cat === 'tithe') breakdownTotals.tithe += amt;
-    else if (cat === 'offering') breakdownTotals.offering += amt;
-    else if (cat === 'partnership') breakdownTotals.partnership += amt;
-    else if (cat === 'church hosting') breakdownTotals.hosting += amt;
-    else if (cat === 'pco seed') breakdownTotals.pcoSeed += amt;
-    else if (cat === 'welfare') breakdownTotals.welfare += amt;
-    else breakdownTotals.others += amt;
+    categoryTotalsMap[item.category] = (categoryTotalsMap[item.category] || 0) + item.totalAmount;
   });
-  const givingTypeData = [
-    { label: 'Tithe', value: breakdownTotals.tithe, color: '#6366f1' },
-    { label: 'Offering', value: breakdownTotals.offering, color: '#10b981' },
-    { label: 'Partnership', value: breakdownTotals.partnership, color: '#06b6d4' },
-    { label: 'Church Hosting', value: breakdownTotals.hosting, color: '#3b82f6' },
-    { label: 'PCO Seed', value: breakdownTotals.pcoSeed, color: '#8b5cf6' },
-    { label: 'Welfare', value: breakdownTotals.welfare, color: '#f59e0b' },
-    { label: 'Others', value: breakdownTotals.others, color: '#f43f5e' }
-  ].filter(d => d.value > 0);
+  const givingTypeData = Object.keys(categoryTotalsMap)
+    .map(cat => ({ label: cat, value: categoryTotalsMap[cat] }));
 
   // 3. Giving by Chapter
   const chapterGivingMap = {};
   chapters.forEach(ch => {
-    chapterGivingMap[ch.id] = 0;
+    chapterGivingMap[ch.name] = 0;
   });
   confirmedLedger.forEach(item => {
-    if (chapterGivingMap[item.chapterId] !== undefined) {
-      chapterGivingMap[item.chapterId] += item.totalAmount;
+    const chName = chapters.find(c => c.id === item.chapterId)?.name;
+    if (chName) {
+      chapterGivingMap[chName] = (chapterGivingMap[chName] || 0) + item.totalAmount;
     }
   });
-  const chapterGivingData = chapters.map(ch => ({
-    label: ch.name,
-    value: chapterGivingMap[ch.id]
-  }));
+  const chapterGivingData = Object.keys(chapterGivingMap)
+    .map(name => ({ label: name, value: chapterGivingMap[name] }));
 
-  // --- LEADERBOARDS & METRICS ---
-  // Soul-winning leaderboard by Cell
+  // 4. Soul-winning ranking
   const cellSoulsMap = {};
-  cells.forEach(c => {
-    cellSoulsMap[c.id] = { name: c.name, chapter: chapters.find(ch => ch.id === c.chapterId)?.name || 'Unknown', souls: 0 };
+  cells.forEach(cell => {
+    const chName = chapters.find(ch => ch.id === cell.chapterId)?.name || 'Unknown';
+    cellSoulsMap[cell.id] = { name: cell.name, chapter: chName, souls: 0 };
+  });
+  souls.forEach(s => {
+    if (s.status === 'Approved' && cellSoulsMap[s.cellId]) {
+      cellSoulsMap[s.cellId].souls += 1;
+    }
   });
   confirmedLedger.forEach(item => {
     if (cellSoulsMap[item.cellId]) {
@@ -296,18 +278,14 @@ export function AdminPortal({
     u.status === 'Pending_Higher_Approval'
   );
 
-  // Active leaders list
   const activeChapterLeadersList = users.filter(u => u.role === 'chapter_leader' && u.status === 'Active');
   const activeCellLeadersList = users.filter(u => u.role === 'cell_leader' && u.status === 'Active');
 
   // --- NON-PERFORMANCE FLAGGING SYSTEM ---
-  // Highlight regions (cells) that have missed recent weekly reporting (e.g. 2026-07-05) OR have low attendance/giving growth
   const latestDate = '2026-07-05';
   
   const cellDeadlinesFlags = cells.map(cell => {
-    // Check if cell submitted confirmed or pending entries for the latest reporting week
     const hasSubmission = ledger.some(item => item.cellId === cell.id && item.serviceDate === latestDate);
-    // Calculate cell total giving
     const cellGiving = ledger
       .filter(item => item.cellId === cell.id && item.status === 'Confirmed')
       .reduce((sum, item) => sum + item.totalAmount, 0);
@@ -329,43 +307,54 @@ export function AdminPortal({
     }
     if (cellSouls === 0 && cell.leaderName !== 'Vacant') {
       if (performanceStatus !== 'critical') performanceStatus = 'warning';
-      flagReasons.push('No Soul-Winning Growth');
-    }
-    if (cell.leaderName === 'Vacant') {
-      performanceStatus = 'critical';
-      flagReasons.push('Leadership Vacancy');
+      flagReasons.push('Zero outreach conversions');
     }
 
     return {
+      cellId: cell.id,
       cellName: cell.name,
       chapterName: chapters.find(ch => ch.id === cell.chapterId)?.name || 'Unknown',
       leaderName: cell.leaderName,
       status: performanceStatus,
-      reasons: flagReasons,
-      giving: cellGiving,
-      souls: cellSouls
+      reasons: flagReasons
     };
-  }).filter(c => c.status !== 'optimal');
+  }).filter(c => c.reasons.length > 0);
 
   const handleCreateChapter = (e) => {
     e.preventDefault();
-    if (!newChapterName.trim() || !newChapterHq.trim()) return;
+    if (!newChapterName || !newChapterHq) return;
     createChapter(newChapterName.trim(), newChapterHq.trim());
     setNewChapterName('');
     setNewChapterHq('');
     setChapterSuccess(true);
-    setTimeout(() => setChapterSuccess(false), 3000);
+    setTimeout(() => setChapterSuccess(false), 2000);
   };
 
+  // Filter list by global search term
+  const filterBySearch = (items, fields) => {
+    if (!globalSearchTerm) return items;
+    const term = globalSearchTerm.toLowerCase();
+    return items.filter(item => 
+      fields.some(field => {
+        const val = item[field];
+        return val && String(val).toLowerCase().includes(term);
+      })
+    );
+  };
+
+  const filteredLedger = filterBySearch(ledger, ['id', 'memberName', 'category', 'paymentMethod', 'serviceDate']);
+  const filteredSouls = filterBySearch(souls.filter(s => s.status === 'Approved'), ['name', 'sex', 'reporterName', 'profession', 'phone']);
+
   return (
-    <div className="space-y-6 border-t-2 border-amber-500/80 rounded-t-3xl pt-2">
-      {/* Welcome Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 glass-panel rounded-3xl">
+    <div className="space-y-6">
+      
+      {/* Welcome Bar / Rank Information (Zonal Pastor Gold theme representation) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 glass-panel rounded-3xl border-t-2 border-amber-500/80">
         <div className="flex items-center gap-4">
           <button 
             type="button"
             onDoubleClick={onEditProfile}
-            className="relative group rounded-2xl overflow-hidden hover:scale-105 active:scale-95 transition-all ring-4 ring-indigo-500/10 shrink-0 border-none cursor-pointer p-0"
+            className="relative group rounded-2xl overflow-hidden hover:scale-105 active:scale-95 transition-all ring-4 ring-amber-500/10 shrink-0 border-none cursor-pointer p-0"
             title="Double-click to Edit Profile"
           >
             <UserAvatar user={currentUser} size="lg" />
@@ -374,126 +363,21 @@ export function AdminPortal({
             </div>
           </button>
           <div>
-            <span className="text-xs text-indigo-400 font-extrabold uppercase tracking-wider">Pastor Portal</span>
-            <h2 className="text-2xl font-extrabold text-slate-100 mt-1">Global Root Administration</h2>
-            <p className="text-slate-400 text-sm mt-1">Full structural oversight of all chapters, cells, members, and giving receipts.</p>
+            <span className="text-xs text-amber-500 font-extrabold uppercase tracking-wide">Zonal Pastor (L1)</span>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-100 tracking-tight mt-1 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 bg-clip-text text-transparent">Global Root Administration</h2>
+            <p className="text-slate-400 text-xs mt-1">Full structural oversight of all chapters, cells, members, and giving receipts.</p>
           </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-3 shrink-0">
-          <button
-            onDoubleClick={() => setShowAddLeader(!showAddLeader)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-900/30 cursor-pointer border-none"
-            title="Double-click to Provision Chapter Leader"
-          >
-            <UserPlus size={14} />
-            {showAddLeader ? 'View Dashboards' : 'Provision Chapter Leader'}
-          </button>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-1">
-        <button
-          onClick={() => { setActiveTab('dashboard'); setShowAddLeader(false); }}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all border-b-2 ${activeTab === 'dashboard' && !showAddLeader ? 'text-indigo-400 border-indigo-500 bg-indigo-500/5' : 'text-slate-400 border-transparent hover:text-slate-205'}`}
-        >
-          Overview & Analytics
-        </button>
-        <button
-          onClick={() => { setActiveTab('directory'); setShowAddLeader(false); }}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all border-b-2 ${activeTab === 'directory' ? 'text-indigo-400 border-indigo-500 bg-indigo-500/5' : 'text-slate-400 border-transparent hover:text-slate-205'}`}
-        >
-          Credentials & Members Directory
-        </button>
-        <button
-          onClick={() => { setActiveTab('personal'); setShowAddLeader(false); }}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all border-b-2 ${activeTab === 'personal' ? 'text-indigo-400 border-indigo-500 bg-indigo-500/5' : 'text-slate-400 border-transparent hover:text-slate-205'}`}
-        >
-          My Personal Input
-        </button>
-      </div>
+      {/* RENDER VIEWS ACCORDING TO SIDENAV MODULES */}
 
-      {showAddLeader ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Form to Create Chapter Leader */}
-          <div className="lg:col-span-2">
-            <CredentialForm
-              creatorRole={currentUser.role}
-              targetRole="chapter_leader"
-              chapters={chapters}
-              onSubmit={createCredential}
-            />
-          </div>
-
-          {/* Form to Create Chapter */}
-          <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800 p-6 rounded-2xl h-fit">
-            <h3 className="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
-              <Map size={18} className="text-indigo-400" />
-              Establish New Chapter
-            </h3>
-            {chapterSuccess && (
-              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm rounded-xl">
-                Chapter established successfully!
-              </div>
-            )}
-            <form onSubmit={handleCreateChapter} className="space-y-4">
-              <div>
-                <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Chapter Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Faith Chapter"
-                  value={newChapterName}
-                  onChange={(e) => setNewChapterName(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Headquarters City</label>
-                <input
-                  type="text"
-                  placeholder="e.g. New York"
-                  value={newChapterHq}
-                  onChange={(e) => setNewChapterHq(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full py-2.5 bg-slate-850 hover:bg-slate-800 border border-slate-700 text-white font-bold rounded-xl text-xs transition-colors"
-              >
-                Create Chapter
-              </button>
-            </form>
-          </div>
-        </div>
-      ) : activeTab === 'personal' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <RecordGivingForm
-            currentUser={currentUser}
-            onSubmit={submitLedgerEntry}
-            onUpdateUser={updateUser}
-          />
-          <RecordSoulForm
-            currentUser={currentUser}
-            chapters={chapters}
-            cells={cells}
-            onSubmit={submitSoulRecord}
-          />
-        </div>
-      ) : activeTab === 'directory' ? (
-        <UserDirectory
-          currentUser={currentUser}
-          users={users}
-          chapters={chapters}
-          cells={cells}
-          updateUser={updateUser}
-        />
-      ) : (
+      {activeModule === 'dashboard' && (
         <>
           {/* Timeframe Filter for Metrics & Summary */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2 bg-slate-900/20 p-4 rounded-3xl border border-slate-850">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2 bg-slate-900/20 p-4 rounded-3xl border border-slate-800">
             <div>
-              <h3 className="text-sm font-bold text-slate-100">Global Overview & Analytics</h3>
+              <h3 className="text-sm font-bold text-slate-100 tracking-tight">Global Overview & Analytics</h3>
               <p className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">Filter entire church network statistics by period</p>
             </div>
             <TimeframeFilter 
@@ -512,7 +396,7 @@ export function AdminPortal({
               title="Global Total Giving"
               value={`$${totalGiving.toLocaleString()}`}
               icon={TrendingUp}
-              description="Click to reveal breakdown of chapter, cell, and member giving contributions"
+              description="Double-click to reveal breakdown of chapter, cell, and member giving contributions"
               status="info"
               onClick={() => setRevealedReport('givings')}
             />
@@ -520,7 +404,7 @@ export function AdminPortal({
               title="Total Souls Won"
               value={totalSoulsWon}
               icon={Trophy}
-              description="Click to reveal cell group and individual soul-winning tallies"
+              description="Double-click to reveal cell group and individual soul-winning tallies"
               status="success"
               onClick={() => setRevealedReport('souls')}
             />
@@ -528,7 +412,7 @@ export function AdminPortal({
               title="Active Chapters"
               value={chapters.length}
               icon={Map}
-              description="Click to reveal regional headquarters details and leadership"
+              description="Double-click to reveal regional headquarters details and leadership"
               status="default"
               onClick={() => setRevealedReport('chapters')}
             />
@@ -536,54 +420,366 @@ export function AdminPortal({
               title="Active Member Base"
               value={activeMembersCount}
               icon={Users}
-              description={`Click to reveal full database list of active members`}
+              description={`Double-click to reveal full database list of active members`}
               status="default"
               onClick={() => setRevealedReport('members')}
             />
           </div>
 
-          {/* My Personal Overview */}
-          <div className="p-4 sm:p-6 bg-slate-900/30 border border-slate-800/80 rounded-3xl mt-6">
-            <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2 animate-pulse-soft">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-              My Personal Overview & Analytics (Pastor)
+          {/* Charts Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+            <div className="lg:col-span-2 p-6 glass-panel rounded-3xl">
+              <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2 tracking-tight">
+                <TrendingUp size={16} className="text-amber-500" />
+                Global Weekly Giving Trends
+              </h3>
+              <p className="text-xs text-slate-500 mb-4">Confirmed receipts aggregated by service dates.</p>
+              <div className="h-60 flex items-center">
+                <LineChart data={weeklyGivingData} />
+              </div>
+            </div>
+
+            <div className="p-6 glass-panel rounded-3xl">
+              <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2 tracking-tight">
+                <Grid size={16} className="text-amber-500" />
+                Contribution Breakdown
+              </h3>
+              <p className="text-xs text-slate-500 mb-4">Category allocation of received funds.</p>
+              <div className="h-60 flex items-center justify-center">
+                <DonutChart data={givingTypeData} />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <div className="p-6 glass-panel rounded-3xl">
+              <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2 tracking-tight">
+                <Map size={16} className="text-amber-500" />
+                Giving Receipts by Regional Chapter
+              </h3>
+              <p className="text-xs text-slate-500 mb-4">Regional performance based on audit confirmed transactions.</p>
+              <div className="h-60 flex items-center">
+                <BarChart data={chapterGivingData} barColor="#f59e0b" />
+              </div>
+            </div>
+
+            <div className="p-6 glass-panel rounded-3xl flex flex-col justify-between">
+              <div>
+                <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2 tracking-tight">
+                  <Trophy size={16} className="text-yellow-500" />
+                  Cell Group Soul-Winning Leaderboard
+                </h3>
+                <p className="text-xs text-slate-500 mb-4">Ranking cell outreach units by new members added.</p>
+                
+                <div className="overflow-x-auto max-h-56 overflow-y-auto pr-1">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="text-slate-500 border-b border-slate-800 font-extrabold uppercase text-[10px] tracking-wide">
+                        <th className="pb-2">Cell Group</th>
+                        <th className="pb-2">Regional Chapter</th>
+                        <th className="pb-2 text-right">Souls Won</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-850">
+                      {cellLeaderboard.map((cell, idx) => (
+                        <tr key={idx} className="ledger-row transition-all duration-250">
+                          <td className="py-2.5 text-slate-200 font-bold flex items-center gap-1.5">
+                            <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[9px] ${idx === 0 ? 'bg-yellow-500/10 text-yellow-500' : idx === 1 ? 'bg-slate-350/10 text-slate-350' : 'bg-slate-800 text-slate-400'}`}>
+                              {idx + 1}
+                            </span>
+                            {cell.name}
+                          </td>
+                          <td className="py-2.5 text-slate-450">{cell.chapter}</td>
+                          <td className="py-2.5 text-right font-extrabold text-indigo-400 font-mono tabular-nums">{cell.souls}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {activeModule === 'ledger' && (
+        <div className="p-6 glass-panel rounded-3xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-md font-bold text-slate-100 flex items-center gap-2 tracking-tight">
+                <FileText size={16} className="text-amber-500" />
+                Church Ledger Register
+              </h3>
+              <p className="text-xs text-slate-500">Rigid vertical alignment of all weekly giving entries and audits.</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => exportToTxt('Full Church Ledger Register', ['ID', 'Member', 'Category', 'Method', 'Date', 'Amount', 'Status'], ledger.map(item => [item.id, item.memberName, item.category, item.paymentMethod, item.serviceDate, `$${item.totalAmount}`, item.status]))}
+                className="px-3.5 py-1.5 bg-slate-950 border border-slate-800 text-slate-350 font-bold rounded-xl text-xs hover:border-slate-700 active:scale-95 transition-all cursor-pointer"
+              >
+                Export TXT
+              </button>
+              <button
+                onClick={() => triggerPrint('Full Church Ledger Register', ['ID', 'Member', 'Category', 'Method', 'Date', 'Amount', 'Status'], ledger.map(item => [item.id, item.memberName, item.category, item.paymentMethod, item.serviceDate, `$${item.totalAmount}`, item.status]))}
+                className="px-3.5 py-1.5 bg-indigo-650 hover:bg-indigo-600 text-white font-bold rounded-xl text-xs active:scale-95 transition-all shadow-md cursor-pointer border-none"
+              >
+                Print PDF
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/40">
+            <table className="w-full text-left text-xs border-collapse min-w-[700px]">
+              <thead>
+                <tr className="text-slate-500 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
+                  <th className="px-6 py-3.5">Transaction ID</th>
+                  <th className="px-6 py-3.5">Member Name</th>
+                  <th className="px-6 py-3.5">Category</th>
+                  <th className="px-6 py-3.5">Service Date</th>
+                  <th className="px-6 py-3.5">Method</th>
+                  <th className="px-6 py-3.5 text-right">Total Amount</th>
+                  <th className="px-6 py-3.5 text-center">Audit Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-850 font-medium">
+                {filteredLedger.map(item => (
+                  <tr 
+                    key={item.id} 
+                    onDoubleClick={() => setSelectedReceipt(item)}
+                    className="ledger-row cursor-pointer"
+                    title="Double-click to view proof of payment receipt"
+                  >
+                    <td className="px-6 py-3 font-mono text-[10px] text-slate-500">{item.id}</td>
+                    <td className="px-6 py-3 text-slate-100 font-bold">{item.memberName}</td>
+                    <td className="px-6 py-3">
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${item.category === 'Tithe' ? 'badge-indigo-soft' : 'badge-slate-soft'}`}>
+                        {item.category}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 font-mono text-slate-400">{item.serviceDate}</td>
+                    <td className="px-6 py-3 text-slate-450">{item.paymentMethod}</td>
+                    <td className="px-6 py-3 text-right text-indigo-400 font-bold font-tabular">${item.totalAmount.toLocaleString()}</td>
+                    <td className="px-6 py-3 text-center">
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${item.status === 'Confirmed' ? 'badge-emerald-soft' : 'badge-amber-soft'}`}>
+                        {item.status === 'Confirmed' ? 'Verified' : 'Pending Review'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {filteredLedger.length === 0 && (
+                  <tr>
+                    <td colSpan="7" className="text-center text-slate-650 py-12 italic">No transaction entries found matching active search.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {activeModule === 'souls' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 p-6 glass-panel rounded-3xl space-y-4">
+            <div>
+              <h3 className="text-md font-bold text-slate-100 flex items-center gap-2 tracking-tight">
+                <Trophy size={16} className="text-amber-500" />
+                Soul Outreach Tracker
+              </h3>
+              <p className="text-xs text-slate-500">Full register of confirmed church database outreach additions.</p>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/40">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="text-slate-500 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
+                    <th className="px-6 py-3.5">Soul Name</th>
+                    <th className="px-6 py-3.5">Sex</th>
+                    <th className="px-6 py-3.5">Profession</th>
+                    <th className="px-6 py-3.5">Phone Number</th>
+                    <th className="px-6 py-3.5">Recorded By</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-850 font-medium">
+                  {filteredSouls.map(soul => (
+                    <tr key={soul.id} className="ledger-row">
+                      <td className="px-6 py-3 text-slate-105 font-bold">{soul.name}</td>
+                      <td className="px-6 py-3">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 font-bold border border-indigo-900">{soul.sex}</span>
+                      </td>
+                      <td className="px-6 py-3 text-slate-400">{soul.profession}</td>
+                      <td className="px-6 py-3 font-mono text-slate-450">{soul.phone}</td>
+                      <td className="px-6 py-3 text-slate-350">{soul.reporterName}</td>
+                    </tr>
+                  ))}
+                  {filteredSouls.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="text-center text-slate-650 py-12 italic">No outreach additions recorded in system.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <RecordSoulForm
+              currentUser={currentUser}
+              chapters={chapters}
+              cells={cells}
+              onSubmit={submitSoulRecord}
+            />
+          </div>
+        </div>
+      )}
+
+      {activeModule === 'deficits' && (
+        <div className="space-y-6">
+          
+          {/* Chapter Non-Performance flags */}
+          <div className="p-6 border border-rose-500/15 bg-rose-500/5 rounded-3xl">
+            <h3 className="text-md font-bold text-rose-400 flex items-center gap-2 mb-2 tracking-tight">
+              <AlertCircle size={18} className="text-rose-400 shrink-0" />
+              Non-Performance Flags: Chapters ({nonPerformingChapters.length})
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <StatCard
-                title="My Personal Giving"
-                value={`$${myPersonalGiving.toLocaleString()}`}
-                icon={TrendingUp}
-                description="Your confirmed giving records for this timeframe"
-                status="info"
+            <p className="text-xs text-slate-500 mb-4">
+              Chapters flagged for zero total chapter giving AND zero souls won within the selected timeframe.
+            </p>
+            {nonPerformingChapters.length === 0 ? (
+              <div className="text-xs text-slate-500 italic py-4 text-center">
+                All regional chapters are performing actively. No flags generated.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {nonPerformingChapters.map(chapter => (
+                  <div key={chapter.id} className="p-4 bg-slate-950 border border-slate-800 rounded-2xl flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-slate-200 block">{chapter.name}</span>
+                      <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">HQ: {chapter.headquarters}</span>
+                    </div>
+                    <span className="px-2 py-0.5 bg-rose-550/10 text-rose-400 border border-rose-500/10 rounded-lg text-[9px] font-bold uppercase tracking-wider animate-pulse">
+                      Underperforming
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Automate Non-Performance alerts */}
+          <div className="p-6 border border-rose-500/15 bg-rose-500/5 rounded-3xl">
+            <h3 className="text-md font-bold text-rose-450 flex items-center gap-2 mb-2 tracking-tight">
+              <AlertTriangle size={18} className="animate-pulse" />
+              Pastor Flagging Engine: Cell Deadlines & Giving Deficits
+            </h3>
+            <p className="text-xs text-slate-400 mb-4">
+              Weekly audit automated notifications flagging cells or regions with active leadership vacancies, 
+              missed deadline submissions (for week <span className="font-mono text-rose-300 font-bold">{latestDate}</span>), or negative growth trends.
+            </p>
+
+            {cellDeadlinesFlags.length === 0 ? (
+              <div className="p-4 bg-emerald-950/20 border border-emerald-800/30 text-emerald-400 text-xs rounded-xl font-semibold flex items-center gap-2">
+                <CheckCircle size={16} /> All active cells have met reporting deadlines and performance indexes this week!
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {cellDeadlinesFlags.map((cell, idx) => (
+                  <div 
+                    key={idx} 
+                    className={`p-4 rounded-2xl border ${cell.status === 'critical' ? 'bg-rose-950/20 border-rose-500/20 text-rose-350' : 'bg-amber-950/10 border-amber-500/20 text-amber-350'}`}
+                  >
+                    <div className="flex items-center justify-between font-bold mb-2">
+                      <span className="text-sm text-slate-205">{cell.cellName}</span>
+                      <span className={`text-[9px] px-2 py-0.5 rounded font-extrabold uppercase ${cell.status === 'critical' ? 'bg-rose-500/15 text-rose-400' : 'bg-amber-500/15 text-amber-400'}`}>
+                        {cell.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 mb-3">
+                      Chapter: <span className="font-semibold text-slate-400">{cell.chapterName}</span> <br />
+                      Cell Leader: <span className="font-semibold text-slate-400">{cell.leaderName}</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {cell.reasons.map((r, i) => (
+                        <div key={i} className="flex items-center gap-1.5 text-xs font-bold text-rose-400">
+                          <XCircle size={12} className="shrink-0" />
+                          <span>{r}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeModule === 'audits' && (
+        <div className="space-y-6">
+          
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* chapter leader form */}
+            <div className="flex-1">
+              <CredentialForm
+                creatorRole={currentUser.role}
+                targetRole="chapter_leader"
+                chapters={chapters}
+                onSubmit={createCredential}
               />
-              <StatCard
-                title="My Personal Outreach"
-                value={`${myPersonalSouls} Souls`}
-                icon={Sparkles}
-                description="Approved souls won and brought by you"
-                status="success"
-              />
-              <StatCard
-                title="My Personal Submissions"
-                value={`${myPersonalSubmissions} Entries`}
-                icon={FileText}
-                description="Your submitted entries in this timeframe"
-                status="default"
-              />
+            </div>
+            
+            {/* create chapter form */}
+            <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl h-fit w-full lg:w-80">
+              <h3 className="text-sm font-bold text-slate-100 mb-4 flex items-center gap-2 tracking-tight">
+                <Map size={16} className="text-indigo-400" />
+                Establish New Chapter
+              </h3>
+              {chapterSuccess && (
+                <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl font-bold">
+                  Chapter established!
+                </div>
+              )}
+              <form onSubmit={handleCreateChapter} className="space-y-4">
+                <div>
+                  <label className="block text-slate-450 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Chapter Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Faith Chapter"
+                    value={newChapterName}
+                    onChange={(e) => setNewChapterName(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-xs outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Headquarters City</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Lagos"
+                    value={newChapterHq}
+                    onChange={(e) => setNewChapterHq(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-xs outline-none"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-all active:scale-[0.98] cursor-pointer border-none"
+                >
+                  Create Chapter
+                </button>
+              </form>
             </div>
           </div>
 
           {/* Credential Approvals Queue */}
           {pendingCellLeaders.length > 0 && (
             <div className="p-6 bg-amber-500/5 border border-amber-500/20 rounded-3xl">
-              <h3 className="text-md font-bold text-amber-400 flex items-center gap-2 mb-4">
+              <h3 className="text-md font-bold text-amber-400 flex items-center gap-2 mb-4 tracking-tight">
                 <UserCheck size={18} />
                 Two-Tier Credential Queue: Pending Pastor Confirmation
               </h3>
-              <div className="overflow-x-auto rounded-xl border border-amber-500/10 bg-slate-950/60">
+              <div className="overflow-x-auto rounded-2xl border border-amber-500/10 bg-slate-950/60">
                 <table className="w-full border-collapse text-left text-xs min-w-[600px]">
                   <thead>
-                    <tr className="border-b border-amber-500/10 text-slate-400 uppercase tracking-wider font-extrabold bg-slate-900/60">
+                    <tr className="border-b border-amber-500/10 text-slate-500 uppercase tracking-wider font-extrabold bg-slate-900/60 text-[10px]">
                       <th className="px-4 py-3">Full Name</th>
                       <th className="px-4 py-3">Username</th>
                       <th className="px-4 py-3">Assigned Region</th>
@@ -600,7 +796,7 @@ export function AdminPortal({
                       return (
                         <tr key={u.id} className="hover:bg-amber-500/5 transition-colors font-medium">
                           <td className="px-4 py-3 text-slate-100 font-bold">{u.name}</td>
-                          <td className="px-4 py-3 text-slate-300">@{u.username}</td>
+                          <td className="px-4 py-3 text-slate-350 font-semibold">@{u.username}</td>
                           <td className="px-4 py-3">
                             <span className="text-indigo-400">{chapter?.name}</span> &rarr; <span className="text-cyan-400">{cell?.name}</span>
                           </td>
@@ -609,13 +805,13 @@ export function AdminPortal({
                           <td className="px-4 py-3 text-right flex items-center justify-end gap-2">
                             <button
                               onClick={() => approveCredential(u.id)}
-                              className="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-lg border border-emerald-500/20 transition-colors flex items-center gap-1 active:scale-95"
+                              className="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-450 font-bold rounded-lg border border-emerald-500/20 transition-colors flex items-center gap-1 active:scale-95 cursor-pointer"
                             >
                               <CheckCircle size={12} /> Confirm
                             </button>
                             <button
                               onClick={() => rejectCredential(u.id)}
-                              className="px-2.5 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-bold rounded-lg border border-rose-500/20 transition-colors flex items-center gap-1 active:scale-95"
+                              className="px-2.5 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-450 font-bold rounded-lg border border-rose-500/20 transition-colors flex items-center gap-1 active:scale-95 cursor-pointer"
                             >
                               <XCircle size={12} /> Reject
                             </button>
@@ -631,15 +827,15 @@ export function AdminPortal({
 
           {/* Pending Deletions Queue */}
           {pendingDeletions.length > 0 && (
-            <div className="p-6 bg-rose-500/5 border border-rose-500/20 rounded-3xl mt-4">
-              <h3 className="text-md font-bold text-rose-400 flex items-center gap-2 mb-4">
+            <div className="p-6 bg-rose-500/5 border border-rose-500/20 rounded-3xl">
+              <h3 className="text-md font-bold text-rose-405 flex items-center gap-2 mb-4 tracking-tight">
                 <AlertTriangle size={18} className="animate-pulse" />
-                Pending Deletion Approval Requests (Initiated by Chapter Leaders)
+                Pending Deletion Approval Requests (Chapter Leaders Authority)
               </h3>
-              <div className="overflow-x-auto rounded-xl border border-rose-500/10 bg-slate-950/60">
+              <div className="overflow-x-auto rounded-2xl border border-rose-500/10 bg-slate-950/60">
                 <table className="w-full border-collapse text-left text-xs min-w-[600px]">
                   <thead>
-                    <tr className="border-b border-rose-500/10 text-slate-400 uppercase tracking-wider font-extrabold bg-slate-900/60">
+                    <tr className="border-b border-rose-500/10 text-slate-500 uppercase tracking-wider font-extrabold bg-slate-900/60 text-[10px]">
                       <th className="px-4 py-3">Full Name</th>
                       <th className="px-4 py-3">Username</th>
                       <th className="px-4 py-3">Role</th>
@@ -669,13 +865,13 @@ export function AdminPortal({
                           <td className="px-4 py-3 text-right flex items-center justify-end gap-2">
                             <button
                               onClick={() => approveUserDeletion(u.id)}
-                              className="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-lg border border-emerald-500/20 transition-colors flex items-center gap-1 active:scale-95"
+                              className="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-450 font-bold rounded-lg border border-emerald-500/20 transition-colors flex items-center gap-1 active:scale-95 cursor-pointer"
                             >
                               <CheckCircle size={12} /> Confirm Delete
                             </button>
                             <button
                               onClick={() => rejectUserDeletion(u.id)}
-                              className="px-2.5 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-bold rounded-lg border border-rose-500/20 transition-colors flex items-center gap-1 active:scale-95"
+                              className="px-2.5 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-455 font-bold rounded-lg border border-rose-500/20 transition-colors flex items-center gap-1 active:scale-95 cursor-pointer"
                             >
                               <XCircle size={12} /> Reject Request
                             </button>
@@ -691,14 +887,14 @@ export function AdminPortal({
 
           {/* Souls Pending Verification Queue */}
           {pendingSouls.length > 0 && (
-            <div className="p-6 border border-indigo-500/15 bg-indigo-500/5 rounded-3xl mt-4">
-              <h3 className="text-md font-bold text-indigo-400 flex items-center gap-2 mb-4">
+            <div className="p-6 border border-indigo-500/15 bg-indigo-500/5 rounded-3xl">
+              <h3 className="text-md font-bold text-indigo-400 flex items-center gap-2 mb-4 tracking-tight">
                 <Sparkles size={18} />
                 Souls Awaiting Pastor Confirmation ({pendingSouls.length})
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {pendingSouls.map(soul => (
-                  <div key={soul.id} className="p-4 bg-slate-950 border border-slate-850 rounded-2xl flex flex-col justify-between gap-3 font-medium">
+                  <div key={soul.id} className="p-4 bg-slate-950 border border-slate-800 rounded-2xl flex flex-col justify-between gap-3 font-medium">
                     <div>
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-slate-200">{soul.name}</span>
@@ -706,21 +902,21 @@ export function AdminPortal({
                       </div>
                       <p className="text-[10px] text-slate-500 mt-1">Recorded by: <span className="text-slate-400 font-semibold">{soul.reporterName}</span> (Chapter Leader)</p>
                       <div className="mt-2 text-xs space-y-1 text-slate-450 border-t border-slate-900 pt-2">
-                        <p><span className="text-slate-500 font-medium">Profession:</span> {soul.profession}</p>
-                        <p><span className="text-slate-500 font-medium">Phone:</span> {soul.phone}</p>
-                        <p><span className="text-slate-500 font-medium">Address:</span> {soul.address}</p>
+                        <p><span className="text-slate-500 font-semibold">Profession:</span> {soul.profession}</p>
+                        <p><span className="text-slate-500 font-semibold">Phone:</span> {soul.phone}</p>
+                        <p><span className="text-slate-500 font-semibold">Address:</span> {soul.address}</p>
                       </div>
                     </div>
                     <div className="flex gap-2 border-t border-slate-900 pt-2.5">
                       <button
                         onClick={() => approveSoul(soul.id)}
-                        className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-[10px] transition-colors"
+                        className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-[10px] transition-colors cursor-pointer border-none"
                       >
                         Confirm & Activate
                       </button>
                       <button
                         onClick={() => rejectSoul(soul.id)}
-                        className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold rounded-lg text-[10px] transition-colors border border-rose-500/10"
+                        className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-455 font-bold rounded-lg text-[10px] transition-colors border border-rose-500/10 cursor-pointer"
                       >
                         Reject
                       </button>
@@ -733,18 +929,18 @@ export function AdminPortal({
 
           {/* Pastor Giving Verification Queue */}
           {pendingGivings.length > 0 && (
-            <div className="p-6 border border-amber-500/15 bg-amber-500/5 rounded-3xl mt-4">
-              <h3 className="text-md font-bold text-amber-400 flex items-center gap-2 mb-4">
+            <div className="p-6 border border-amber-500/15 bg-amber-500/5 rounded-3xl">
+              <h3 className="text-md font-bold text-amber-400 flex items-center gap-2 mb-4 tracking-tight">
                 <AlertCircle size={18} />
                 Financial Audit Queue: Pending Pastor Review ({pendingGivings.length})
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {pendingGivings.map(item => (
-                  <div key={item.id} className="bg-slate-950 border border-slate-850 p-5 rounded-2xl flex flex-col justify-between">
+                  <div key={item.id} className="bg-slate-950 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-bold text-slate-100">{item.memberName}</span>
-                        <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                        <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1 font-mono">
                           <Calendar size={12} />
                           {item.serviceDate}
                         </span>
@@ -757,11 +953,11 @@ export function AdminPortal({
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-slate-500 font-semibold">Category:</span>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200/50 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900/30 font-bold uppercase">{item.category}</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded badge-indigo-soft font-bold uppercase">{item.category}</span>
                         </div>
                         <div className="flex justify-between items-center border-t border-slate-900 pt-2 font-bold text-sm">
                           <span className="text-slate-300">Amount:</span>
-                          <span className="text-emerald-400 font-mono tabular-nums">${item.totalAmount}</span>
+                          <span className="text-emerald-450 font-mono tabular-nums">${item.totalAmount}</span>
                         </div>
                         {item.description && (
                           <div className="border-t border-slate-900 pt-2">
@@ -774,13 +970,13 @@ export function AdminPortal({
                     <div className="flex gap-2 border-t border-slate-900 pt-3">
                       <button
                         onClick={() => verifyLedgerEntry(item.id, true)}
-                        className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-[10px] transition-colors"
+                        className="flex-1 py-2 bg-emerald-650 hover:bg-emerald-600 text-white font-bold rounded-lg text-[10px] transition-colors cursor-pointer border-none"
                       >
                         Approve Receipt
                       </button>
                       <button
                         onClick={() => verifyLedgerEntry(item.id, false)}
-                        className="px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold rounded-lg text-[10px] transition-colors border border-rose-500/10"
+                        className="px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-455 font-bold rounded-lg text-[10px] transition-colors border border-rose-500/10 cursor-pointer"
                       >
                         Reject
                       </button>
@@ -790,164 +986,10 @@ export function AdminPortal({
               </div>
             </div>
           )}
-
-          {/* Chapters Non-Performance Alerts */}
-          <div className="p-6 border border-rose-500/10 bg-rose-500/5 rounded-3xl mt-6">
-            <h3 className="text-md font-bold text-rose-450 flex items-center gap-2 mb-2">
-              <AlertCircle size={18} className="text-rose-400 shrink-0" />
-              Non-Performance Flags: Chapters ({nonPerformingChapters.length})
-            </h3>
-            <p className="text-xs text-slate-500 mb-4">
-              Regional chapters flagged for zero total chapter giving AND zero souls won within the selected timeframe.
-            </p>
-            {nonPerformingChapters.length === 0 ? (
-              <div className="text-xs text-slate-500 italic py-4 text-center">
-                All regional chapters are performing actively. No flags generated.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {nonPerformingChapters.map(chapter => (
-                  <div key={chapter.id} className="p-4 bg-slate-950/80 border border-slate-850 rounded-2xl flex items-center justify-between">
-                    <div>
-                      <span className="text-xs font-bold text-slate-205 block">{chapter.name}</span>
-                      <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">HQ: {chapter.hq || 'Global HQ'}</span>
-                    </div>
-                    <span className="px-2 py-0.5 bg-rose-550/10 text-rose-400 border border-rose-500/10 rounded-lg text-[9px] font-bold uppercase tracking-wider animate-pulse">
-                      Underperforming
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Charts Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left: Weekly trend */}
-            <div className="lg:col-span-2 p-6 glass-panel rounded-3xl">
-              <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2">
-                <TrendingUp size={16} className="text-indigo-400" />
-                Global Weekly Giving Trends
-              </h3>
-              <p className="text-xs text-slate-500 mb-4">Confirmed receipts aggregated by service dates.</p>
-              <div className="h-60 flex items-center">
-                <LineChart data={weeklyGivingData} />
-              </div>
-            </div>
-
-            {/* Right: Giving type breakdown */}
-            <div className="p-6 glass-panel rounded-3xl">
-              <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2">
-                <Grid size={16} className="text-pink-400" />
-                Contribution Breakdown
-              </h3>
-              <p className="text-xs text-slate-500 mb-4">Category allocation of received funds.</p>
-              <div className="h-60 flex items-center justify-center">
-                <DonutChart data={givingTypeData} />
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left: Giving by Chapter */}
-            <div className="p-6 glass-panel rounded-3xl">
-              <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2">
-                <Map size={16} className="text-cyan-400" />
-                Giving Receipts by Regional Chapter
-              </h3>
-              <p className="text-xs text-slate-500 mb-4">Regional performance based on audit confirmed transactions.</p>
-              <div className="h-60 flex items-center">
-                <BarChart data={chapterGivingData} barColor="#06b6d4" />
-              </div>
-            </div>
-
-            {/* Right: Soul-Winning Leaderboard */}
-            <div className="p-6 glass-panel rounded-3xl flex flex-col justify-between">
-              <div>
-                <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2">
-                  <Trophy size={16} className="text-yellow-500" />
-                  Cell Group Soul-Winning Leaderboard
-                </h3>
-                <p className="text-xs text-slate-500 mb-4">Ranking cell outreach units by new members added.</p>
-                
-                <div className="overflow-x-auto max-h-56 overflow-y-auto pr-1">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="text-slate-400 border-b border-slate-800 font-extrabold uppercase text-[10px]">
-                        <th className="pb-2">Cell Group</th>
-                        <th className="pb-2">Regional Chapter</th>
-                        <th className="pb-2 text-right">Souls Won</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                      {cellLeaderboard.map((cell, idx) => (
-                        <tr key={idx} className="hover:bg-slate-900/10 dark:hover:bg-slate-900/30 transition-all duration-200">
-                          <td className="py-2.5 text-slate-200 font-bold flex items-center gap-1.5">
-                            <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[9px] ${idx === 0 ? 'bg-yellow-500/10 text-yellow-500' : idx === 1 ? 'bg-slate-300/10 text-slate-350' : 'bg-slate-800 text-slate-400'}`}>
-                              {idx + 1}
-                            </span>
-                            {cell.name}
-                          </td>
-                          <td className="py-2.5 text-slate-400">{cell.chapter}</td>
-                          <td className="py-2.5 text-right font-extrabold text-indigo-400 font-mono tabular-nums">{cell.souls}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Grid: Non-Performance Alerts */}
-          <div className="p-6 border border-rose-500/15 bg-rose-500/5 rounded-3xl">
-            <h3 className="text-md font-bold text-rose-400 flex items-center gap-2 mb-2">
-              <AlertTriangle size={18} className="animate-pulse" />
-              Pastor Flagging Engine: Non-Performance & Deficit Alerts
-            </h3>
-            <p className="text-xs text-slate-400 mb-4">
-              Weekly audit automated notifications flagging cells or regions with active leadership vacancies, 
-              missed deadline submissions (for week <span className="font-mono text-rose-300 font-bold">{latestDate}</span>), or negative growth trends.
-            </p>
-
-            {cellDeadlinesFlags.length === 0 ? (
-              <div className="p-4 bg-emerald-950/20 border border-emerald-800/30 text-emerald-400 text-xs rounded-xl font-semibold flex items-center gap-2">
-                <CheckCircle size={16} /> All active cells have met reporting deadlines and performance indexes this week!
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {cellDeadlinesFlags.map((cell, idx) => (
-                  <div 
-                    key={idx} 
-                    className={`p-4 rounded-2xl border ${cell.status === 'critical' ? 'bg-rose-950/20 border-rose-500/20 text-rose-350' : 'bg-amber-950/10 border-amber-500/20 text-amber-350'}`}
-                  >
-                    <div className="flex items-center justify-between font-bold mb-2">
-                      <span className="text-sm text-slate-200">{cell.cellName}</span>
-                      <span className={`text-[9px] px-2 py-0.5 rounded font-extrabold uppercase ${cell.status === 'critical' ? 'bg-rose-500/15 text-rose-400' : 'bg-amber-500/15 text-amber-400'}`}>
-                        {cell.status.toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="text-[10px] text-slate-400 mb-3">
-                      Chapter: <span className="font-semibold text-slate-350">{cell.chapterName}</span> <br />
-                      Cell Leader: <span className="font-semibold text-slate-350">{cell.leaderName}</span>
-                    </div>
-                    <div className="space-y-1.5">
-                      {cell.reasons.map((r, i) => (
-                        <div key={i} className="flex items-center gap-1.5 text-xs font-bold text-rose-400">
-                          <XCircle size={12} className="shrink-0" />
-                          <span>{r}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </>
+        </div>
       )}
 
-      {/* Analytics Reveal Report Exporter Modal */}
+      {/* Exporter Reveal Modal */}
       {revealedReport && (() => {
         let reportTitle = '';
         let headers = [];
@@ -1026,29 +1068,26 @@ export function AdminPortal({
         }
 
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
             <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
-              {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-slate-850 bg-slate-900/10">
+              <div className="flex items-center justify-between p-6 border-b border-slate-800 bg-slate-900/10">
                 <div>
                   <h3 className="text-lg font-bold text-slate-100">{reportTitle}</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Summary of contributors and growth breakdown</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Summary of network records and growth breakdown</p>
                 </div>
                 <button
                   onClick={() => setRevealedReport(null)}
-                  className="w-8 h-8 rounded-full bg-slate-950 border border-slate-800 hover:bg-slate-900 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-all cursor-pointer shadow-lg active:scale-90 shrink-0 text-lg font-bold"
-                  aria-label="Close modal"
+                  className="w-8 h-8 rounded-full bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-all cursor-pointer shadow-lg active:scale-90 shrink-0 text-lg font-bold"
                 >
                   &times;
                 </button>
               </div>
 
-              {/* Table Container */}
               <div className="flex-1 overflow-y-auto p-6">
-                <div className="overflow-x-auto rounded-2xl border border-slate-850 bg-slate-950/40">
+                <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/40">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="text-slate-405 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
+                      <tr className="text-slate-500 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
                         {headers.map((h, i) => {
                           const isAmountHeader = h.toLowerCase().includes('amount') || h.toLowerCase().includes('souls') || h.toLowerCase().includes('giving') || h.toLowerCase().includes('contribution') || h.toLowerCase().includes('base');
                           return (
@@ -1083,27 +1122,26 @@ export function AdminPortal({
                 </div>
               </div>
 
-              {/* Footer controls with download formats */}
-              <div className="flex items-center justify-between p-6 border-t border-slate-850 bg-slate-950/20">
-                <div className="text-[10px] text-slate-550 font-semibold uppercase">Export Format Options:</div>
+              <div className="flex items-center justify-between p-6 border-t border-slate-800 bg-slate-950/20">
+                <div className="text-[10px] text-slate-500 font-extrabold uppercase">Export Format Options:</div>
                 <div className="flex gap-2.5">
                   <button
                     onClick={() => exportToTxt(reportTitle, headers, rows)}
-                    className="px-3.5 py-2 bg-slate-950 border border-slate-800 text-slate-300 font-bold rounded-xl text-xs hover:border-slate-700 active:scale-95 transition-all"
+                    className="px-3.5 py-2 bg-slate-950 border border-slate-800 text-slate-300 font-bold rounded-xl text-xs hover:border-slate-700 active:scale-95 transition-all cursor-pointer"
                   >
                     Download TXT
                   </button>
                   <button
                     onClick={() => exportToWord(reportTitle, headers, rows)}
-                    className="px-3.5 py-2 bg-slate-950 border border-slate-800 text-slate-350 font-bold rounded-xl text-xs hover:border-slate-700 active:scale-95 transition-all"
+                    className="px-3.5 py-2 bg-slate-950 border border-slate-800 text-slate-350 font-bold rounded-xl text-xs hover:border-slate-700 active:scale-95 transition-all cursor-pointer"
                   >
-                    Download Word (.doc)
+                    Download Word
                   </button>
                   <button
                     onClick={() => triggerPrint(reportTitle, headers, rows)}
-                    className="px-3.5 py-2 bg-indigo-650 hover:bg-indigo-600 text-white font-bold rounded-xl text-xs active:scale-95 transition-all shadow-md shadow-indigo-900/20"
+                    className="px-3.5 py-2 bg-indigo-650 hover:bg-indigo-600 text-white font-bold rounded-xl text-xs active:scale-95 transition-all shadow-md cursor-pointer border-none"
                   >
-                    Print / Export PDF
+                    Print Report
                   </button>
                 </div>
               </div>
@@ -1111,6 +1149,80 @@ export function AdminPortal({
           </div>
         );
       })()}
+
+      {/* Double click receipt auditing modal */}
+      {selectedReceipt && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 flex flex-col justify-between max-h-[90vh] shadow-2xl">
+            <div>
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                <div>
+                  <h3 className="font-bold text-slate-100">{selectedReceipt.memberName}</h3>
+                  <span className="text-[10px] text-slate-550 font-mono">Audit Transaction ID: {selectedReceipt.id}</span>
+                </div>
+                <button
+                  onClick={() => setSelectedReceipt(null)}
+                  className="text-slate-400 hover:text-slate-205 font-bold text-lg cursor-pointer bg-transparent border-none"
+                >
+                  &times;
+                </button>
+              </div>
+
+              {/* Simulated Receipt Preview */}
+              <div className="bg-slate-950 border border-slate-850 p-6 rounded-2xl flex flex-col items-center justify-center text-center gap-3 min-h-60 shadow-inner relative overflow-hidden">
+                <div className="absolute inset-0 opacity-5 bg-[linear-gradient(#6366f1_1px,transparent_1px),linear-gradient(90deg,#6366f1_1px,transparent_1px)] bg-[size:16px_16px]" />
+                <div className="w-12 h-12 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center border border-indigo-500/20">
+                  <FileText size={24} />
+                </div>
+                <span className="text-xs font-bold text-slate-300">RECEIPT ATTACHMENT DETAILS</span>
+                <div className="text-xs space-y-1.5 text-slate-400 text-left bg-slate-900/60 p-4 rounded-xl border border-slate-850 w-full font-medium">
+                  <div>Segment: <strong className="text-slate-200">{selectedReceipt.segment || 'Local'}</strong></div>
+                  <div>Category: <strong className="text-indigo-400 font-bold uppercase">{selectedReceipt.category || 'Tithe'}</strong></div>
+                  {selectedReceipt.description && (
+                    <div>Memo: <span className="text-slate-350 italic">"{selectedReceipt.description}"</span></div>
+                  )}
+                  <div className="pt-2 border-t border-slate-800/80">Service Date: <strong className="text-slate-300 font-mono">{selectedReceipt.serviceDate}</strong></div>
+                  <div>Payment: <strong className="text-slate-300">{selectedReceipt.paymentMethod}</strong></div>
+                  <div>File: <strong className="text-indigo-400 font-mono">{selectedReceipt.receiptUrl}</strong></div>
+                </div>
+                <div className="text-lg font-extrabold text-emerald-450 font-mono mt-2 tabular-nums">
+                  Verified Amount: ${selectedReceipt.amount || selectedReceipt.totalAmount}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 border-t border-slate-800 pt-4 mt-6">
+              {selectedReceipt.status !== 'Confirmed' ? (
+                <>
+                  <button
+                    onClick={() => {
+                      verifyLedgerEntry(selectedReceipt.id, true);
+                      setSelectedReceipt(null);
+                    }}
+                    className="flex-1 py-2 bg-emerald-650 hover:bg-emerald-600 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer border-none"
+                  >
+                    Confirm & Verify
+                  </button>
+                  <button
+                    onClick={() => {
+                      verifyLedgerEntry(selectedReceipt.id, false);
+                      setSelectedReceipt(null);
+                    }}
+                    className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-455 font-bold rounded-xl text-xs border border-rose-500/10 cursor-pointer"
+                  >
+                    Reject
+                  </button>
+                </>
+              ) : (
+                <div className="w-full p-2.5 bg-emerald-550/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl font-bold text-center flex items-center justify-center gap-1.5">
+                  <CheckCircle size={14} /> Audit Completed (Confirmed)
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

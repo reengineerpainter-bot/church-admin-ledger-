@@ -84,7 +84,7 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
                 placeholder="e.g. John Doe"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all"
               />
             </div>
           </div>
@@ -98,7 +98,7 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
                 placeholder="e.g. +2348012345678"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all font-mono"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all font-mono"
               />
             </div>
           </div>
@@ -110,7 +110,7 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
             <select
               value={sex}
               onChange={(e) => setSex(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all"
+              className="w-full px-4 py-2.5 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all"
             >
               <option value="Male" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Male</option>
               <option value="Female" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Female</option>
@@ -126,7 +126,7 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
                 placeholder="e.g. Architect"
                 value={profession}
                 onChange={(e) => setProfession(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all"
               />
             </div>
           </div>
@@ -141,7 +141,7 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
               placeholder="e.g. 12 Grace Court, Lagos"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all"
             />
           </div>
         </div>
@@ -154,7 +154,7 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
               <select
                 value={selectedChapterId}
                 onChange={(e) => { setSelectedChapterId(e.target.value); setSelectedCellId(''); }}
-                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all"
+                className="w-full px-4 py-2.5 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all"
               >
                 <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>-- Select Chapter --</option>
                 {chapters.map(ch => (
@@ -169,7 +169,7 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
                 value={selectedCellId}
                 onChange={(e) => setSelectedCellId(e.target.value)}
                 disabled={!selectedChapterId}
-                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all disabled:opacity-50"
+                className="w-full px-4 py-2.5 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all disabled:opacity-50"
               >
                 <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>-- Select Cell (None) --</option>
                 {availableCells.map(c => (
@@ -186,7 +186,7 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
             <select
               value={selectedCellId}
               onChange={(e) => setSelectedCellId(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all"
+              className="w-full px-4 py-2.5 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all"
             >
               <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>-- Select Cell (None/General Chapter) --</option>
               {availableCells.map(c => (

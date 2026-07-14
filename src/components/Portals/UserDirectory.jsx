@@ -59,17 +59,17 @@ export function UserDirectory({
   });
 
   const getRoleBadge = (role) => {
-    if (role === 'admin') return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-    if (role === 'chapter_leader') return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
-    if (role === 'cell_leader') return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
-    return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+    if (role === 'admin') return 'badge-indigo-soft';
+    if (role === 'chapter_leader') return 'badge-indigo-soft';
+    if (role === 'cell_leader') return 'badge-slate-soft';
+    return 'badge-emerald-soft';
   };
 
   const getStatusBadge = (status) => {
-    if (status === 'Active') return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-    if (status === 'Pending_Higher_Approval') return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-    if (status === 'Pending_Deletion') return 'bg-rose-505/10 text-rose-400 border-rose-500/20';
-    return 'bg-rose-500/10 text-rose-455 border-rose-500/20';
+    if (status === 'Active') return 'badge-emerald-soft';
+    if (status === 'Pending_Higher_Approval') return 'badge-amber-soft';
+    if (status === 'Pending_Deletion') return 'badge-rose-soft';
+    return 'badge-rose-soft';
   };
 
   const getRoleLabel = (role) => {
@@ -90,7 +90,7 @@ export function UserDirectory({
             placeholder="Search by name or @username..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-100 rounded-xl text-xs outline-none transition-colors"
+            className="w-full pl-10 pr-4 py-2 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-xs outline-none transition-colors"
           />
         </div>
 
@@ -101,7 +101,7 @@ export function UserDirectory({
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="bg-transparent text-slate-300 text-xs font-bold outline-none cursor-pointer"
+                className="bg-transparent text-slate-350 text-xs font-bold outline-none cursor-pointer custom-focus"
               >
                 <option value="all" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>All Roles</option>
                 <option value="chapter_leader" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Chapter Leaders</option>
@@ -116,7 +116,7 @@ export function UserDirectory({
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-transparent text-slate-300 text-xs font-bold outline-none cursor-pointer"
+              className="bg-transparent text-slate-350 text-xs font-bold outline-none cursor-pointer custom-focus"
             >
               <option value="all" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>All Statuses</option>
               <option value="Active" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Active</option>
