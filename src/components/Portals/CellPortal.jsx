@@ -18,6 +18,8 @@ export function CellPortal({
   chapters, 
   cells, 
   createCredential, 
+  approveCredential,
+  rejectCredential,
   verifyLedgerEntry,
   updateUser,
   submitSoulRecord,
@@ -157,6 +159,7 @@ export function CellPortal({
   
   const cellLedger = ledger.filter(item => item.cellId === cellId || item.memberId === currentUser.id);
   const confirmedLedger = cellLedger.filter(item => item.status === 'Confirmed');
+  const pendingMembers = users.filter(u => u.status === 'Pending_Higher_Approval' && u.cellId === cellId);
 
   // --- STATS COMPUTATIONS ---
   const cellLedgerFiltered = cellLedger.filter(item => filterByTimeframe(item.serviceDate));
@@ -520,6 +523,66 @@ export function CellPortal({
 
       {activeModule === 'audits' && (
         <div className="space-y-6">
+
+          {/* User approvals */}
+          <div className="p-6 bg-slate-900/40 border border-slate-800 rounded-3xl">
+            <h3 className="text-md font-bold text-slate-100 flex items-center gap-2 mb-4 tracking-tight">
+              <UserCheck size={18} className="text-amber-500" />
+              Two-Tier Credential Queue: Pending Cell Leader Confirmation
+            </h3>
+            {pendingMembers.length > 0 ? (
+              <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/60">
+                <table className="w-full border-collapse text-left text-xs min-w-[600px]">
+                  <thead>
+                    <tr className="border-b border-slate-850 text-slate-550 uppercase tracking-wider font-extrabold bg-slate-900/60 text-[10px]">
+                      <th className="px-4 py-3">Full Name</th>
+                      <th className="px-4 py-3">Username</th>
+                      <th className="px-4 py-3">Role</th>
+                      <th className="px-4 py-3">Creator</th>
+                      <th className="px-4 py-3">Temp Password</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-850">
+                    {pendingMembers.map(u => {
+                      const creator = users.find(creatorUser => creatorUser.id === u.creatorId);
+                      return (
+                        <tr key={u.id} className="hover:bg-slate-850/30 transition-colors font-medium">
+                          <td className="px-4 py-3 text-slate-100 font-bold">{u.name}</td>
+                          <td className="px-4 py-3 text-slate-350">@{u.username}</td>
+                          <td className="px-4 py-3">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-indigo-950/60 text-indigo-300 border border-indigo-900/50 uppercase">{u.role === 'member' ? 'Member (L6)' : u.role}</span>
+                          </td>
+                          <td className="px-4 py-3 text-slate-400">{creator?.name || 'System / Zonal'}</td>
+                          <td className="px-4 py-3 font-mono">{u.tempPassword}</td>
+                          <td className="px-4 py-3 text-right flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => approveCredential(u.id)}
+                              className="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-450 font-bold rounded-lg border border-emerald-500/20 transition-colors flex items-center gap-1 active:scale-95 cursor-pointer"
+                            >
+                              <CheckCircle size={12} /> Confirm
+                            </button>
+                            <button
+                              onClick={() => rejectCredential(u.id)}
+                              className="px-2.5 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-455 font-bold rounded-lg border border-rose-500/20 transition-colors flex items-center gap-1 active:scale-95 cursor-pointer"
+                            >
+                              <XCircle size={12} /> Reject
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-center bg-slate-950/20 rounded-2xl border border-slate-850 border-dashed">
+                <CheckCircle size={28} className="text-slate-600 mb-2" />
+                <span className="text-xs font-bold text-slate-400">All Credentials Active</span>
+                <span className="text-[10px] text-slate-550 mt-0.5">There are no pending credentials awaiting confirmation in your cell.</span>
+              </div>
+            )}
+          </div>
 
           {/* Pending Submissions Queue */}
           {pendingSubmissions.length > 0 && (

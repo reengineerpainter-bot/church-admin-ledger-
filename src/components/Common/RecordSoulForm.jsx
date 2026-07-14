@@ -25,11 +25,12 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
       return;
     }
 
-    const soulChapterId = currentUser.role === 'admin' ? selectedChapterId : currentUser.chapterId;
-    const soulCellId = currentUser.role === 'admin' ? selectedCellId : (currentUser.role === 'chapter_leader' ? selectedCellId : currentUser.cellId);
+    const isLeader = currentUser.role !== 'member';
+    const soulChapterId = isLeader ? (selectedChapterId || currentUser.chapterId) : currentUser.chapterId;
+    const soulCellId = isLeader ? selectedCellId : currentUser.cellId;
 
-    if (currentUser.role === 'admin' && !soulChapterId) {
-      setError('Please select a chapter to assign the soul.');
+    if (isLeader && !soulChapterId) {
+      setError('Please select a structure location assignment.');
       return;
     }
 
@@ -49,6 +50,8 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
       setAddress('');
       setPhone('');
       setProfession('');
+      setSelectedChapterId('');
+      setSelectedCellId('');
       setError('');
       setTimeout(() => setSuccess(false), 4000);
     }
@@ -147,16 +150,16 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
         </div>
 
         {/* Dynamic assignments based on leader visibility */}
-        {currentUser.role === 'admin' && (
+        {currentUser.role !== 'member' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div>
-              <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Assign Chapter</label>
+              <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Assign Structure Location</label>
               <select
                 value={selectedChapterId}
                 onChange={(e) => { setSelectedChapterId(e.target.value); setSelectedCellId(''); }}
                 className="w-full px-4 py-2.5 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all"
               >
-                <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>-- Select Chapter --</option>
+                <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>-- Select Structure --</option>
                 {chapters.map(ch => (
                   <option key={ch.id} value={ch.id} className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>{ch.name}</option>
                 ))}
@@ -164,7 +167,7 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
             </div>
 
             <div>
-              <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Assign Cell (Optional)</label>
+              <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Assign Cell Group (Optional)</label>
               <select
                 value={selectedCellId}
                 onChange={(e) => setSelectedCellId(e.target.value)}
@@ -177,22 +180,6 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
                 ))}
               </select>
             </div>
-          </div>
-        )}
-
-        {currentUser.role === 'chapter_leader' && (
-          <div>
-            <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Assign Cell Group (Optional)</label>
-            <select
-              value={selectedCellId}
-              onChange={(e) => setSelectedCellId(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all"
-            >
-              <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>-- Select Cell (None/General Chapter) --</option>
-              {availableCells.map(c => (
-                <option key={c.id} value={c.id} className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>{c.name}</option>
-              ))}
-            </select>
           </div>
         )}
 

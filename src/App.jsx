@@ -250,6 +250,8 @@ export function App() {
             chapters={state.chapters}
             cells={state.cells}
             createCredential={state.createCredential}
+            approveCredential={state.approveCredential}
+            rejectCredential={state.rejectCredential}
             verifyLedgerEntry={state.verifyLedgerEntry}
             updateUser={state.updateUser}
             submitSoulRecord={state.submitSoulRecord}
