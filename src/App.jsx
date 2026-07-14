@@ -16,6 +16,11 @@ export function App() {
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [activeModule, setActiveModule] = useState('dashboard');
   const [globalSearchTerm, setGlobalSearchTerm] = useState('');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMobileSidebarOpen(false);
+  }, [activeModule, currentUserId]);
 
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('theme') || 'light';
@@ -294,7 +299,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen flex bg-slate-950 text-slate-100">
+    <div className="min-h-screen flex bg-slate-950 text-slate-100 relative">
       {/* 1. Left Sidebar with Simulator Controls */}
       <Sidebar
         currentUser={currentUser}
@@ -310,6 +315,8 @@ export function App() {
         activeModule={activeModule}
         setActiveModule={setActiveModule}
         pendingAuditsCount={pendingAuditsCount}
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
       />
 
       {/* 2. Top Bar and Main Workspace Viewport */}
@@ -322,9 +329,10 @@ export function App() {
           setActiveModule={setActiveModule}
           onLogout={state.logout}
           onEditProfile={() => setShowEditProfile(true)}
+          onOpenSidebar={() => setIsMobileSidebarOpen(true)}
         />
 
-        <main className="flex-grow p-6">
+        <main className="flex-grow p-4 sm:p-6">
           {renderDashboard()}
         </main>
       </div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Users, RotateCcw, Terminal, ChevronDown, ChevronUp, 
   LogOut, Download, Sun, Moon, TrendingUp, FileText, 
-  AlertCircle, ShieldAlert, Award, Activity, Wallet, UserPlus
+  AlertCircle, ShieldAlert, Award, Activity, Wallet, UserPlus, X
 } from 'lucide-react';
 import { UserAvatar } from './UserAvatar';
 
@@ -19,7 +19,9 @@ export function Sidebar({
   onToggleTheme,
   activeModule,
   setActiveModule,
-  pendingAuditsCount
+  pendingAuditsCount,
+  isOpen = false,
+  onClose
 }) {
   const [isProfileSwitcherOpen, setIsProfileSwitcherOpen] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
@@ -109,9 +111,18 @@ export function Sidebar({
     if (!currentUser) return [];
     const role = currentUser.role;
 
+    const getLedgerLabel = (r) => {
+      if (r === 'admin') return 'zonal church Register';
+      if (r === 'group_pastor') return 'group ledger register';
+      if (r === 'pastor') return 'church ledger register';
+      if (r === 'chapter_leader') return 'chapter ledger register';
+      if (r === 'cell_leader') return 'cell ledger register';
+      return 'Ledger Register';
+    };
+
     const items = [
       { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
-      { id: 'ledger', label: role === 'admin' ? 'zonal church Register' : 'Ledger Register', icon: FileText },
+      { id: 'ledger', label: getLedgerLabel(role), icon: FileText },
       { id: 'personal_givings', label: 'My Personal Givings', icon: Wallet }
     ];
 
@@ -140,17 +151,33 @@ export function Sidebar({
   };
 
   return (
-    <aside className={`w-80 flex flex-col bg-slate-900 border-r border-slate-800 text-slate-300 h-screen sticky top-0 shrink-0 select-none z-40 transition-all ${currentUser ? getThemeClass(currentUser.role) : ''}`}>
-      {/* Brand logo header */}
-      <div className="p-6 border-b border-slate-800 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-indigo-650 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-900/50 font-sans">
-          ⛪
+    <>
+      {/* Mobile Backdrop Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-30 lg:hidden transition-opacity duration-300"
+          onClick={onClose}
+        />
+      )}
+      <aside className={`fixed inset-y-0 left-0 z-40 w-80 lg:w-72 flex flex-col bg-slate-900 border-r border-slate-800 text-slate-300 h-screen lg:sticky top-0 shrink-0 select-none transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} ${currentUser ? getThemeClass(currentUser.role) : ''}`}>
+        {/* Brand logo header */}
+        <div className="p-6 border-b border-slate-800 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-indigo-650 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-900/50 font-sans">
+              ⛪
+            </div>
+            <div>
+              <span className="font-extrabold text-base text-slate-100 tracking-tight block">Church Admin</span>
+              <span className="text-[10px] text-slate-555 font-extrabold tracking-widest uppercase block -mt-1">Ledger Hierarchy</span>
+            </div>
+          </div>
+          <button 
+            onClick={onClose}
+            className="lg:hidden p-1.5 hover:bg-slate-850 rounded-xl text-slate-400 hover:text-slate-200 cursor-pointer border-none bg-transparent"
+          >
+            <X size={18} />
+          </button>
         </div>
-        <div>
-          <span className="font-extrabold text-base text-slate-100 tracking-tight block">Church Admin</span>
-          <span className="text-[10px] text-slate-500 font-extrabold tracking-widest uppercase block -mt-1">Ledger Hierarchy</span>
-        </div>
-      </div>
 
       {/* 1. Context Switcher (Simulate Profile) */}
       <div className="p-4 border-b border-slate-800 bg-slate-950/20">
@@ -381,6 +408,7 @@ export function Sidebar({
         )}
       </div>
     </aside>
+   </>
   );
 }
 export default Sidebar;
