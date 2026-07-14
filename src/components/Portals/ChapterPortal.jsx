@@ -668,16 +668,16 @@ export function ChapterPortal({
         <div className="space-y-6">
 
           {/* User approvals */}
-          {pendingMembers.length > 0 && (
-            <div className="p-6 bg-amber-500/5 border border-amber-500/20 rounded-3xl">
-              <h3 className="text-md font-bold text-amber-400 flex items-center gap-2 mb-4 tracking-tight">
-                <UserCheck size={18} />
-                Two-Tier Credential Queue: Pending Chapter Leader Confirmation
-              </h3>
-              <div className="overflow-x-auto rounded-2xl border border-amber-500/10 bg-slate-950/60">
+          <div className="p-6 bg-slate-900/40 border border-slate-800 rounded-3xl">
+            <h3 className="text-md font-bold text-slate-100 flex items-center gap-2 mb-4 tracking-tight">
+              <UserCheck size={18} className="text-amber-500" />
+              Two-Tier Credential Queue: Pending Chapter Leader Confirmation
+            </h3>
+            {pendingMembers.length > 0 ? (
+              <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/60">
                 <table className="w-full border-collapse text-left text-xs min-w-[600px]">
                   <thead>
-                    <tr className="border-b border-amber-500/10 text-slate-550 uppercase tracking-wider font-extrabold bg-slate-900/60 text-[10px]">
+                    <tr className="border-b border-slate-850 text-slate-550 uppercase tracking-wider font-extrabold bg-slate-900/60 text-[10px]">
                       <th className="px-4 py-3">Full Name</th>
                       <th className="px-4 py-3">Username</th>
                       <th className="px-4 py-3">Assigned Cell Group</th>
@@ -686,12 +686,12 @@ export function ChapterPortal({
                       <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-amber-500/10">
+                  <tbody className="divide-y divide-slate-850">
                     {pendingMembers.map(u => {
                       const creator = users.find(creatorUser => creatorUser.id === u.creatorId);
                       const cell = cells.find(c => c.id === u.cellId);
                       return (
-                        <tr key={u.id} className="hover:bg-amber-500/5 transition-colors font-medium">
+                        <tr key={u.id} className="hover:bg-slate-850/30 transition-colors font-medium">
                           <td className="px-4 py-3 text-slate-100 font-bold">{u.name}</td>
                           <td className="px-4 py-3 text-slate-350">@{u.username}</td>
                           <td className="px-4 py-3 text-cyan-400">{cell?.name || 'Unknown'}</td>
@@ -717,8 +717,14 @@ export function ChapterPortal({
                   </tbody>
                 </table>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-center bg-slate-950/20 rounded-2xl border border-slate-850 border-dashed">
+                <CheckCircle size={28} className="text-slate-600 mb-2" />
+                <span className="text-xs font-bold text-slate-400">All Credentials Active</span>
+                <span className="text-[10px] text-slate-550 mt-0.5">There are no pending credentials awaiting confirmation in your chapter.</span>
+              </div>
+            )}
+          </div>
 
           {/* Souls verification */}
           {pendingSouls.length > 0 && (

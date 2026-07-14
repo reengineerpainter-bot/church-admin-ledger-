@@ -41,12 +41,12 @@ export function Sidebar({
   };
 
   const getRoleLabel = (role) => {
-    if (role === 'admin') return 'Zonal Pastor';
-    if (role === 'group_pastor') return 'Group Pastor';
-    if (role === 'pastor') return 'Pastor';
-    if (role === 'chapter_leader') return 'Chapter Leader';
-    if (role === 'cell_leader') return 'Cell Leader';
-    return 'Member';
+    if (role === 'admin') return 'Zonal Pastor (L1)';
+    if (role === 'group_pastor') return 'Group Pastor (L2)';
+    if (role === 'pastor') return 'Pastor (L3)';
+    if (role === 'chapter_leader') return 'Chapter Leader (L4)';
+    if (role === 'cell_leader') return 'Cell Leader (L5)';
+    return 'Member (L6)';
   };
 
   // Group visible users for the switcher dropdown

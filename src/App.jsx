@@ -8,6 +8,7 @@ import { CellPortal } from './components/Portals/CellPortal';
 import { MemberPortal } from './components/Portals/MemberPortal';
 import { ShieldAlert, LogIn, Lock } from 'lucide-react';
 import { LoginScreen } from './components/Common/LoginScreen';
+import { EditUserModal } from './components/Common/EditUserModal';
 
 export function App() {
   const state = useAppState();
@@ -325,6 +326,17 @@ export function App() {
           {renderDashboard()}
         </main>
       </div>
+
+      <EditUserModal
+        isOpen={showEditProfile}
+        onClose={() => setShowEditProfile(false)}
+        user={currentUser}
+        onSave={state.updateUser}
+        chapters={state.chapters}
+        cells={state.cells}
+        isAdminMode={false}
+        currentUserRole={currentUser?.role}
+      />
     </div>
   );
 }
