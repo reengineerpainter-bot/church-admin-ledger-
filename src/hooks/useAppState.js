@@ -199,12 +199,6 @@ export function useAppState() {
     const newId = `u_${Date.now()}`;
     let status = 'Pending_Higher_Approval';
 
-    // Higher authority creates credentials -> Instantly Active
-    const isHigherAdmin = ['admin', 'group_pastor', 'pastor'].includes(currentUser.role);
-    if (isHigherAdmin) {
-      status = 'Active';
-    }
-
     const newUser = {
       id: newId,
       username,

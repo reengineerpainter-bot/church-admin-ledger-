@@ -111,7 +111,7 @@ export function Sidebar({
 
     const items = [
       { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
-      { id: 'ledger', label: 'Ledger Register', icon: FileText },
+      { id: 'ledger', label: role === 'admin' ? 'zonal church Register' : 'Ledger Register', icon: FileText },
       { id: 'personal_givings', label: 'My Personal Givings', icon: Wallet }
     ];
 

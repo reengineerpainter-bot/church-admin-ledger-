@@ -226,7 +226,11 @@ export function AdminPortal({
 
   // --- STATS COMPUTATIONS ---
   // Confirmed entries
-  const confirmedLedger = ledger.filter(item => item.status === 'Confirmed');
+  const confirmedLedger = ledger.filter(item => {
+    if (item.status !== 'Confirmed') return false;
+    if (currentUser.role === 'admin') return true; // Zonal Pastor L1 sees overall records
+    return item.chapterId === currentUser.chapterId || item.memberId === currentUser.id;
+  });
   
   // --- STATS COMPUTATIONS ---
   const confirmedLedgerFiltered = confirmedLedger.filter(item => filterByTimeframe(item.serviceDate));
@@ -340,11 +344,11 @@ export function AdminPortal({
     .sort((a, b) => b.souls - a.souls);
 
   // --- CREDENTIALS WORKFLOW QUEUES ---
-  // Cell Leaders created by Chapter Leaders awaiting Pastor's confirmation
-  const pendingCellLeaders = users.filter(u => 
-    u.role === 'cell_leader' && 
-    u.status === 'Pending_Higher_Approval'
-  );
+  const pendingCellLeaders = users.filter(u => {
+    if (u.status !== 'Pending_Higher_Approval') return false;
+    if (currentUser.role === 'admin') return true; // Zonal Pastor L1 sees overall database queue
+    return u.chapterId === currentUser.chapterId || u.creatorId === currentUser.id;
+  });
 
   const activeChapterLeadersList = users.filter(u => u.role === 'chapter_leader' && u.status === 'Active');
   const activeCellLeadersList = users.filter(u => u.role === 'cell_leader' && u.status === 'Active');
@@ -803,11 +807,12 @@ export function AdminPortal({
               <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/60">
                 <table className="w-full border-collapse text-left text-xs min-w-[600px]">
                   <thead>
-                    <tr className="border-b border-slate-850 text-slate-500 uppercase tracking-wider font-extrabold bg-slate-900/60 text-[10px]">
+                    <tr className="border-b border-slate-850 text-slate-550 uppercase tracking-wider font-extrabold bg-slate-900/60 text-[10px]">
                       <th className="px-4 py-3">Full Name</th>
                       <th className="px-4 py-3">Username</th>
-                      <th className="px-4 py-3">Assigned Region</th>
-                      <th className="px-4 py-3">Creator (Chapter Leader)</th>
+                      <th className="px-4 py-3">Role</th>
+                      <th className="px-4 py-3">Assignment</th>
+                      <th className="px-4 py-3">Creator</th>
                       <th className="px-4 py-3">Temp Password</th>
                       <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
@@ -817,14 +822,36 @@ export function AdminPortal({
                       const creator = users.find(creatorUser => creatorUser.id === u.creatorId);
                       const chapter = chapters.find(ch => ch.id === u.chapterId);
                       const cell = cells.find(c => c.id === u.cellId);
+                      const getRoleBadgeLabel = (r) => {
+                        if (r === 'group_pastor') return 'Group Pastor (L2)';
+                        if (r === 'pastor') return 'Pastor (L3)';
+                        if (r === 'chapter_leader') return 'Chapter Leader (L4)';
+                        if (r === 'cell_leader') return 'Cell Leader (L5)';
+                        return 'Member (L6)';
+                      };
                       return (
                         <tr key={u.id} className="hover:bg-slate-850/30 transition-colors font-medium">
                           <td className="px-4 py-3 text-slate-100 font-bold">{u.name}</td>
                           <td className="px-4 py-3 text-slate-355 font-semibold">@{u.username}</td>
                           <td className="px-4 py-3">
-                            <span className="text-indigo-400">{chapter?.name}</span> &rarr; <span className="text-cyan-400">{cell?.name}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-indigo-950/60 text-indigo-300 border border-indigo-900/50 uppercase">{getRoleBadgeLabel(u.role)}</span>
                           </td>
-                          <td className="px-4 py-3 text-slate-400">{creator?.name || 'Unknown'}</td>
+                          <td className="px-4 py-3">
+                            {chapter ? (
+                              <>
+                                <span className="text-indigo-400">{chapter.name}</span>
+                                {cell && (
+                                  <>
+                                    {' '}
+                                    &rarr; <span className="text-cyan-400">{cell.name}</span>
+                                  </>
+                                )}
+                              </>
+                            ) : (
+                              <span className="text-slate-500">Unassigned</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-slate-400">{creator?.name || 'System / Zonal'}</td>
                           <td className="px-4 py-3 font-mono">{u.tempPassword}</td>
                           <td className="px-4 py-3 text-right flex items-center justify-end gap-2">
                             <button
@@ -998,6 +1025,12 @@ export function AdminPortal({
                       </div>
                     </div>
                     <div className="flex gap-2 border-t border-slate-900 pt-3">
+                      <button
+                        onClick={() => setSelectedReceipt(item)}
+                        className="px-3 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold rounded-lg text-[10px] transition-colors border border-indigo-500/10 cursor-pointer"
+                      >
+                        View Proof
+                      </button>
                       <button
                         onClick={() => verifyLedgerEntry(item.id, true)}
                         className="flex-1 py-2 bg-emerald-650 hover:bg-emerald-600 text-white font-bold rounded-lg text-[10px] transition-colors cursor-pointer border-none"

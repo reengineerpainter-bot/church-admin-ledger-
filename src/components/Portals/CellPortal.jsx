@@ -155,7 +155,7 @@ export function CellPortal({
   const cellUsers = users.filter(u => u.cellId === cellId && u.role === 'member');
   const activeMembers = cellUsers.filter(u => u.status === 'Active');
   
-  const cellLedger = ledger.filter(item => item.cellId === cellId);
+  const cellLedger = ledger.filter(item => item.cellId === cellId || item.memberId === currentUser.id);
   const confirmedLedger = cellLedger.filter(item => item.status === 'Confirmed');
 
   // --- STATS COMPUTATIONS ---

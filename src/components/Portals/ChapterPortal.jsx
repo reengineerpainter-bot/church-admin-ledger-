@@ -165,7 +165,7 @@ export function ChapterPortal({
   
   const cellIds = chapterCells.map(c => c.id);
   
-  const chapterLedger = ledger.filter(item => item.chapterId === chapterId);
+  const chapterLedger = ledger.filter(item => item.chapterId === chapterId || item.memberId === currentUser.id);
   const confirmedLedger = chapterLedger.filter(item => item.status === 'Confirmed');
 
   const confirmedLedgerFiltered = confirmedLedger.filter(item => filterByTimeframe(item.serviceDate));
@@ -221,14 +221,14 @@ export function ChapterPortal({
 
   // --- CREDENTIALS WORKFLOW QUEUES ---
   const pendingMembers = users.filter(u => 
-    u.chapterId === chapterId && 
-    u.status === 'Pending_Higher_Approval'
+    u.status === 'Pending_Higher_Approval' && 
+    u.chapterId === currentUser.chapterId
   );
 
   const pendingSouls = souls.filter(s => {
     if (s.status !== 'Pending_Approval') return false;
     const reporter = users.find(u => u.id === s.recordedBy);
-    return reporter && reporter.role === 'member' && reporter.chapterId === chapterId;
+    return reporter && reporter.chapterId === chapterId;
   });
 
   const pendingGivings = ledger.filter(item => {
@@ -680,8 +680,9 @@ export function ChapterPortal({
                     <tr className="border-b border-slate-850 text-slate-550 uppercase tracking-wider font-extrabold bg-slate-900/60 text-[10px]">
                       <th className="px-4 py-3">Full Name</th>
                       <th className="px-4 py-3">Username</th>
-                      <th className="px-4 py-3">Assigned Cell Group</th>
-                      <th className="px-4 py-3">Creator (Cell Leader)</th>
+                      <th className="px-4 py-3">Role</th>
+                      <th className="px-4 py-3">Assignment</th>
+                      <th className="px-4 py-3">Creator</th>
                       <th className="px-4 py-3">Temp Password</th>
                       <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
@@ -690,12 +691,22 @@ export function ChapterPortal({
                     {pendingMembers.map(u => {
                       const creator = users.find(creatorUser => creatorUser.id === u.creatorId);
                       const cell = cells.find(c => c.id === u.cellId);
+                      const getRoleBadgeLabel = (r) => {
+                        if (r === 'group_pastor') return 'Group Pastor (L2)';
+                        if (r === 'pastor') return 'Pastor (L3)';
+                        if (r === 'chapter_leader') return 'Chapter Leader (L4)';
+                        if (r === 'cell_leader') return 'Cell Leader (L5)';
+                        return 'Member (L6)';
+                      };
                       return (
                         <tr key={u.id} className="hover:bg-slate-850/30 transition-colors font-medium">
                           <td className="px-4 py-3 text-slate-100 font-bold">{u.name}</td>
                           <td className="px-4 py-3 text-slate-350">@{u.username}</td>
-                          <td className="px-4 py-3 text-cyan-400">{cell?.name || 'Unknown'}</td>
-                          <td className="px-4 py-3 text-slate-400">{creator?.name || 'Unknown'}</td>
+                          <td className="px-4 py-3">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-indigo-950/60 text-indigo-300 border border-indigo-900/50 uppercase">{getRoleBadgeLabel(u.role)}</span>
+                          </td>
+                          <td className="px-4 py-3 text-cyan-400">{cell?.name || 'Chapter Level'}</td>
+                          <td className="px-4 py-3 text-slate-400">{creator?.name || 'System / Zonal'}</td>
                           <td className="px-4 py-3 font-mono">{u.tempPassword}</td>
                           <td className="px-4 py-3 text-right flex items-center justify-end gap-2">
                             <button
@@ -803,6 +814,12 @@ export function ChapterPortal({
                       </div>
                     </div>
                     <div className="flex gap-2 border-t border-slate-900 pt-3">
+                      <button
+                        onClick={() => setSelectedReceipt(item)}
+                        className="px-3 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold rounded-lg text-[10px] transition-colors border border-indigo-500/10 cursor-pointer"
+                      >
+                        View Proof
+                      </button>
                       <button
                         onClick={() => verifyLedgerEntry(item.id, true)}
                         className="flex-1 py-2 bg-emerald-650 hover:bg-emerald-600 text-white font-bold rounded-lg text-[10px] transition-colors cursor-pointer border-none"
