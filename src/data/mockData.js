@@ -18,6 +18,7 @@ export const initialUsers = [
     name: 'Pastor Chris',
     role: 'admin',
     status: 'Active',
+    tempPassword: 'password',
     title: 'Pastor'
   },
   {
@@ -26,6 +27,7 @@ export const initialUsers = [
     name: 'Pastor Samuel',
     role: 'group_pastor',
     status: 'Active',
+    tempPassword: 'password',
     title: 'Pastor'
   },
   {
@@ -34,6 +36,7 @@ export const initialUsers = [
     name: 'Pastor Matthew',
     role: 'pastor',
     status: 'Active',
+    tempPassword: 'password',
     title: 'Pastor'
   },
   // Chapter Leaders
@@ -44,6 +47,7 @@ export const initialUsers = [
     role: 'chapter_leader',
     chapterId: 'c1',
     status: 'Active',
+    tempPassword: 'password',
     title: 'Bro'
   },
   {
@@ -53,6 +57,7 @@ export const initialUsers = [
     role: 'chapter_leader',
     chapterId: 'c2',
     status: 'Active',
+    tempPassword: 'password',
     title: 'Sis'
   },
   // Cell Leaders
@@ -65,6 +70,7 @@ export const initialUsers = [
     cellId: 'cell1',
     status: 'Active',
     creatorId: 'u2',
+    tempPassword: 'password',
     title: 'Sis'
   },
   {
@@ -76,6 +82,7 @@ export const initialUsers = [
     cellId: 'cell2',
     status: 'Active',
     creatorId: 'u2',
+    tempPassword: 'password',
     title: 'Bro'
   },
   {
@@ -87,6 +94,7 @@ export const initialUsers = [
     cellId: 'cell3',
     status: 'Active',
     creatorId: 'u3',
+    tempPassword: 'password',
     title: 'Bro'
   },
   // Members
@@ -99,6 +107,7 @@ export const initialUsers = [
     cellId: 'cell1',
     status: 'Active',
     creatorId: 'u4',
+    tempPassword: 'password',
     title: 'Bro'
   },
   {
@@ -110,6 +119,7 @@ export const initialUsers = [
     cellId: 'cell1',
     status: 'Active',
     creatorId: 'u4',
+    tempPassword: 'password',
     title: 'Sis'
   },
   {
@@ -121,6 +131,7 @@ export const initialUsers = [
     cellId: 'cell3',
     status: 'Active',
     creatorId: 'u6',
+    tempPassword: 'password',
     title: 'Bro'
   },
   // PENDING CREDENTIAL WORKFLOW USER CASES

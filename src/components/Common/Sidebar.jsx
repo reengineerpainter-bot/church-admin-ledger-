@@ -214,7 +214,7 @@ export function Sidebar({
                             <UserAvatar user={u} size="xs" className="shrink-0" />
                             <span className="truncate">{getFormattedName(u)}</span>
                           </div>
-                          <span className="text-[8px] px-1 py-0.5 rounded bg-indigo-950 text-indigo-300 font-bold shrink-0">Ch {u.chapterId.toUpperCase()}</span>
+                          <span className="text-[8px] px-1 py-0.5 rounded bg-indigo-950 text-indigo-300 font-bold shrink-0">{u.chapterId ? `Ch ${u.chapterId.toUpperCase()}` : 'N/A'}</span>
                         </button>
                       ))}
                     </div>
@@ -234,7 +234,7 @@ export function Sidebar({
                             <UserAvatar user={u} size="xs" className="shrink-0" />
                             <span className="truncate">{getFormattedName(u)}</span>
                           </div>
-                          <span className="text-[8px] px-1 py-0.5 rounded bg-cyan-950 text-cyan-300 font-bold shrink-0">{u.cellId}</span>
+                          <span className="text-[8px] px-1 py-0.5 rounded bg-cyan-950 text-cyan-300 font-bold shrink-0">{u.cellId ? `Cell ${u.cellId.toUpperCase()}` : 'N/A'}</span>
                         </button>
                       ))}
                     </div>
@@ -254,7 +254,7 @@ export function Sidebar({
                             <UserAvatar user={u} size="xs" className="shrink-0" />
                             <span className="truncate">{getFormattedName(u)}</span>
                           </div>
-                          <span className="text-[8px] px-1 py-0.5 rounded bg-emerald-950 text-emerald-300 font-bold shrink-0">{u.cellId}</span>
+                          <span className="text-[8px] px-1 py-0.5 rounded bg-emerald-950 text-emerald-300 font-bold shrink-0">{u.cellId ? `Cell ${u.cellId.toUpperCase()}` : 'N/A'}</span>
                         </button>
                       ))}
                     </div>

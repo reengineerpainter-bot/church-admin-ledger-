@@ -40,12 +40,22 @@ export function CredentialForm({
     }
   }, [creatorRole, currentChapterId, currentCellId]);
 
-  // Filter chapters and cells based on creator's jurisdiction
+  // Filter chapters and cells based on creator's jurisdiction and selected role
   const selectableChapters = chapters.filter(ch => {
     if (creatorRole === 'chapter_leader' || creatorRole === 'cell_leader') {
-      return ch.id === currentChapterId;
+      if (ch.id !== currentChapterId) return false;
     }
-    return true;
+    
+    if (selectedRole === 'group_pastor') {
+      return ch.type === 'group';
+    }
+    if (selectedRole === 'pastor') {
+      return ch.type === 'church';
+    }
+    if (selectedRole === 'chapter_leader') {
+      return ch.type === 'chapter' || !ch.type;
+    }
+    return ch.type === 'chapter' || !ch.type;
   });
 
   const selectableCells = cells.filter(cell => {
@@ -252,7 +262,7 @@ export function CredentialForm({
         </div>
 
         {/* Chapter/Assignment Selection */}
-        {selectedRole !== 'admin' && selectedRole !== 'group_pastor' && (
+        {selectedRole !== 'admin' && (
           <div>
             <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Assignment</label>
             <div className="relative">
@@ -266,7 +276,7 @@ export function CredentialForm({
                 }}
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Select Chapter...</option>
+                <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Select Structure...</option>
                 {selectableChapters.map(ch => (
                   <option key={ch.id} value={ch.id} className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>{ch.name}</option>
                 ))}
