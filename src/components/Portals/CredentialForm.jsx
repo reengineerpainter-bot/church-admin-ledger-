@@ -40,8 +40,23 @@ export function CredentialForm({
     }
   }, [creatorRole, currentChapterId, currentCellId]);
 
-  // Filter cells based on chosen chapter
-  const filteredCells = cells.filter(cell => cell.chapterId === chapterId);
+  // Filter chapters and cells based on creator's jurisdiction
+  const selectableChapters = chapters.filter(ch => {
+    if (creatorRole === 'chapter_leader' || creatorRole === 'cell_leader') {
+      return ch.id === currentChapterId;
+    }
+    return true;
+  });
+
+  const selectableCells = cells.filter(cell => {
+    if (creatorRole === 'cell_leader') {
+      return cell.id === currentCellId;
+    }
+    if (creatorRole === 'chapter_leader') {
+      return cell.chapterId === currentChapterId;
+    }
+    return cell.chapterId === chapterId;
+  });
 
   const getSelectableRoles = () => {
     if (creatorRole === 'admin') {
@@ -163,7 +178,7 @@ export function CredentialForm({
                   setChapterId('');
                   setCellId('');
                 }}
-                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all"
+                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-105 rounded-xl text-sm outline-none transition-all"
               >
                 {selectableRoles.map(r => (
                   <option key={r.value} value={r.value} className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>{r.label}</option>
@@ -182,7 +197,7 @@ export function CredentialForm({
                 key={t}
                 type="button"
                 onClick={() => setTitle(t)}
-                className={`py-2 px-4 rounded-xl border text-xs font-bold transition-all ${title === t ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'}`}
+                className={`py-2 px-4 rounded-xl border text-xs font-bold transition-all ${title === t ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-955 border-slate-800 text-slate-400 hover:text-slate-200'}`}
               >
                 {t}
               </button>
@@ -236,10 +251,10 @@ export function CredentialForm({
           </div>
         </div>
 
-        {/* Chapter Selection */}
-        {selectedRole !== 'member' && selectedRole !== 'group_pastor' && (
+        {/* Chapter/Assignment Selection */}
+        {selectedRole !== 'admin' && selectedRole !== 'group_pastor' && (
           <div>
-            <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Chapter Assignment</label>
+            <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Assignment</label>
             <div className="relative">
               <Globe size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
               <select
@@ -252,7 +267,7 @@ export function CredentialForm({
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Select Chapter...</option>
-                {chapters.map(ch => (
+                {selectableChapters.map(ch => (
                   <option key={ch.id} value={ch.id} className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>{ch.name}</option>
                 ))}
               </select>
@@ -263,7 +278,7 @@ export function CredentialForm({
         {/* Cell Selection */}
         {(selectedRole === 'cell_leader' || selectedRole === 'member') && (
           <div>
-            <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Home Cell Group</label>
+            <label className="block text-slate-405 text-xs font-semibold uppercase tracking-wider mb-2">Cell Assignment</label>
             <div className="relative">
               <LayoutGrid size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-505" />
               <select
@@ -273,12 +288,12 @@ export function CredentialForm({
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-sm outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <option value="" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Select Cell...</option>
-                {filteredCells.map(c => (
+                {selectableCells.map(c => (
                   <option key={c.id} value={c.id} className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>{c.name}</option>
                 ))}
               </select>
             </div>
-            {chapterId && filteredCells.length === 0 && (
+            {chapterId && selectableCells.length === 0 && (
               <span className="text-xs text-amber-500 mt-1 block">No cells found for selected Chapter. Create a cell first.</span>
             )}
           </div>

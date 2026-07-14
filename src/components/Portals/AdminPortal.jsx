@@ -773,10 +773,13 @@ export function AdminPortal({
             
             {/* create chapter form */}
             <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl h-fit w-full lg:w-80">
-              <h3 className="text-sm font-bold text-slate-100 mb-4 flex items-center gap-2 tracking-tight">
+              <h3 className="text-sm font-bold text-slate-100 mb-2 flex items-center gap-2 tracking-tight">
                 <Map size={16} className="text-indigo-400" />
                 Establish New Chapter
               </h3>
+              <p className="text-[10px] text-slate-450 leading-relaxed mb-4">
+                Global Root Administration: Add a new regional Chapter headquarters to the church network directory. Once established, Chapter Leaders and Fellowship Cells can be provisioned under this region.
+              </p>
               {chapterSuccess && (
                 <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl font-bold">
                   Chapter established!
