@@ -113,7 +113,7 @@ export function Sidebar({
 
     const getLedgerLabel = (r) => {
       if (r === 'admin') return 'zonal church Register';
-      if (r === 'group_pastor') return 'group ledger register';
+      if (r === 'group_pastor') return 'Group church ledger register';
       if (r === 'pastor') return 'church ledger register';
       if (r === 'chapter_leader') return 'chapter ledger register';
       if (r === 'cell_leader') return 'cell ledger register';
