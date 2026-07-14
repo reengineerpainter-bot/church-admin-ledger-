@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Users, RotateCcw, Terminal, ChevronDown, ChevronUp, 
   LogOut, Download, Sun, Moon, TrendingUp, FileText, 
-  AlertCircle, ShieldAlert, Award, Activity
+  AlertCircle, ShieldAlert, Award, Activity, Wallet, UserPlus
 } from 'lucide-react';
 import { UserAvatar } from './UserAvatar';
 
@@ -104,14 +104,32 @@ export function Sidebar({
     link.click();
   };
 
-  // Nav items configuration
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
-    { id: 'ledger', label: 'Ledger Register', icon: FileText },
-    { id: 'souls', label: 'Soul Tracker', icon: Award },
-    { id: 'deficits', label: 'Deficit Reports', icon: AlertCircle },
-    { id: 'audits', label: 'Audits', icon: ShieldAlert, badge: pendingAuditsCount }
-  ];
+  // Dynamic nav items configuration
+  const getNavItems = () => {
+    if (!currentUser) return [];
+    const role = currentUser.role;
+
+    const items = [
+      { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
+      { id: 'ledger', label: 'Ledger Register', icon: FileText },
+      { id: 'personal_givings', label: 'My Personal Givings', icon: Wallet }
+    ];
+
+    if (role !== 'member') {
+      items.push({ id: 'access_control', label: 'Access Control', icon: UserPlus });
+    }
+
+    items.push({ id: 'souls', label: 'Soul Tracker', icon: Award });
+
+    if (role !== 'member') {
+      items.push({ id: 'deficits', label: 'Deficit Reports', icon: AlertCircle });
+      items.push({ id: 'audits', label: 'Audits', icon: ShieldAlert, badge: pendingAuditsCount });
+    }
+
+    return items;
+  };
+
+  const navItems = getNavItems();
 
   // Theme border style based on role
   const getThemeClass = (role) => {

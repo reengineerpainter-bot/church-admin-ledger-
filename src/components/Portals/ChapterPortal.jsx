@@ -559,13 +559,6 @@ export function ChapterPortal({
             </table>
           </div>
 
-          <div className="mt-6">
-            <RecordGivingForm
-              currentUser={currentUser}
-              onSubmit={submitLedgerEntry}
-              showAttendance={false}
-            />
-          </div>
         </div>
       )}
 
@@ -671,50 +664,6 @@ export function ChapterPortal({
 
       {activeModule === 'audits' && (
         <div className="space-y-6">
-          
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-1">
-              <CredentialForm
-                creatorRole={currentUser.role}
-                targetRole="cell_leader"
-                chapters={chapters}
-                cells={cells}
-                currentChapterId={chapterId}
-                onSubmit={createCredential}
-              />
-            </div>
-            
-            {/* Cell Group creator */}
-            <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl h-fit w-full lg:w-80">
-              <h3 className="text-sm font-bold text-slate-100 mb-4 flex items-center gap-2 tracking-tight">
-                <Plus size={16} className="text-indigo-400" />
-                Establish New Cell Group
-              </h3>
-              {cellSuccess && (
-                <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl font-bold">
-                  Cell group established!
-                </div>
-              )}
-              <form onSubmit={handleCreateCell} className="space-y-4">
-                <div>
-                  <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Cell Group Name</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Joy Cell"
-                    value={newCellName}
-                    onChange={(e) => setNewCellName(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-xs outline-none"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-all active:scale-[0.98] cursor-pointer border-none"
-                >
-                  Create Cell Group
-                </button>
-              </form>
-            </div>
-          </div>
 
           {/* User approvals */}
           {pendingMembers.length > 0 && (
@@ -864,6 +813,152 @@ export function ChapterPortal({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {activeModule === 'access_control' && (
+        <div className="space-y-6">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* create credentials form */}
+            <div className="flex-1">
+              <CredentialForm
+                creatorRole={currentUser.role}
+                targetRole="cell_leader"
+                chapters={chapters}
+                cells={cells}
+                currentChapterId={chapterId}
+                onSubmit={createCredential}
+              />
+            </div>
+            
+            {/* establish cell form */}
+            <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl h-fit w-full lg:w-80 shadow-lg">
+              <h3 className="text-sm font-bold text-slate-101 mb-2 flex items-center gap-2 tracking-tight">
+                <Map size={16} className="text-indigo-400" />
+                Establish New Cell Group
+              </h3>
+              <p className="text-[10px] text-slate-450 leading-relaxed mb-4">
+                Chapter Administration: Add a new Fellowship Cell under your jurisdiction in {chapterName}.
+              </p>
+              {cellSuccess && (
+                <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl font-bold">
+                  Cell group established successfully!
+                </div>
+              )}
+              <form onSubmit={handleCreateCell} className="space-y-4">
+                <div>
+                  <label className="block text-slate-400 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Structure Type</label>
+                  <select
+                    disabled
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 text-slate-400 rounded-xl text-xs outline-none cursor-not-allowed"
+                  >
+                    <option>Fellowship Cell (Level 5)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Cell Group Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Joy Cell"
+                    value={newCellName}
+                    onChange={(e) => setNewCellName(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-xs outline-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-all active:scale-[0.98] cursor-pointer border-none shadow-md"
+                >
+                  Establish Location / Structure
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <UserDirectory
+              currentUser={currentUser}
+              users={chapterUsers}
+              chapters={chapters}
+              cells={cells}
+              updateUser={updateUser}
+            />
+          </div>
+        </div>
+      )}
+
+      {activeModule === 'personal_givings' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Left side: My Personal Givings History list */}
+            <div className="lg:col-span-2 p-6 bg-slate-900/40 border border-slate-800 rounded-3xl space-y-4">
+              <div>
+                <h3 className="text-md font-bold text-slate-100 flex items-center gap-2 tracking-tight">
+                  <Wallet size={16} className="text-indigo-400" />
+                  My Personal Givings History
+                </h3>
+                <p className="text-xs text-slate-500">Record and status summary of your own weekly ledger submissions.</p>
+              </div>
+
+              <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/40">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="text-slate-500 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
+                      <th className="px-6 py-3.5">Transaction ID</th>
+                      <th className="px-6 py-3.5">Category</th>
+                      <th className="px-6 py-3.5">Service Date</th>
+                      <th className="px-6 py-3.5">Payment Method</th>
+                      <th className="px-6 py-3.5 text-right">Amount</th>
+                      <th className="px-6 py-3.5 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-850 font-medium text-slate-300">
+                    {mySubmissions.map(item => (
+                      <tr 
+                        key={item.id} 
+                        onDoubleClick={() => setSelectedReceipt(item)}
+                        className="ledger-row cursor-pointer transition-colors"
+                        title="Double-click to view details"
+                      >
+                        <td className="px-6 py-3 font-mono text-[10px] text-slate-550">{item.id}</td>
+                        <td className="px-6 py-3">
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${item.category === 'Tithe' ? 'badge-indigo-soft' : 'badge-slate-soft'}`}>
+                            {item.category}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3 font-mono text-slate-400">{item.serviceDate}</td>
+                        <td className="px-6 py-3 text-slate-400">{item.paymentMethod}</td>
+                        <td className="px-6 py-3 text-right text-indigo-400 font-bold font-mono tabular-nums">${item.totalAmount.toLocaleString()}</td>
+                        <td className="px-6 py-3 text-center">
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${item.status === 'Confirmed' ? 'badge-emerald-soft' : 'badge-amber-soft'}`}>
+                            {item.status === 'Confirmed' ? 'Verified' : 'Pending Review'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {mySubmissions.length === 0 && (
+                      <tr>
+                        <td colSpan="6" className="text-center text-slate-650 py-12 italic">No personal weekly giving logs recorded.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Right side: Record Giving Form */}
+            <div>
+              <RecordGivingForm
+                currentUser={currentUser}
+                onSubmit={submitLedgerEntry}
+                showAttendance={false}
+              />
+            </div>
+          </div>
         </div>
       )}
 

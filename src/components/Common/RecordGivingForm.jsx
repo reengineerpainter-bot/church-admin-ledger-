@@ -99,7 +99,7 @@ export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser, showAtte
     <div className="bg-slate-900/40 border border-slate-800 p-4 sm:p-6 rounded-3xl shadow-inner">
       <h3 className="text-md font-bold text-slate-100 mb-4 flex items-center gap-2">
         <Send size={16} className="text-indigo-400" />
-        Record My Giving Contribution
+        Record My Giving
       </h3>
 
       {error && (
@@ -289,7 +289,7 @@ export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser, showAtte
           type="submit"
           className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-900/20"
         >
-          Record Giving Contribution
+          Record Giving
         </button>
       </form>
     </div>

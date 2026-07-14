@@ -385,7 +385,7 @@ export function MemberPortal({
                 <FileText size={16} className="text-indigo-500" />
                 My Submission Logs & History
               </h3>
-              <p className="text-xs text-slate-500">Log history of weekly contributions and cell auditing verification status.</p>
+              <p className="text-xs text-slate-500">Log history of weekly givings and cell auditing verification status.</p>
             </div>
             <div className="flex gap-2">
               <button
@@ -537,7 +537,7 @@ export function MemberPortal({
               </p>
               <div className="p-4 bg-slate-950 border border-slate-850 rounded-2xl space-y-2 text-xs">
                 <div className="flex items-center gap-2 text-rose-400 font-bold">
-                  <XCircle size={14} /> Zero Confirmed Giving Contributions
+                  <XCircle size={14} /> Zero Confirmed Giving Records
                 </div>
                 <div className="flex items-center gap-2 text-rose-400 font-bold">
                   <XCircle size={14} /> Missed In-Person / Midweek Online Service Attendance Check-in
@@ -555,7 +555,7 @@ export function MemberPortal({
         </div>
       )}
 
-      {activeModule === 'audits' && (
+      {activeModule === 'personal_givings' && (
         <div className="max-w-3xl">
           <RecordGivingForm
             currentUser={currentUser}

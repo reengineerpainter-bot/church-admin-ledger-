@@ -22,6 +22,7 @@ export function AdminPortal({
   approveCredential, 
   rejectCredential,
   createChapter,
+  createCell,
   updateUser,
   approveUserDeletion,
   rejectUserDeletion,
@@ -36,9 +37,11 @@ export function AdminPortal({
   globalSearchTerm = ''
 }) {
   const [showAddLeader, setShowAddLeader] = useState(false);
-  const [newChapterName, setNewChapterName] = useState('');
-  const [newChapterHq, setNewChapterHq] = useState('');
-  const [chapterSuccess, setChapterSuccess] = useState(false);
+  const [structureType, setStructureType] = useState('chapter');
+  const [newStructureName, setNewStructureName] = useState('');
+  const [newStructureHq, setNewStructureHq] = useState('');
+  const [newStructureChapterId, setNewStructureChapterId] = useState('');
+  const [structureSuccess, setStructureSuccess] = useState(false);
   const [revealedReport, setRevealedReport] = useState(null); // 'givings' | 'souls' | 'chapters' | 'members' | null
   const [timeframe, setTimeframe] = useState('monthly');
   const [customStart, setCustomStart] = useState('');
@@ -80,6 +83,28 @@ export function AdminPortal({
   };
 
   const meta = getRoleMeta();
+
+  const getSelectableStructureTypes = () => {
+    const role = currentUser.role;
+    if (role === 'admin') {
+      return [
+        { value: 'group', label: 'Group Church (Level 2)' },
+        { value: 'chapter', label: 'Chapter (Level 4)' },
+        { value: 'cell', label: 'Fellowship Cell (Level 5)' }
+      ];
+    }
+    if (role === 'group_pastor') {
+      return [
+        { value: 'chapter', label: 'Chapter (Level 4)' },
+        { value: 'cell', label: 'Fellowship Cell (Level 5)' }
+      ];
+    }
+    return [
+      { value: 'cell', label: 'Fellowship Cell (Level 5)' }
+    ];
+  };
+
+  const selectableStructureTypes = getSelectableStructureTypes();
 
   const filterByTimeframe = (dateStr) => {
     if (!dateStr) return false;
@@ -266,7 +291,7 @@ export function AdminPortal({
       return { label, value: weeklyTotalsMap[date] };
     });
 
-  // 2. Contribution allocation breakdown
+  // 2. Giving allocation breakdown
   const categoryTotalsMap = {};
   confirmedLedger.forEach(item => {
     categoryTotalsMap[item.category] = (categoryTotalsMap[item.category] || 0) + item.totalAmount;
@@ -356,14 +381,23 @@ export function AdminPortal({
     };
   }).filter(c => c.reasons.length > 0);
 
-  const handleCreateChapter = (e) => {
+  const handleEstablishStructure = (e) => {
     e.preventDefault();
-    if (!newChapterName || !newChapterHq) return;
-    createChapter(newChapterName.trim(), newChapterHq.trim());
-    setNewChapterName('');
-    setNewChapterHq('');
-    setChapterSuccess(true);
-    setTimeout(() => setChapterSuccess(false), 2000);
+    if (!newStructureName.trim()) return;
+
+    if (structureType === 'cell') {
+      if (!newStructureChapterId) return;
+      createCell(newStructureName.trim(), newStructureChapterId);
+      setNewStructureName('');
+      setStructureSuccess(true);
+      setTimeout(() => setStructureSuccess(false), 2000);
+    } else {
+      createChapter(newStructureName.trim(), newStructureHq.trim() || 'Global Region', structureType);
+      setNewStructureName('');
+      setNewStructureHq('');
+      setStructureSuccess(true);
+      setTimeout(() => setStructureSuccess(false), 2000);
+    }
   };
 
   // Filter list by global search term
@@ -432,7 +466,7 @@ export function AdminPortal({
               title="Global Total Giving"
               value={`$${totalGiving.toLocaleString()}`}
               icon={TrendingUp}
-              description="Double-click to reveal breakdown of chapter, cell, and member giving contributions"
+              description="Double-click to reveal breakdown of chapter, cell, and member giving"
               status="info"
               onClick={() => setRevealedReport('givings')}
             />
@@ -478,7 +512,7 @@ export function AdminPortal({
             <div className="p-6 glass-panel rounded-3xl">
               <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2 tracking-tight">
                 <Grid size={16} className="text-amber-500" />
-                Contribution Breakdown
+                Giving Breakdown
               </h3>
               <p className="text-xs text-slate-500 mb-4">Category allocation of received funds.</p>
               <div className="h-60 flex items-center justify-center">
@@ -609,14 +643,6 @@ export function AdminPortal({
                 )}
               </tbody>
             </table>
-          </div>
-
-          <div className="mt-6">
-            <RecordGivingForm
-              currentUser={currentUser}
-              onSubmit={submitLedgerEntry}
-              showAttendance={false}
-            />
           </div>
         </div>
       )}
@@ -759,62 +785,6 @@ export function AdminPortal({
 
       {activeModule === 'audits' && (
         <div className="space-y-6">
-          
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* chapter leader form */}
-            <div className="flex-1">
-              <CredentialForm
-                creatorRole={currentUser.role}
-                targetRole="chapter_leader"
-                chapters={chapters}
-                onSubmit={createCredential}
-              />
-            </div>
-            
-            {/* create chapter form */}
-            <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl h-fit w-full lg:w-80">
-              <h3 className="text-sm font-bold text-slate-100 mb-2 flex items-center gap-2 tracking-tight">
-                <Map size={16} className="text-indigo-400" />
-                Establish New Chapter
-              </h3>
-              <p className="text-[10px] text-slate-450 leading-relaxed mb-4">
-                Global Root Administration: Add a new regional Chapter headquarters to the church network directory. Once established, Chapter Leaders and Fellowship Cells can be provisioned under this region.
-              </p>
-              {chapterSuccess && (
-                <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl font-bold">
-                  Chapter established!
-                </div>
-              )}
-              <form onSubmit={handleCreateChapter} className="space-y-4">
-                <div>
-                  <label className="block text-slate-450 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Chapter Name</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Faith Chapter"
-                    value={newChapterName}
-                    onChange={(e) => setNewChapterName(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-xs outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Headquarters City</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Lagos"
-                    value={newChapterHq}
-                    onChange={(e) => setNewChapterHq(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-xs outline-none"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-all active:scale-[0.98] cursor-pointer border-none"
-                >
-                  Create Chapter
-                </button>
-              </form>
-            </div>
-          </div>
 
           {/* Credential Approvals Queue */}
           {pendingCellLeaders.length > 0 && (
@@ -1036,6 +1006,189 @@ export function AdminPortal({
         </div>
       )}
 
+      {activeModule === 'access_control' && (
+        <div className="space-y-6">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* create credentials form */}
+            <div className="flex-1">
+              <CredentialForm
+                creatorRole={currentUser.role}
+                targetRole="chapter_leader"
+                chapters={chapters}
+                cells={cells}
+                onSubmit={createCredential}
+              />
+            </div>
+            
+            {/* establish location / structure form */}
+            <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl h-fit w-full lg:w-80 shadow-lg">
+              <h3 className="text-sm font-bold text-slate-101 mb-2 flex items-center gap-2 tracking-tight">
+                <Map size={16} className="text-indigo-400" />
+                Establish New Location / Structure
+              </h3>
+              <p className="text-[10px] text-slate-450 leading-relaxed mb-4">
+                Global Administration: Select a level to add a new Group Church, Chapter, or Fellowship Cell to the church directory.
+              </p>
+              {structureSuccess && (
+                <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl font-bold">
+                  Structure established successfully!
+                </div>
+              )}
+              <form onSubmit={handleEstablishStructure} className="space-y-4">
+                <div>
+                  <label className="block text-slate-400 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Structure Type</label>
+                  <select
+                    value={structureType}
+                    onChange={(e) => {
+                      setStructureType(e.target.value);
+                      setNewStructureName('');
+                      setNewStructureHq('');
+                      setNewStructureChapterId('');
+                    }}
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-101 rounded-xl text-xs outline-none"
+                  >
+                    {selectableStructureTypes.map(st => (
+                      <option key={st.value} value={st.value} className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>{st.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-450 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">
+                    {structureType === 'group' ? 'Group Church Name' : structureType === 'chapter' ? 'Chapter Name' : 'Fellowship Cell Name'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder={structureType === 'group' ? 'e.g. Lagos Group Church' : structureType === 'chapter' ? 'e.g. Faith Chapter' : 'e.g. Joy Cell'}
+                    value={newStructureName}
+                    onChange={(e) => setNewStructureName(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-xs outline-none"
+                  />
+                </div>
+
+                {structureType !== 'cell' ? (
+                  <div>
+                    <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Headquarters / City</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Lagos"
+                      value={newStructureHq}
+                      onChange={(e) => setNewStructureHq(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-xs outline-none"
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Parent Chapter Assignment</label>
+                    <select
+                      value={newStructureChapterId}
+                      required
+                      onChange={(e) => setNewStructureChapterId(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-101 rounded-xl text-xs outline-none font-medium"
+                    >
+                      <option value="" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Select Chapter...</option>
+                      {chapters.map(ch => (
+                        <option key={ch.id} value={ch.id} className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>{ch.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-all active:scale-[0.98] cursor-pointer border-none shadow-md"
+                >
+                  Establish Location / Structure
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <UserDirectory
+              currentUser={currentUser}
+              users={users}
+              chapters={chapters}
+              cells={cells}
+              updateUser={updateUser}
+            />
+          </div>
+        </div>
+      )}
+
+      {activeModule === 'personal_givings' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Left side: My Personal Givings History list */}
+            <div className="lg:col-span-2 p-6 bg-slate-900/40 border border-slate-800 rounded-3xl space-y-4">
+              <div>
+                <h3 className="text-md font-bold text-slate-100 flex items-center gap-2 tracking-tight">
+                  <Wallet size={16} className="text-indigo-400" />
+                  My Personal Givings History
+                </h3>
+                <p className="text-xs text-slate-500">Record and status summary of your own weekly ledger submissions.</p>
+              </div>
+
+              <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/40">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="text-slate-500 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
+                      <th className="px-6 py-3.5">Transaction ID</th>
+                      <th className="px-6 py-3.5">Category</th>
+                      <th className="px-6 py-3.5">Service Date</th>
+                      <th className="px-6 py-3.5">Payment Method</th>
+                      <th className="px-6 py-3.5 text-right">Amount</th>
+                      <th className="px-6 py-3.5 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-850 font-medium text-slate-300">
+                    {mySubmissions.map(item => (
+                      <tr 
+                        key={item.id} 
+                        onDoubleClick={() => setSelectedReceipt(item)}
+                        className="ledger-row cursor-pointer transition-colors"
+                        title="Double-click to view details"
+                      >
+                        <td className="px-6 py-3 font-mono text-[10px] text-slate-500">{item.id}</td>
+                        <td className="px-6 py-3">
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${item.category === 'Tithe' ? 'badge-indigo-soft' : 'badge-slate-soft'}`}>
+                            {item.category}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3 font-mono text-slate-400">{item.serviceDate}</td>
+                        <td className="px-6 py-3 text-slate-400">{item.paymentMethod}</td>
+                        <td className="px-6 py-3 text-right text-indigo-400 font-bold font-mono tabular-nums">${item.totalAmount.toLocaleString()}</td>
+                        <td className="px-6 py-3 text-center">
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${item.status === 'Confirmed' ? 'badge-emerald-soft' : 'badge-amber-soft'}`}>
+                            {item.status === 'Confirmed' ? 'Verified' : 'Pending Review'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {mySubmissions.length === 0 && (
+                      <tr>
+                        <td colSpan="6" className="text-center text-slate-650 py-12 italic">No personal weekly giving logs recorded.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Right side: Record Giving Form */}
+            <div>
+              <RecordGivingForm
+                currentUser={currentUser}
+                onSubmit={submitLedgerEntry}
+                showAttendance={false}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Exporter Reveal Modal */}
       {revealedReport && (() => {
         let reportTitle = '';
@@ -1136,7 +1289,7 @@ export function AdminPortal({
                     <thead>
                       <tr className="text-slate-500 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
                         {headers.map((h, i) => {
-                          const isAmountHeader = h.toLowerCase().includes('amount') || h.toLowerCase().includes('souls') || h.toLowerCase().includes('giving') || h.toLowerCase().includes('contribution') || h.toLowerCase().includes('base');
+                          const isAmountHeader = h.toLowerCase().includes('amount') || h.toLowerCase().includes('souls') || h.toLowerCase().includes('giving') || h.toLowerCase().includes('givings') || h.toLowerCase().includes('base');
                           return (
                             <th key={i} className={`px-6 py-3 ${isAmountHeader ? 'text-right' : ''}`}>{h}</th>
                           );

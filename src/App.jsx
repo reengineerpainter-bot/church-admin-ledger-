@@ -32,6 +32,12 @@ export function App() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  // Reset active module and search term when switching users
+  useEffect(() => {
+    setActiveModule('dashboard');
+    setGlobalSearchTerm('');
+  }, [currentUserId]);
+
   // Auto logout after 3 minutes of inactivity
   useEffect(() => {
     if (currentUserId === 'logged_out') return;
@@ -194,6 +200,7 @@ export function App() {
             approveCredential={state.approveCredential}
             rejectCredential={state.rejectCredential}
             createChapter={state.createChapter}
+            createCell={state.createCell}
             updateUser={state.updateUser}
             approveUserDeletion={state.approveUserDeletion}
             rejectUserDeletion={state.rejectUserDeletion}
