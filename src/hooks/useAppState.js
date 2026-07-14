@@ -234,11 +234,12 @@ export function useAppState() {
   };
 
   // Hierarchy Structure Modifiers
-  const createChapter = (name, headquarters) => {
+  const createChapter = (name, headquarters, type = 'chapter') => {
     const newId = `c_${Date.now()}`;
-    const newChapter = { id: newId, name, headquarters };
+    const newChapter = { id: newId, name, headquarters, type };
     setChapters(prev => [...prev, newChapter]);
-    addLog(`${currentUser.name} created new Chapter: ${name} (Headquarters: ${headquarters}).`);
+    const label = type === 'group' ? 'Group Church' : type === 'church' ? 'Church' : 'Chapter';
+    addLog(`${currentUser.name} created new ${label}: ${name} (Location: ${headquarters}).`);
     return newId;
   };
 

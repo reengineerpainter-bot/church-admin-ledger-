@@ -4,7 +4,7 @@ import { CredentialForm } from './CredentialForm';
 import { UserDirectory } from './UserDirectory';
 import { 
   TrendingUp, Users, CheckCircle, XCircle, UserPlus, 
-  UserCheck, AlertCircle, FileText, Eye, Calendar, Trophy, Sparkles, Camera
+  UserCheck, AlertCircle, FileText, Eye, Calendar, Trophy, Sparkles, Camera, Wallet
 } from 'lucide-react';
 import { RecordGivingForm } from '../Common/RecordGivingForm';
 import { RecordSoulForm } from '../Common/RecordSoulForm';

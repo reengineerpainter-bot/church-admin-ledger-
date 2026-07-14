@@ -5,7 +5,7 @@ import { CredentialForm } from './CredentialForm';
 import { UserDirectory } from './UserDirectory';
 import { 
   TrendingUp, Users, Grid, CheckCircle, XCircle, 
-  UserPlus, UserCheck, AlertTriangle, ShieldCheck, Plus, Sparkles, AlertCircle, Calendar, FileText, Camera
+  UserPlus, UserCheck, AlertTriangle, ShieldCheck, Plus, Sparkles, AlertCircle, Calendar, FileText, Camera, Wallet
 } from 'lucide-react';
 import { RecordGivingForm } from '../Common/RecordGivingForm';
 import { RecordSoulForm } from '../Common/RecordSoulForm';
@@ -36,6 +36,7 @@ export function ChapterPortal({
 }) {
   const [showAddLeader, setShowAddLeader] = useState(false);
   const [newCellName, setNewCellName] = useState('');
+  const [cellCity, setCellCity] = useState('');
   const [cellSuccess, setCellSuccess] = useState(false);
   const [revealedReport, setRevealedReport] = useState(null); // 'givings' | 'souls' | 'cells' | 'members' | null
   const [timeframe, setTimeframe] = useState('monthly');
@@ -296,6 +297,7 @@ export function ChapterPortal({
     if (!newCellName.trim()) return;
     createCell(newCellName.trim(), chapterId, 'Vacant');
     setNewCellName('');
+    setCellCity('');
     setCellSuccess(true);
     setTimeout(() => setCellSuccess(false), 3000);
   };
@@ -835,7 +837,7 @@ export function ChapterPortal({
             <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl h-fit w-full lg:w-80 shadow-lg">
               <h3 className="text-sm font-bold text-slate-101 mb-2 flex items-center gap-2 tracking-tight">
                 <Map size={16} className="text-indigo-400" />
-                Establish New Cell Group
+                Establish New Location / Structure
               </h3>
               <p className="text-[10px] text-slate-450 leading-relaxed mb-4">
                 Chapter Administration: Add a new Fellowship Cell under your jurisdiction in {chapterName}.
@@ -852,18 +854,30 @@ export function ChapterPortal({
                     disabled
                     className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 text-slate-400 rounded-xl text-xs outline-none cursor-not-allowed"
                   >
-                    <option>Fellowship Cell (Level 5)</option>
+                    <option>cell</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Cell Group Name</label>
+                  <label className="block text-slate-450 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Structure Name</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Joy Cell"
                     value={newCellName}
                     onChange={(e) => setNewCellName(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-xs outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Structure City</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Lagos"
+                    value={cellCity}
+                    onChange={(e) => setCellCity(e.target.value)}
                     className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-xs outline-none"
                   />
                 </div>

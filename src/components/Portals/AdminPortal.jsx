@@ -5,7 +5,7 @@ import { CredentialForm } from './CredentialForm';
 import { UserDirectory } from './UserDirectory';
 import { 
   TrendingUp, Users, Map, Grid, CheckCircle, XCircle, 
-  UserPlus, UserCheck, AlertTriangle, Trophy, Calendar, Sparkles, AlertCircle, FileText, Camera
+  UserPlus, UserCheck, AlertTriangle, Trophy, Calendar, Sparkles, AlertCircle, FileText, Camera, Wallet
 } from 'lucide-react';
 import { RecordGivingForm } from '../Common/RecordGivingForm';
 import { RecordSoulForm } from '../Common/RecordSoulForm';
@@ -37,7 +37,12 @@ export function AdminPortal({
   globalSearchTerm = ''
 }) {
   const [showAddLeader, setShowAddLeader] = useState(false);
-  const [structureType, setStructureType] = useState('chapter');
+  const [structureType, setStructureType] = useState(() => {
+    const role = currentUser?.role;
+    if (role === 'admin') return 'group';
+    if (role === 'group_pastor') return 'church';
+    return 'cell';
+  });
   const [newStructureName, setNewStructureName] = useState('');
   const [newStructureHq, setNewStructureHq] = useState('');
   const [newStructureChapterId, setNewStructureChapterId] = useState('');
@@ -88,19 +93,21 @@ export function AdminPortal({
     const role = currentUser.role;
     if (role === 'admin') {
       return [
-        { value: 'group', label: 'Group Church (Level 2)' },
-        { value: 'chapter', label: 'Chapter (Level 4)' },
-        { value: 'cell', label: 'Fellowship Cell (Level 5)' }
+        { value: 'group', label: 'group church' },
+        { value: 'church', label: 'church' },
+        { value: 'chapter', label: 'chapter' },
+        { value: 'cell', label: 'cell' }
       ];
     }
     if (role === 'group_pastor') {
       return [
-        { value: 'chapter', label: 'Chapter (Level 4)' },
-        { value: 'cell', label: 'Fellowship Cell (Level 5)' }
+        { value: 'church', label: 'church' },
+        { value: 'chapter', label: 'chapter' },
+        { value: 'cell', label: 'cell' }
       ];
     }
     return [
-      { value: 'cell', label: 'Fellowship Cell (Level 5)' }
+      { value: 'cell', label: 'cell' }
     ];
   };
 
@@ -1054,31 +1061,18 @@ export function AdminPortal({
                 </div>
 
                 <div>
-                  <label className="block text-slate-450 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">
-                    {structureType === 'group' ? 'Group Church Name' : structureType === 'chapter' ? 'Chapter Name' : 'Fellowship Cell Name'}
-                  </label>
+                  <label className="block text-slate-450 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Structure Name</label>
                   <input
                     type="text"
                     required
-                    placeholder={structureType === 'group' ? 'e.g. Lagos Group Church' : structureType === 'chapter' ? 'e.g. Faith Chapter' : 'e.g. Joy Cell'}
+                    placeholder="e.g. Joy Fellowship"
                     value={newStructureName}
                     onChange={(e) => setNewStructureName(e.target.value)}
                     className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-xs outline-none"
                   />
                 </div>
 
-                {structureType !== 'cell' ? (
-                  <div>
-                    <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Headquarters / City</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Lagos"
-                      value={newStructureHq}
-                      onChange={(e) => setNewStructureHq(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-xs outline-none"
-                    />
-                  </div>
-                ) : (
+                {structureType === 'cell' && (
                   <div>
                     <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Parent Chapter Assignment</label>
                     <select
@@ -1094,6 +1088,18 @@ export function AdminPortal({
                     </select>
                   </div>
                 )}
+
+                <div>
+                  <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-wide mb-1.5">Structure City</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Lagos"
+                    value={newStructureHq}
+                    onChange={(e) => setNewStructureHq(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-100 rounded-xl text-xs outline-none"
+                  />
+                </div>
 
                 <button
                   type="submit"
