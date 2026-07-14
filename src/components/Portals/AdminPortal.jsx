@@ -511,7 +511,7 @@ export function AdminPortal({
                 Global Weekly Giving Trends
               </h3>
               <p className="text-xs text-slate-500 mb-4">Confirmed receipts aggregated by service dates.</p>
-              <div className="h-60 flex items-center">
+              <div className="h-40 flex items-center">
                 <LineChart data={weeklyGivingData} />
               </div>
             </div>
@@ -522,8 +522,8 @@ export function AdminPortal({
                 Giving Breakdown
               </h3>
               <p className="text-xs text-slate-500 mb-4">Category allocation of received funds.</p>
-              <div className="h-60 flex items-center justify-center">
-                <DonutChart data={givingTypeData} />
+              <div className="h-40 flex items-center justify-center">
+                <DonutChart data={givingTypeData} size={150} />
               </div>
             </div>
           </div>
@@ -535,7 +535,7 @@ export function AdminPortal({
                 Giving Receipts by Regional Chapter
               </h3>
               <p className="text-xs text-slate-500 mb-4">Regional performance based on audit confirmed transactions.</p>
-              <div className="h-60 flex items-center">
+              <div className="h-40 flex items-center">
                 <BarChart data={chapterGivingData} barColor="#f59e0b" />
               </div>
             </div>

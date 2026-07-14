@@ -19,8 +19,27 @@ const describeArc = (x, y, radius, startAngle, endAngle) => {
   ].join(' ');
 };
 
+// Bezier Curve generator for smooth path lines (Enterprise BI Standard)
+const getBezierPath = (points) => {
+  if (points.length === 0) return '';
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+  
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i];
+    const p1 = points[i + 1];
+    // Control points at 1/3 and 2/3 of X distance
+    const cpX1 = p0.x + (p1.x - p0.x) / 3;
+    const cpY1 = p0.y;
+    const cpX2 = p0.x + 2 * (p1.x - p0.x) / 3;
+    const cpY2 = p1.y;
+    d += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${p1.x} ${p1.y}`;
+  }
+  return d;
+};
+
 export function LineChart({ data = [], height = 180, strokeColor = '#6366f1', fillColor }) {
-  if (!data || data.length === 0) return <div className="text-slate-500 text-xs text-center py-10 italic">No data available</div>;
+  if (!data || data.length === 0) return <div className="text-slate-500 text-[11px] text-center py-10 italic font-medium">No data available</div>;
 
   const width = 500;
   const paddingLeft = 45;
@@ -35,25 +54,16 @@ export function LineChart({ data = [], height = 180, strokeColor = '#6366f1', fi
   const minVal = 0;
   const range = maxVal - minVal;
 
-  // Generate points
+  // Generate coordinates
   const points = data.map((d, i) => {
     const x = paddingLeft + (i / (data.length - 1 || 1)) * chartWidth;
     const y = paddingTop + chartHeight - ((d.value - minVal) / (range || 1)) * chartHeight;
     return { x, y, value: d.value, label: d.label };
   });
 
-  // Construct path string
-  let pathD = '';
-  if (points.length > 0) {
-    pathD = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 1; i < points.length; i++) {
-      pathD += ` L ${points[i].x} ${points[i].y}`;
-    }
-  }
-
-  // Construct area path string
+  const smoothPathD = getBezierPath(points);
   const areaD = points.length > 0 
-    ? `${pathD} L ${points[points.length - 1].x} ${paddingTop + chartHeight} L ${points[0].x} ${paddingTop + chartHeight} Z`
+    ? `${smoothPathD} L ${points[points.length - 1].x} ${paddingTop + chartHeight} L ${points[0].x} ${paddingTop + chartHeight} Z`
     : '';
 
   // Y-axis gridlines
@@ -63,22 +73,21 @@ export function LineChart({ data = [], height = 180, strokeColor = '#6366f1', fi
     return { y, value };
   });
 
-  // Unique gradient IDs to prevent conflicts
   const gradId = `areaGrad-${strokeColor.replace('#', '')}`;
 
   return (
-    <div className="w-full">
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto select-none overflow-visible">
+    <div className="w-full flex items-center justify-center">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full max-h-[170px] select-none overflow-visible">
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={strokeColor} stopOpacity="0.25" />
+            <stop offset="0%" stopColor={strokeColor} stopOpacity="0.18" />
             <stop offset="100%" stopColor={strokeColor} stopOpacity="0.0" />
           </linearGradient>
-          <pattern id="dotGrid" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="1" fill="#334155" opacity="0.3" />
+          <pattern id="dotGrid" x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
+            <circle cx="1.5" cy="1.5" r="0.75" fill="#475569" opacity="0.15" />
           </pattern>
           <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
-            <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor={strokeColor} floodOpacity="0.3" />
+            <feDropShadow dx="0" dy="3" stdDeviation="3.5" floodColor={strokeColor} floodOpacity="0.25" />
           </filter>
         </defs>
 
@@ -93,15 +102,16 @@ export function LineChart({ data = [], height = 180, strokeColor = '#6366f1', fi
               y1={line.y} 
               x2={width - paddingRight} 
               y2={line.y} 
-              stroke="#1e293b" 
-              strokeWidth="1.2" 
+              stroke="#334155" 
+              strokeWidth="0.8" 
+              opacity="0.2"
             />
             <text 
               x={paddingLeft - 10} 
-              y={line.y + 3.5} 
-              fill="#64748b" 
-              fontSize="9" 
-              fontWeight="600"
+              y={line.y + 3} 
+              fill="#475569" 
+              fontSize="8.5" 
+              fontWeight="bold"
               fontFamily="monospace"
               textAnchor="end"
             >
@@ -110,16 +120,16 @@ export function LineChart({ data = [], height = 180, strokeColor = '#6366f1', fi
           </g>
         ))}
 
-        {/* Area fill under curve */}
-        {areaD && <path d={areaD} fill={`url(#${gradId})`} className="transition-all duration-300" />}
+        {/* Gradient area under bezier curve */}
+        {areaD && <path d={areaD} fill={`url(#${gradId})`} />}
 
         {/* Smooth line */}
-        {pathD && (
+        {smoothPathD && (
           <path 
-            d={pathD} 
+            d={smoothPathD} 
             fill="none" 
             stroke={strokeColor} 
-            strokeWidth="2.5" 
+            strokeWidth="2.2" 
             strokeLinecap="round" 
             strokeLinejoin="round" 
             filter="url(#shadow)"
@@ -129,42 +139,39 @@ export function LineChart({ data = [], height = 180, strokeColor = '#6366f1', fi
         {/* Interactive points */}
         {points.map((p, idx) => (
           <g key={idx} className="group cursor-pointer">
-            {/* Hover shadow ring */}
             <circle 
               cx={p.x} 
               cy={p.y} 
-              r="7" 
+              r="6" 
               fill={strokeColor} 
               opacity="0"
               className="transition-all duration-200 group-hover:opacity-20"
             />
-            {/* Core point */}
             <circle 
               cx={p.x} 
               cy={p.y} 
-              r="4" 
+              r="3.5" 
               fill="#0f172a" 
               stroke={strokeColor} 
-              strokeWidth="2"
-              className="transition-all duration-200"
+              strokeWidth="1.8"
             />
-            {/* Custom Tooltip */}
-            <g className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+            {/* Tooltip on hover */}
+            <g className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none">
               <rect
-                x={p.x - 35}
-                y={p.y - 30}
-                width="70"
-                height="20"
-                rx="6"
+                x={p.x - 30}
+                y={p.y - 25}
+                width="60"
+                height="17"
+                rx="5"
                 fill="#0f172a"
                 stroke="#334155"
-                strokeWidth="1"
+                strokeWidth="0.8"
               />
               <text
                 x={p.x}
-                y={p.y - 17}
+                y={p.y - 14}
                 fill="#f8fafc"
-                fontSize="9"
+                fontSize="8.5"
                 fontWeight="800"
                 textAnchor="middle"
                 fontFamily="monospace"
@@ -180,9 +187,9 @@ export function LineChart({ data = [], height = 180, strokeColor = '#6366f1', fi
           <text 
             key={idx} 
             x={p.x} 
-            y={height - 8} 
-            fill="#64748b" 
-            fontSize="9" 
+            y={height - 6} 
+            fill="#475569" 
+            fontSize="8.5" 
             fontWeight="bold"
             textAnchor="middle"
           >
@@ -195,7 +202,7 @@ export function LineChart({ data = [], height = 180, strokeColor = '#6366f1', fi
 }
 
 export function BarChart({ data = [], height = 180, barColor = '#10b981' }) {
-  if (!data || data.length === 0) return <div className="text-slate-500 text-xs text-center py-10 italic">No data available</div>;
+  if (!data || data.length === 0) return <div className="text-slate-500 text-[11px] text-center py-10 italic font-medium">No data available</div>;
 
   const width = 500;
   const paddingLeft = 45;
@@ -214,21 +221,22 @@ export function BarChart({ data = [], height = 180, barColor = '#10b981' }) {
   });
 
   const barCount = data.length;
-  const barWidth = (chartWidth / barCount) * 0.5;
-  const gap = (chartWidth / barCount) * 0.5;
+  // Enforce slim modern bar width bounds to avoid fat chunk blocks
+  const barWidth = Math.min((chartWidth / barCount) * 0.45, 18);
+  const gap = (chartWidth - barWidth * barCount) / (barCount || 1);
 
   const barGradId = `barGrad-${barColor.replace('#', '')}`;
 
   return (
-    <div className="w-full">
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto select-none overflow-visible">
+    <div className="w-full flex items-center justify-center">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full max-h-[170px] select-none overflow-visible">
         <defs>
           <linearGradient id={barGradId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={barColor} stopOpacity="1" />
-            <stop offset="100%" stopColor={barColor} stopOpacity="0.65" />
+            <stop offset="100%" stopColor={barColor} stopOpacity="0.5" />
           </linearGradient>
-          <pattern id="dotGridBar" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="1" fill="#334155" opacity="0.3" />
+          <pattern id="dotGridBar" x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
+            <circle cx="1.5" cy="1.5" r="0.75" fill="#475569" opacity="0.15" />
           </pattern>
         </defs>
 
@@ -243,15 +251,16 @@ export function BarChart({ data = [], height = 180, barColor = '#10b981' }) {
               y1={line.y} 
               x2={width - paddingRight} 
               y2={line.y} 
-              stroke="#1e293b" 
-              strokeWidth="1.2"
+              stroke="#334155" 
+              strokeWidth="0.8"
+              opacity="0.2"
             />
             <text 
               x={paddingLeft - 10} 
-              y={line.y + 3.5} 
-              fill="#64748b" 
-              fontSize="9" 
-              fontWeight="600"
+              y={line.y + 3} 
+              fill="#475569" 
+              fontSize="8.5" 
+              fontWeight="bold"
               fontFamily="monospace"
               textAnchor="end"
             >
@@ -268,15 +277,15 @@ export function BarChart({ data = [], height = 180, barColor = '#10b981' }) {
 
           return (
             <g key={i} className="group cursor-pointer">
-              {/* Subtle background track for bars */}
+              {/* Subtle bar background track */}
               <rect 
                 x={x} 
                 y={paddingTop} 
                 width={barWidth} 
                 height={chartHeight} 
                 fill="#1e293b" 
-                opacity="0.15"
-                rx="4"
+                opacity="0.1"
+                rx="3.5"
               />
               {/* Actual bar */}
               <rect 
@@ -285,26 +294,26 @@ export function BarChart({ data = [], height = 180, barColor = '#10b981' }) {
                 width={barWidth} 
                 height={Math.max(barH, 3)} 
                 fill={`url(#${barGradId})`} 
-                rx="4"
+                rx="3.5"
                 className="transition-all duration-200 hover:brightness-110"
               />
               {/* Tooltip on hover */}
-              <g className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+              <g className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none">
                 <rect
-                  x={x + barWidth / 2 - 35}
-                  y={y - 28}
-                  width="70"
-                  height="20"
-                  rx="6"
+                  x={x + barWidth / 2 - 30}
+                  y={y - 25}
+                  width="60"
+                  height="17"
+                  rx="5"
                   fill="#0f172a"
                   stroke="#334155"
-                  strokeWidth="1"
+                  strokeWidth="0.8"
                 />
                 <text
                   x={x + barWidth / 2}
-                  y={y - 15}
+                  y={y - 14}
                   fill="#f8fafc"
-                  fontSize="9"
+                  fontSize="8.5"
                   fontWeight="800"
                   textAnchor="middle"
                   fontFamily="monospace"
@@ -315,13 +324,13 @@ export function BarChart({ data = [], height = 180, barColor = '#10b981' }) {
               {/* X label */}
               <text 
                 x={x + barWidth / 2} 
-                y={height - 8} 
-                fill="#64748b" 
-                fontSize="9" 
+                y={height - 6} 
+                fill="#475569" 
+                fontSize="8.5" 
                 fontWeight="bold"
                 textAnchor="middle"
               >
-                {d.label.length > 12 ? d.label.substring(0, 10) + '..' : d.label}
+                {d.label.length > 10 ? d.label.substring(0, 8) + '..' : d.label}
               </text>
             </g>
           );
@@ -331,17 +340,17 @@ export function BarChart({ data = [], height = 180, barColor = '#10b981' }) {
   );
 }
 
-export function DonutChart({ data = [], size = 200, strokeWidth = 16 }) {
+export function DonutChart({ data = [], size = 130, strokeWidth = 12 }) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const center = size / 2;
-  const radius = (size - strokeWidth - 25) / 2;
+  const radius = (size - strokeWidth - 15) / 2;
 
   if (total === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <svg width={size} height={size}>
           <circle cx={center} cy={center} r={radius} fill="none" stroke="#1e293b" strokeWidth={strokeWidth} />
-          <text x={center} y={center} fill="#475569" textAnchor="middle" dominantBaseline="middle" className="text-xs font-bold font-mono">NO RECORDS</text>
+          <text x={center} y={center} fill="#475569" textAnchor="middle" dominantBaseline="middle" className="text-[10px] font-bold font-mono">NO RECORDS</text>
         </svg>
       </div>
     );
@@ -350,17 +359,17 @@ export function DonutChart({ data = [], size = 200, strokeWidth = 16 }) {
   let currentAngle = 0;
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-center gap-8 w-full">
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full py-2">
       <div className="relative shrink-0" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="overflow-visible">
           <defs>
-            <filter id="donutShadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#0f172a" floodOpacity="0.5" />
+            <filter id="donutShadow" x="-15%" y="-15%" width="130%" height="130%">
+              <feDropShadow dx="0" dy="3" stdDeviation="4.5" floodColor="#0f172a" floodOpacity="0.45" />
             </filter>
           </defs>
 
           {/* Underlay background track */}
-          <circle cx={center} cy={center} r={radius} fill="none" stroke="#1e293b" strokeWidth={strokeWidth} opacity="0.4" />
+          <circle cx={center} cy={center} r={radius} fill="none" stroke="#1e293b" strokeWidth={strokeWidth} opacity="0.3" />
 
           {data.map((item, idx) => {
             const angleSize = (item.value / total) * 360;
@@ -381,7 +390,7 @@ export function DonutChart({ data = [], size = 200, strokeWidth = 16 }) {
                 strokeWidth={strokeWidth}
                 strokeLinecap="round"
                 filter="url(#donutShadow)"
-                className="transition-all duration-300 hover:stroke-[18px] cursor-pointer"
+                className="transition-all duration-300 hover:stroke-[14px] cursor-pointer"
               />
             );
           })}
@@ -390,43 +399,43 @@ export function DonutChart({ data = [], size = 200, strokeWidth = 16 }) {
           <circle cx={center} cy={center} r={radius - strokeWidth / 2} fill="#0f172a" opacity="0.8" />
           <text 
             x={center} 
-            y={center - 3} 
+            y={center - 2} 
             fill="#f8fafc" 
             textAnchor="middle" 
             fontWeight="900" 
-            fontSize="15"
+            fontSize="12"
             fontFamily="monospace"
           >
             ${total.toLocaleString()}
           </text>
           <text 
             x={center} 
-            y={center + 12} 
-            fill="#64748b" 
+            y={center + 9} 
+            fill="#475569" 
             textAnchor="middle" 
             fontWeight="bold"
-            fontSize="8" 
+            fontSize="7.5" 
             style={{ textTransform: 'uppercase' }} 
-            letterSpacing="1.2"
+            letterSpacing="1"
           >
-            Givings
+            Total
           </text>
         </svg>
       </div>
 
       {/* Legend list - Grid styling for premium feel */}
-      <div className="flex-1 grid grid-cols-1 gap-2.5 max-w-xs">
+      <div className="flex-grow grid grid-cols-1 gap-1.5 max-w-[180px]">
         {data.map((item, idx) => {
           const pct = total > 0 ? ((item.value / total) * 100).toFixed(0) : 0;
           return (
-            <div key={idx} className="flex items-center justify-between p-2 rounded-xl bg-slate-950/40 border border-slate-850 hover:border-slate-800 transition-colors">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                <span className="text-slate-300 font-bold text-[11px]">{item.label}</span>
+            <div key={idx} className="flex items-center justify-between p-1.5 rounded-lg bg-slate-950/40 border border-slate-850 hover:border-slate-800 transition-colors">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                <span className="text-slate-300 font-bold text-[10px] truncate max-w-[80px]">{item.label}</span>
               </div>
-              <div className="flex items-center gap-1.5 font-mono text-[10px]">
+              <div className="flex items-center gap-1 font-mono text-[9px] shrink-0">
                 <span className="text-slate-400 font-semibold">${item.value.toLocaleString()}</span>
-                <span className="text-indigo-400 font-extrabold bg-indigo-950/60 border border-indigo-900/50 px-1.5 py-0.5 rounded text-[9px]">{pct}%</span>
+                <span className="text-indigo-400 font-extrabold bg-indigo-950/60 border border-indigo-900/30 px-1 py-0.5 rounded text-[8px]">{pct}%</span>
               </div>
             </div>
           );

@@ -403,7 +403,7 @@ export function ChapterPortal({
                 Chapter Weekly Giving Trends
               </h3>
               <p className="text-xs text-slate-500 mb-4">Confirmed receipts aggregated by service dates.</p>
-              <div className="h-60 flex items-center">
+              <div className="h-40 flex items-center">
                 <LineChart data={weeklyGivingData} />
               </div>
             </div>
@@ -449,7 +449,7 @@ export function ChapterPortal({
                 Giving Receipts by Cell Group
               </h3>
               <p className="text-xs text-slate-500 mb-4">Fellowship cells performance breakdown in this chapter.</p>
-              <div className="h-60 flex items-center">
+              <div className="h-40 flex items-center">
                 <BarChart data={cellGivingData} barColor="#10b981" />
               </div>
             </div>
