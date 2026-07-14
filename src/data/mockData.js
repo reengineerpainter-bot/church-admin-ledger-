@@ -20,6 +20,22 @@ export const initialUsers = [
     status: 'Active',
     title: 'Pastor'
   },
+  {
+    id: 'u_gp1',
+    username: 'gpsamuel',
+    name: 'Pastor Samuel',
+    role: 'group_pastor',
+    status: 'Active',
+    title: 'Pastor'
+  },
+  {
+    id: 'u_p1',
+    username: 'pmatthew',
+    name: 'Pastor Matthew',
+    role: 'pastor',
+    status: 'Active',
+    title: 'Pastor'
+  },
   // Chapter Leaders
   {
     id: 'u2',

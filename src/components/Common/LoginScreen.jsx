@@ -36,10 +36,12 @@ export function LoginScreen({ onLogin, users }) {
 
   // Select a few core users representing each tier to list for quick-testing
   const demoAccounts = [
-    { name: 'Pastor Chris', username: 'pastorchris', role: 'admin', desc: 'Global Authority' },
-    { name: 'CL David', username: 'cldavid', role: 'chapter_leader', desc: 'Grace Chapter Leader' },
-    { name: 'Cell Leader Mary', username: 'marycell', role: 'cell_leader', desc: 'Joy Cell Leader' },
-    { name: 'Member John', username: 'memberjohn', role: 'member', desc: 'Active Member' }
+    { name: 'Pastor Chris', username: 'pastorchris', role: 'admin', desc: 'Zonal Pastor (L1)' },
+    { name: 'GP Samuel', username: 'gpsamuel', role: 'group_pastor', desc: 'Group Pastor (L2)' },
+    { name: 'P Matthew', username: 'pmatthew', role: 'pastor', desc: 'Pastor (L3)' },
+    { name: 'CL David', username: 'cldavid', role: 'chapter_leader', desc: 'Grace Chapter Leader (L4)' },
+    { name: 'Cell Leader Mary', username: 'marycell', role: 'cell_leader', desc: 'Joy Cell Leader (L5)' },
+    { name: 'Member John', username: 'memberjohn', role: 'member', desc: 'Active Member (L6)' }
   ];
 
   return (

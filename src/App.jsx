@@ -76,7 +76,9 @@ export function App() {
     if (!currentUser || currentUserId === 'logged_out') return 0;
 
     switch (currentUser.role) {
-      case 'admin': {
+      case 'admin':
+      case 'group_pastor':
+      case 'pastor': {
         const pendingCellLeaders = state.users.filter(
           u => u.role === 'cell_leader' && u.status === 'Pending_Higher_Approval'
         );
@@ -179,6 +181,8 @@ export function App() {
     // Role switcher dashboard router
     switch (currentUser.role) {
       case 'admin':
+      case 'group_pastor':
+      case 'pastor':
         return (
           <AdminPortal
             currentUser={currentUser}

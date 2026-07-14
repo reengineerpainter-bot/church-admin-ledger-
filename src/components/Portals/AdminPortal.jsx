@@ -45,6 +45,42 @@ export function AdminPortal({
   const [customEnd, setCustomEnd] = useState('');
   const [selectedReceipt, setSelectedReceipt] = useState(null);
 
+  const getRoleMeta = () => {
+    if (currentUser.role === 'group_pastor') {
+      return {
+        roleLabel: 'Group Pastor (L2)',
+        title: 'Group Care Administration',
+        desc: 'Oversight of designated group chapters, cells, members, and audit reports.',
+        borderColor: 'border-slate-500/80',
+        ringColor: 'ring-slate-500/10',
+        textColor: 'text-slate-400',
+        gradient: 'from-slate-400 via-slate-350 to-slate-500'
+      };
+    }
+    if (currentUser.role === 'pastor') {
+      return {
+        roleLabel: 'Pastor (L3)',
+        title: 'Chapter Care Administration',
+        desc: 'Spiritual and structural care supervision of chapter, cells, and weekly member ledger inputs.',
+        borderColor: 'border-blue-500/80',
+        ringColor: 'ring-blue-500/10',
+        textColor: 'text-blue-400',
+        gradient: 'from-blue-400 to-indigo-500'
+      };
+    }
+    return {
+      roleLabel: 'Zonal Pastor (L1)',
+      title: 'Global Root Administration',
+      desc: 'Full structural oversight of all chapters, cells, members, and giving receipts.',
+      borderColor: 'border-amber-500/80',
+      ringColor: 'ring-amber-500/10',
+      textColor: 'text-amber-500',
+      gradient: 'from-amber-400 via-yellow-500 to-amber-600'
+    };
+  };
+
+  const meta = getRoleMeta();
+
   const filterByTimeframe = (dateStr) => {
     if (!dateStr) return false;
     const itemDate = new Date(dateStr);
@@ -348,13 +384,13 @@ export function AdminPortal({
   return (
     <div className="space-y-6">
       
-      {/* Welcome Bar / Rank Information (Zonal Pastor Gold theme representation) */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 glass-panel rounded-3xl border-t-2 border-amber-500/80">
+      {/* Welcome Bar / Rank Information */}
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 glass-panel rounded-3xl border-t-2 ${meta.borderColor}`}>
         <div className="flex items-center gap-4">
           <button 
             type="button"
             onDoubleClick={onEditProfile}
-            className="relative group rounded-2xl overflow-hidden hover:scale-105 active:scale-95 transition-all ring-4 ring-amber-500/10 shrink-0 border-none cursor-pointer p-0"
+            className={`relative group rounded-2xl overflow-hidden hover:scale-105 active:scale-95 transition-all ring-4 ${meta.ringColor} shrink-0 border-none cursor-pointer p-0`}
             title="Double-click to Edit Profile"
           >
             <UserAvatar user={currentUser} size="lg" />
@@ -363,9 +399,9 @@ export function AdminPortal({
             </div>
           </button>
           <div>
-            <span className="text-xs text-amber-500 font-extrabold uppercase tracking-wide">Zonal Pastor (L1)</span>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-100 tracking-tight mt-1 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 bg-clip-text text-transparent">Global Root Administration</h2>
-            <p className="text-slate-400 text-xs mt-1">Full structural oversight of all chapters, cells, members, and giving receipts.</p>
+            <span className={`text-xs ${meta.textColor} font-extrabold uppercase tracking-wide`}>{meta.roleLabel}</span>
+            <h2 className={`text-xl sm:text-2xl font-extrabold text-slate-105 tracking-tight mt-1 bg-gradient-to-r ${meta.gradient} bg-clip-text text-transparent`}>{meta.title}</h2>
+            <p className="text-slate-400 text-xs mt-1">{meta.desc}</p>
           </div>
         </div>
       </div>

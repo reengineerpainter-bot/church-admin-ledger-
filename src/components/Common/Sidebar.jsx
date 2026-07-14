@@ -33,6 +33,8 @@ export function Sidebar({
   // Hierarchy role color badge
   const getRoleBadgeColor = (role) => {
     if (role === 'admin') return 'badge-amber-soft';
+    if (role === 'group_pastor') return 'badge-slate-soft';
+    if (role === 'pastor') return 'badge-slate-soft';
     if (role === 'chapter_leader') return 'badge-emerald-soft';
     if (role === 'cell_leader') return 'badge-cyan-soft';
     return 'badge-indigo-soft';
@@ -40,6 +42,8 @@ export function Sidebar({
 
   const getRoleLabel = (role) => {
     if (role === 'admin') return 'Zonal Pastor';
+    if (role === 'group_pastor') return 'Group Pastor';
+    if (role === 'pastor') return 'Pastor';
     if (role === 'chapter_leader') return 'Chapter Leader';
     if (role === 'cell_leader') return 'Cell Leader';
     return 'Member';
@@ -50,9 +54,9 @@ export function Sidebar({
     if (!authUser || authUserId === 'logged_out') return { admin: [], cl: [], cell: [], member: [] };
     const role = authUser.role;
 
-    if (role === 'admin') {
+    if (role === 'admin' || role === 'group_pastor' || role === 'pastor') {
       return {
-        admin: users.filter(u => u.role === 'admin' && u.status === 'Active'),
+        admin: users.filter(u => (u.role === 'admin' || u.role === 'group_pastor' || u.role === 'pastor') && u.status === 'Active'),
         cl: users.filter(u => u.role === 'chapter_leader' && u.status === 'Active'),
         cell: users.filter(u => u.role === 'cell_leader' && u.status === 'Active'),
         member: users.filter(u => u.role === 'member' && u.status === 'Active')
@@ -158,10 +162,10 @@ export function Sidebar({
                 <div className="fixed inset-0 z-40" onClick={() => setIsProfileSwitcherOpen(false)} />
                 <div className="absolute right-0 left-0 mt-2 bg-slate-955 border border-slate-800 rounded-xl shadow-2xl z-50 overflow-hidden max-h-80 overflow-y-auto">
                   
-                  {/* Zonal Pastors */}
+                  {/* Pastors (L1 - L3) */}
                   {adminUsers.length > 0 && (
                     <div className="p-1 border-b border-slate-850 bg-slate-900/20">
-                      <span className="text-[9px] text-slate-500 font-extrabold tracking-wider uppercase px-2.5 py-1 block">Zonal Pastors</span>
+                      <span className="text-[9px] text-slate-500 font-extrabold tracking-wider uppercase px-2.5 py-1 block">Pastors (L1 - L3)</span>
                       {adminUsers.map(u => (
                         <button
                           key={u.id}
@@ -172,6 +176,7 @@ export function Sidebar({
                             <UserAvatar user={u} size="xs" className="shrink-0" />
                             <span className="truncate">{getFormattedName(u)}</span>
                           </div>
+                          <span className="text-[8px] px-1 py-0.5 rounded bg-indigo-950 text-indigo-300 font-bold shrink-0">{getRoleLabel(u.role)}</span>
                         </button>
                       ))}
                     </div>
