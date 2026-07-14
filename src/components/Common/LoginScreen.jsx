@@ -30,8 +30,17 @@ export function LoginScreen({ onLogin, users }) {
   const handleQuickFill = (uName, role) => {
     setUsername(uName);
     const matchedUser = users?.find(u => u.username.toLowerCase() === uName.toLowerCase());
-    setPassword(matchedUser?.tempPassword || 'password');
+    const pass = matchedUser?.tempPassword || 'password';
+    setPassword(pass);
     setError('');
+    setLoading(true);
+    setTimeout(() => {
+      const res = onLogin(uName, pass);
+      setLoading(false);
+      if (!res.success) {
+        setError(res.error);
+      }
+    }, 200);
   };
 
   // Select a few core users representing each tier to list for quick-testing

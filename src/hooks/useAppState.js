@@ -77,6 +77,39 @@ export function useAppState() {
     localStorage.setItem('church_souls', JSON.stringify(souls));
   }, [souls]);
 
+  // Self-healing database alignment on startup (merges missing default demo users/chapters/cells)
+  useEffect(() => {
+    let usersChanged = false;
+    const mergedUsers = [...users];
+    initialUsers.forEach(iu => {
+      if (!mergedUsers.some(u => u.username.toLowerCase() === iu.username.toLowerCase())) {
+        mergedUsers.push(iu);
+        usersChanged = true;
+      }
+    });
+    if (usersChanged) setUsers(mergedUsers);
+
+    let chaptersChanged = false;
+    const mergedChapters = [...chapters];
+    initialChapters.forEach(ic => {
+      if (!mergedChapters.some(c => c.id === ic.id)) {
+        mergedChapters.push(ic);
+        chaptersChanged = true;
+      }
+    });
+    if (chaptersChanged) setChapters(mergedChapters);
+
+    let cellsChanged = false;
+    const mergedCells = [...cells];
+    initialCells.forEach(icell => {
+      if (!mergedCells.some(c => c.id === icell.id)) {
+        mergedCells.push(icell);
+        cellsChanged = true;
+      }
+    });
+    if (cellsChanged) setCells(mergedCells);
+  }, []);
+
   const currentUser = users.find(u => u.id === currentUserId);
   const authUser = users.find(u => u.id === authUserId);
 
@@ -106,9 +139,15 @@ export function useAppState() {
 
   const login = (username, password) => {
     const cleanUsername = username.trim().toLowerCase().replace(/^@/, '');
-    const matched = users.find(u => u.username.toLowerCase() === cleanUsername);
+    let matched = users.find(u => u.username.toLowerCase() === cleanUsername);
     if (!matched) {
-      return { success: false, error: 'Username not found.' };
+      const defaultUser = initialUsers.find(u => u.username.toLowerCase() === cleanUsername);
+      if (defaultUser) {
+        setUsers(prev => [...prev, defaultUser]);
+        matched = defaultUser;
+      } else {
+        return { success: false, error: 'Username not found.' };
+      }
     }
     if (matched.status === 'Rejected') {
       return { success: false, error: 'This credential account has been rejected by higher administration.' };
