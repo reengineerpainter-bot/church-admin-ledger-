@@ -120,6 +120,12 @@ export function AdminPortal({
         { value: 'cell', label: 'cell' }
       ];
     }
+    if (role === 'pastor') {
+      return [
+        { value: 'chapter', label: 'chapter' },
+        { value: 'cell', label: 'cell' }
+      ];
+    }
     return [
       { value: 'cell', label: 'cell' }
     ];
