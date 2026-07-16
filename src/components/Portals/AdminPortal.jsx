@@ -293,7 +293,7 @@ export function AdminPortal({
   // --- CHART DATA PREPARATION ---
   // 1. Weekly Giving trend
   const weeklyTotalsMap = {};
-  confirmedLedger.forEach(item => {
+  confirmedLedgerFiltered.forEach(item => {
     weeklyTotalsMap[item.serviceDate] = (weeklyTotalsMap[item.serviceDate] || 0) + item.totalAmount;
   });
   const weeklyGivingData = Object.keys(weeklyTotalsMap)
@@ -304,9 +304,31 @@ export function AdminPortal({
       return { label, value: weeklyTotalsMap[date] };
     });
 
+  // 1b. Weekly Souls trend
+  const weeklySoulsMap = {};
+  soulsFiltered.forEach(s => {
+    const dateStr = s.recordedAt || s.createdAt;
+    if (dateStr) {
+      const normalizedDate = new Date(dateStr).toISOString().split('T')[0];
+      weeklySoulsMap[normalizedDate] = (weeklySoulsMap[normalizedDate] || 0) + 1;
+    }
+  });
+  confirmedLedgerFiltered.forEach(item => {
+    if (item.newMembersBroughtIn > 0) {
+      weeklySoulsMap[item.serviceDate] = (weeklySoulsMap[item.serviceDate] || 0) + item.newMembersBroughtIn;
+    }
+  });
+  const weeklySoulsData = Object.keys(weeklySoulsMap)
+    .sort()
+    .map(date => {
+      const d = new Date(date);
+      const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+      return { label, value: weeklySoulsMap[date] };
+    });
+
   // 2. Giving allocation breakdown
   const categoryTotalsMap = {};
-  confirmedLedger.forEach(item => {
+  confirmedLedgerFiltered.forEach(item => {
     categoryTotalsMap[item.category] = (categoryTotalsMap[item.category] || 0) + item.totalAmount;
   });
   const givingTypeData = Object.keys(categoryTotalsMap)
@@ -317,7 +339,7 @@ export function AdminPortal({
   chapters.forEach(ch => {
     chapterGivingMap[ch.name] = 0;
   });
-  confirmedLedger.forEach(item => {
+  confirmedLedgerFiltered.forEach(item => {
     const chName = chapters.find(c => c.id === item.chapterId)?.name;
     if (chName) {
       chapterGivingMap[chName] = (chapterGivingMap[chName] || 0) + item.totalAmount;
@@ -332,12 +354,12 @@ export function AdminPortal({
     const chName = chapters.find(ch => ch.id === cell.chapterId)?.name || 'Unknown';
     cellSoulsMap[cell.id] = { name: cell.name, chapter: chName, souls: 0 };
   });
-  souls.forEach(s => {
-    if (s.status === 'Approved' && cellSoulsMap[s.cellId]) {
+  soulsFiltered.forEach(s => {
+    if (cellSoulsMap[s.cellId]) {
       cellSoulsMap[s.cellId].souls += 1;
     }
   });
-  confirmedLedger.forEach(item => {
+  confirmedLedgerFiltered.forEach(item => {
     if (cellSoulsMap[item.cellId]) {
       cellSoulsMap[item.cellId].souls += item.newMembersBroughtIn;
     }
@@ -457,131 +479,354 @@ export function AdminPortal({
 
       {activeModule === 'dashboard' && (
         <>
-          {/* Timeframe Filter for Metrics & Summary */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2 bg-slate-900/20 p-4 rounded-3xl border border-slate-800">
-            <div>
-              <h3 className="text-sm font-bold text-slate-100 tracking-tight">Global Overview & Analytics</h3>
-              <p className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">Filter entire church network statistics by period</p>
-            </div>
-            <TimeframeFilter 
-              value={timeframe} 
-              onChange={setTimeframe} 
-              customStart={customStart}
-              onChangeStart={setCustomStart}
-              customEnd={customEnd}
-              onChangeEnd={setCustomEnd}
-            />
-          </div>
-
-          {/* Metric Dashboard Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard
-              title="Global Total Giving"
-              value={`$${totalGiving.toLocaleString()}`}
-              icon={TrendingUp}
-              description="Double-click to reveal breakdown of chapter, cell, and member giving"
-              status="info"
-              onClick={() => setRevealedReport('givings')}
-            />
-            <StatCard
-              title="Total Souls Won"
-              value={totalSoulsWon}
-              icon={Trophy}
-              description="Double-click to reveal cell group and individual soul-winning tallies"
-              status="success"
-              onClick={() => setRevealedReport('souls')}
-            />
-            <StatCard
-              title="Active Chapters"
-              value={chapters.length}
-              icon={Map}
-              description="Double-click to reveal regional headquarters details and leadership"
-              status="default"
-              onClick={() => setRevealedReport('chapters')}
-            />
-            <StatCard
-              title="Active Member Base"
-              value={activeMembersCount}
-              icon={Users}
-              description={`Double-click to reveal full database list of active members`}
-              status="default"
-              onClick={() => setRevealedReport('members')}
-            />
-          </div>
-
-          {/* Charts Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-            <div className="lg:col-span-2 p-6 glass-panel rounded-3xl">
-              <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2 tracking-tight">
-                <TrendingUp size={16} className="text-amber-500" />
-                Global Weekly Giving Trends
-              </h3>
-              <p className="text-xs text-slate-500 mb-4">Confirmed receipts aggregated by service dates.</p>
-              <div className="h-40 flex items-center">
-                <LineChart data={weeklyGivingData} />
+          {!revealedReport ? (
+            <>
+              {/* Timeframe Filter for Metrics & Summary */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2 bg-slate-900/20 p-4 rounded-3xl border border-slate-800">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-100 tracking-tight">Global Overview & Analytics</h3>
+                  <p className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">Filter entire church network statistics by period</p>
+                </div>
+                <TimeframeFilter 
+                  value={timeframe} 
+                  onChange={setTimeframe} 
+                  customStart={customStart}
+                  onChangeStart={setCustomStart}
+                  customEnd={customEnd}
+                  onChangeEnd={setCustomEnd}
+                />
               </div>
-            </div>
 
-            <div className="p-6 glass-panel rounded-3xl">
-              <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2 tracking-tight">
-                <Grid size={16} className="text-amber-500" />
-                Giving Breakdown
-              </h3>
-              <p className="text-xs text-slate-500 mb-4">Category allocation of received funds.</p>
-              <div className="h-40 flex items-center justify-center">
-                <DonutChart data={givingTypeData} size={150} />
+              {/* Metric Dashboard Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard
+                  title="Global Total Giving"
+                  value={`$${totalGiving.toLocaleString()}`}
+                  icon={TrendingUp}
+                  description="Double-click to reveal breakdown of chapter, cell, and member giving"
+                  status="info"
+                  onClick={() => setRevealedReport('givings')}
+                />
+                <StatCard
+                  title="Total Souls Won"
+                  value={totalSoulsWon}
+                  icon={Trophy}
+                  description="Double-click to reveal cell group and individual soul-winning tallies"
+                  status="success"
+                  onClick={() => setRevealedReport('souls')}
+                />
+                <StatCard
+                  title="Active Chapters"
+                  value={chapters.length}
+                  icon={Map}
+                  description="Double-click to reveal regional headquarters details and leadership"
+                  status="default"
+                  onClick={() => setRevealedReport('chapters')}
+                />
+                <StatCard
+                  title="Active Member Base"
+                  value={activeMembersCount}
+                  icon={Users}
+                  description={`Double-click to reveal full database list of active members`}
+                  status="default"
+                  onClick={() => setRevealedReport('members')}
+                />
               </div>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-            <div className="p-6 glass-panel rounded-3xl">
-              <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2 tracking-tight">
-                <Map size={16} className="text-amber-500" />
-                Giving Receipts by Regional Chapter
-              </h3>
-              <p className="text-xs text-slate-500 mb-4">Regional performance based on audit confirmed transactions.</p>
-              <div className="h-40 flex items-center">
-                <BarChart data={chapterGivingData} barColor="#f59e0b" />
-              </div>
-            </div>
+              {/* Charts Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                <div className="p-6 glass-panel rounded-3xl">
+                  <h3 className="text-md font-bold text-slate-105 mb-2 flex items-center gap-2 tracking-tight">
+                    <TrendingUp size={16} className="text-amber-500" />
+                    Global Weekly Giving Trends
+                  </h3>
+                  <p className="text-xs text-slate-500 mb-4">Confirmed receipts aggregated by service dates.</p>
+                  <div className="h-40 flex items-center">
+                    <LineChart data={weeklyGivingData} />
+                  </div>
+                </div>
 
-            <div className="p-6 glass-panel rounded-3xl flex flex-col justify-between">
-              <div>
-                <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2 tracking-tight">
-                  <Trophy size={16} className="text-yellow-500" />
-                  Cell Group Soul-Winning Leaderboard
-                </h3>
-                <p className="text-xs text-slate-500 mb-4">Ranking cell outreach units by new members added.</p>
-                
-                <div className="overflow-x-auto max-h-56 overflow-y-auto pr-1">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="text-slate-500 border-b border-slate-800 font-extrabold uppercase text-[10px] tracking-wide">
-                        <th className="pb-2">Cell Group</th>
-                        <th className="pb-2">Regional Chapter</th>
-                        <th className="pb-2 text-right">Souls Won</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-850">
-                      {cellLeaderboard.map((cell, idx) => (
-                        <tr key={idx} className="ledger-row transition-all duration-250">
-                          <td className="py-2.5 text-slate-200 font-bold flex items-center gap-1.5">
-                            <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[9px] ${idx === 0 ? 'bg-yellow-500/10 text-yellow-500' : idx === 1 ? 'bg-slate-350/10 text-slate-350' : 'bg-slate-800 text-slate-400'}`}>
-                              {idx + 1}
-                            </span>
-                            {cell.name}
-                          </td>
-                          <td className="py-2.5 text-slate-450">{cell.chapter}</td>
-                          <td className="py-2.5 text-right font-extrabold text-indigo-400 font-mono tabular-nums">{cell.souls}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="p-6 glass-panel rounded-3xl">
+                  <h3 className="text-md font-bold text-slate-105 mb-2 flex items-center gap-2 tracking-tight">
+                    <Users size={16} className="text-indigo-400" />
+                    Global Weekly Soulwinning Trends
+                  </h3>
+                  <p className="text-xs text-slate-500 mb-4">Approved soul registrations & ledger data by date.</p>
+                  <div className="h-40 flex items-center">
+                    <LineChart data={weeklySoulsData} strokeColor="#818cf8" formatValue={(v) => v.toLocaleString()} />
+                  </div>
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                <div className="p-6 glass-panel rounded-3xl">
+                  <h3 className="text-md font-bold text-slate-105 mb-2 flex items-center gap-2 tracking-tight">
+                    <Grid size={16} className="text-amber-500" />
+                    Giving Breakdown
+                  </h3>
+                  <p className="text-xs text-slate-500 mb-4">Category allocation of received funds.</p>
+                  <div className="h-40 flex items-center justify-center">
+                    <DonutChart data={givingTypeData} size={150} />
+                  </div>
+                </div>
+
+                <div className="p-6 glass-panel rounded-3xl lg:col-span-2">
+                  <h3 className="text-md font-bold text-slate-105 mb-2 flex items-center gap-2 tracking-tight">
+                    <Map size={16} className="text-amber-500" />
+                    Giving Receipts by Regional Chapter
+                  </h3>
+                  <p className="text-xs text-slate-500 mb-4">Regional performance based on audit confirmed transactions.</p>
+                  <div className="h-40 flex items-center">
+                    <BarChart data={chapterGivingData} barColor="#f59e0b" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 mt-6">
+                <div className="p-6 glass-panel rounded-3xl flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-md font-bold text-slate-105 mb-2 flex items-center gap-2 tracking-tight">
+                      <Trophy size={16} className="text-yellow-500" />
+                      Cell Group Soul-Winning Leaderboard
+                    </h3>
+                    <p className="text-xs text-slate-500 mb-4">Ranking cell outreach units by new members added.</p>
+                    
+                    <div className="overflow-x-auto max-h-56 overflow-y-auto pr-1">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="text-slate-500 border-b border-slate-800 font-extrabold uppercase text-[10px] tracking-wide">
+                            <th className="pb-2">Cell Group</th>
+                            <th className="pb-2">Regional Chapter</th>
+                            <th className="pb-2 text-right">Souls Won</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-850">
+                          {cellLeaderboard.map((cell, idx) => (
+                            <tr key={idx} className="ledger-row transition-all duration-250">
+                              <td className="py-2.5 text-slate-205 font-bold flex items-center gap-1.5">
+                                <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[9px] ${idx === 0 ? 'bg-yellow-500/10 text-yellow-500' : idx === 1 ? 'bg-slate-350/10 text-slate-350' : 'bg-slate-800 text-slate-400'}`}>
+                                  {idx + 1}
+                                </span>
+                                {cell.name}
+                              </td>
+                              <td className="py-2.5 text-slate-450">{cell.chapter}</td>
+                              <td className="py-2.5 text-right font-extrabold text-indigo-400 font-mono tabular-nums">{cell.souls}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="p-6 glass-panel rounded-3xl w-full flex flex-col shadow-2xl animate-fade-in space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border-b border-slate-800 bg-slate-900/10 gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-100">{(() => {
+                    if (revealedReport === 'givings') return 'Global Total Givings Audit Report';
+                    if (revealedReport === 'souls') return 'Global Souls Won Outreach Report';
+                    if (revealedReport === 'chapters') return 'Active Regional Chapters List';
+                    if (revealedReport === 'members') return 'Active Member Directory';
+                    return '';
+                  })()}</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Summary of network records and growth breakdown</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  {revealedReport === 'souls' && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">Outreach:</span>
+                      <select
+                        value={outreachFilter}
+                        onChange={(e) => setOutreachFilter(e.target.value)}
+                        className="px-3 py-1.5 bg-slate-955 border border-slate-800 focus:ring-2 focus:ring-indigo-500/20 text-slate-200 rounded-xl text-xs outline-none"
+                      >
+                        <option value="All" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>All Programs</option>
+                        <option value="Ministry Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Ministry Program</option>
+                        <option value="Zonal Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Zonal Program</option>
+                        <option value="Church Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Church Program</option>
+                        <option value="Chapter Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Chapter Program</option>
+                        <option value="Cell Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Cell Program</option>
+                        <option value="Personal Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Personal Program</option>
+                      </select>
+                    </div>
+                  )}
+                  {revealedReport === 'givings' && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">Category:</span>
+                      <select
+                        value={givingCategoryFilter}
+                        onChange={(e) => setGivingCategoryFilter(e.target.value)}
+                        className="px-3 py-1.5 bg-slate-955 border border-slate-800 focus:ring-2 focus:ring-indigo-500/20 text-slate-200 rounded-xl text-xs outline-none"
+                      >
+                        <option value="All" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>All Categories</option>
+                        <option value="Tithe" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Tithe</option>
+                        <option value="Offering" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Offering</option>
+                        <option value="Partnership" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Partnership</option>
+                        <option value="First Fruit" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>First Fruit</option>
+                        <option value="Thanksgiving" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Thanksgiving</option>
+                        <option value="Church Hosting" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Church Hosting</option>
+                        <option value="PCO" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>PCO</option>
+                        <option value="PCO Seed" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>PCO Seed</option>
+                        <option value="Welfare" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Welfare</option>
+                        <option value="Others" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Others</option>
+                      </select>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => { setRevealedReport(null); setOutreachFilter('All'); setGivingCategoryFilter('All'); }}
+                    className="px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-slate-100 flex items-center gap-1.5 transition-all cursor-pointer shadow-lg text-xs font-bold font-sans"
+                  >
+                    &larr; Back to Dashboard
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/40">
+                {(() => {
+                  let headers = [];
+                  let rows = [];
+                  let reportTitle = '';
+
+                  if (revealedReport === 'givings') {
+                    reportTitle = 'Global Total Givings Audit Report';
+                    headers = ['Chapter', 'Cell Group', 'Member', 'Category', 'Segment', 'Method', 'Amount', 'Date & Time'];
+                    const displayGivings = confirmedLedger.filter(item => givingCategoryFilter === 'All' || item.category === givingCategoryFilter);
+                    rows = [...displayGivings]
+                      .sort((a, b) => b.totalAmount - a.totalAmount)
+                      .map(item => {
+                        const chName = chapters.find(c => c.id === item.chapterId)?.name || 'Unknown';
+                        const cellName = cells.find(c => c.id === item.cellId)?.name || 'Unknown';
+                        return [
+                          chName,
+                          cellName,
+                          item.memberName,
+                          item.category || 'Tithe',
+                          item.segment || 'Local',
+                          item.paymentMethod,
+                          `$${item.totalAmount}`,
+                          new Date(item.createdAt).toLocaleString()
+                        ];
+                      });
+                  } else if (revealedReport === 'souls') {
+                    reportTitle = 'Global Souls Won Outreach Report';
+                    headers = ['Soul Name', 'Gender', 'Profession', 'Phone Number', 'Outreach Program', 'Cell Group', 'Chapter', 'Recorded By', 'Date & Time'];
+                    const displaySouls = souls.filter(s => s.status === 'Approved' && (outreachFilter === 'All' || s.outreachProgram === outreachFilter));
+                    rows = displaySouls.map(s => {
+                      const cellName = cells.find(c => c.id === s.cellId)?.name || 'Unknown';
+                      const chName = chapters.find(c => c.id === s.chapterId)?.name || 'Unknown';
+                      return [
+                        s.name,
+                        s.sex,
+                        s.profession,
+                        s.phone,
+                        s.outreachProgram || 'Personal Program',
+                        cellName,
+                        chName,
+                        s.reporterName || 'Unknown',
+                        s.recordedAt || s.createdAt || 'N/A'
+                      ];
+                    });
+                  } else if (revealedReport === 'chapters') {
+                    reportTitle = 'Active Regional Chapters List';
+                    headers = ['Chapter Name', 'Leader/Pastor', 'Cells Count', 'Members Count', 'Status'];
+                    rows = chapters.map(ch => {
+                      const chCells = cells.filter(c => c.chapterId === ch.id).length;
+                      const chMembers = users.filter(u => u.chapterId === ch.id && u.role === 'member').length;
+                      return [
+                        ch.name,
+                        ch.leaderName || 'Vacant',
+                        `${chCells} Cells`,
+                        `${chMembers} Members`,
+                        'Active'
+                      ];
+                    });
+                  } else if (revealedReport === 'members') {
+                    reportTitle = 'Active Member Directory';
+                    headers = ['Name', 'Username', 'Title', 'Chapter', 'Cell Group', 'Status'];
+                    rows = users
+                      .filter(u => u.role === 'member')
+                      .map(u => {
+                        const chName = chapters.find(ch => ch.id === u.chapterId)?.name || 'None';
+                        const cellName = cells.find(c => c.id === u.cellId)?.name || 'None';
+                        return [
+                          u.name,
+                          `@${u.username}`,
+                          u.title || 'Bro',
+                          chName,
+                          cellName,
+                          u.status
+                        ];
+                      });
+                  }
+
+                  return (
+                    <>
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="text-slate-550 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
+                            {headers.map((h, i) => {
+                              const isAmountHeader = h.toLowerCase().includes('amount') || h.toLowerCase().includes('souls') || h.toLowerCase().includes('giving') || h.toLowerCase().includes('givings') || h.toLowerCase().includes('base');
+                              return (
+                                <th key={i} className={`px-6 py-3 ${isAmountHeader ? 'text-right' : ''}`}>{h}</th>
+                              );
+                            })}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-850 font-medium text-slate-300">
+                          {rows.map((row, rIdx) => (
+                            <tr key={rIdx} className="ledger-row transition-colors">
+                              {row.map((val, cIdx) => {
+                                const isNumeric = typeof val === 'string' && (val.startsWith('$') || val.startsWith('+') || /^\d+$/.test(val));
+                                return (
+                                  <td 
+                                    key={cIdx} 
+                                    className={`px-6 py-3 ${isNumeric ? 'font-mono tabular-nums text-right text-indigo-400 font-bold' : ''}`}
+                                  >
+                                    {val}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                          {rows.length === 0 && (
+                            <tr>
+                              <td colSpan={headers.length} className="text-center py-8 text-slate-500 italic">No entries found for this report.</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+
+                      <div className="flex items-center justify-between p-6 border-t border-slate-800 bg-slate-955/20">
+                        <div className="text-[10px] text-slate-500 font-extrabold uppercase">Export Format Options:</div>
+                        <div className="flex gap-2.5">
+                          <button
+                            onClick={() => exportToTxt(reportTitle, headers, rows)}
+                            className="px-3.5 py-2 bg-slate-955 border border-slate-800 text-slate-300 font-bold rounded-xl text-xs hover:border-slate-700 active:scale-95 transition-all cursor-pointer"
+                          >
+                            Download TXT
+                          </button>
+                          <button
+                            onClick={() => exportToWord(reportTitle, headers, rows)}
+                            className="px-3.5 py-2 bg-slate-955 border border-slate-800 text-slate-350 font-bold rounded-xl text-xs hover:border-slate-700 active:scale-95 transition-all cursor-pointer"
+                          >
+                            Download Word
+                          </button>
+                          <button
+                            onClick={() => triggerPrint(reportTitle, headers, rows)}
+                            className="px-3.5 py-2 bg-indigo-650 hover:bg-indigo-600 text-white font-bold rounded-xl text-xs active:scale-95 transition-all shadow-md cursor-pointer border-none"
+                          >
+                            Print Report
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
-          </div>
+          )}
         </>
       )}
 
@@ -1239,211 +1484,7 @@ export function AdminPortal({
         </div>
       )}
 
-      {/* Exporter Reveal Modal */}
-      {revealedReport && (() => {
-        let reportTitle = '';
-        let headers = [];
-        let rows = [];
-
-        if (revealedReport === 'givings') {
-          reportTitle = 'Global Total Givings Audit Report';
-          headers = ['Chapter', 'Cell Group', 'Member', 'Category', 'Segment', 'Method', 'Amount', 'Date & Time'];
-          const displayGivings = confirmedLedger.filter(item => givingCategoryFilter === 'All' || item.category === givingCategoryFilter);
-          rows = [...displayGivings]
-            .sort((a, b) => b.totalAmount - a.totalAmount)
-            .map(item => {
-              const chName = chapters.find(c => c.id === item.chapterId)?.name || 'Unknown';
-              const cellName = cells.find(c => c.id === item.cellId)?.name || 'Unknown';
-              return [
-                chName,
-                cellName,
-                item.memberName,
-                item.category || 'Tithe',
-                item.segment || 'Local',
-                item.paymentMethod,
-                `$${item.totalAmount}`,
-                new Date(item.createdAt).toLocaleString()
-              ];
-            });
-        } else if (revealedReport === 'souls') {
-          reportTitle = 'Total Souls Won Outreach Report';
-          headers = ['Soul Name', 'Gender', 'Profession', 'Phone Number', 'Outreach Program', 'Chapter', 'Cell Group', 'Recorded By', 'Date & Time'];
-          const displaySouls = soulsFiltered.filter(s => outreachFilter === 'All' || s.outreachProgram === outreachFilter);
-          rows = displaySouls.map(s => {
-            const chName = chapters.find(c => c.id === s.chapterId)?.name || 'Unknown';
-            const cellName = cells.find(c => c.id === s.cellId)?.name || 'Unknown';
-            return [
-              s.name,
-              s.sex,
-              s.profession,
-              s.phone,
-              s.outreachProgram || 'Personal Program',
-              chName,
-              cellName,
-              s.reporterName || 'Unknown',
-              s.recordedAt || s.createdAt || 'N/A'
-            ];
-          });
-        } else if (revealedReport === 'chapters') {
-          reportTitle = 'Active Chapters & Scope Report';
-          headers = ['Chapter Name', 'Headquarters', 'Leader Name', 'Cell Groups', 'Total Members'];
-          rows = chapters.map(ch => {
-            const chCellsCount = cells.filter(c => c.chapterId === ch.id).length;
-            const chMembersCount = users.filter(u => u.chapterId === ch.id && u.role === 'member' && u.status === 'Active').length;
-            const leader = users.find(u => u.chapterId === ch.id && u.role === 'chapter_leader')?.name || 'Vacant';
-            return { ch, chCellsCount, chMembersCount, leader };
-          })
-          .sort((a, b) => b.chMembersCount - a.chMembersCount)
-          .map(item => [
-            item.ch.name,
-            item.ch.headquarters,
-            item.leader,
-            item.chCellsCount,
-            item.chMembersCount
-          ]);
-        } else if (revealedReport === 'members') {
-          reportTitle = 'Active Membership Directory Report';
-          headers = ['Member Name', 'Username', 'Title', 'Chapter', 'Cell Group', 'Status'];
-          rows = users
-            .filter(u => u.role === 'member' && u.status === 'Active')
-            .map(u => {
-              const chName = chapters.find(ch => ch.id === u.chapterId)?.name || 'None';
-              const cellName = cells.find(c => c.id === u.cellId)?.name || 'None';
-              return [
-                u.name,
-                `@${u.username}`,
-                u.title || 'Bro',
-                chName,
-                cellName,
-                u.status
-              ];
-            });
-        }
-
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border-b border-slate-800 bg-slate-900/10 gap-4">
-                <div>
-                  <h3 className="text-lg font-bold text-slate-100">{reportTitle}</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Summary of network records and growth breakdown</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  {revealedReport === 'souls' && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">Outreach:</span>
-                      <select
-                        value={outreachFilter}
-                        onChange={(e) => setOutreachFilter(e.target.value)}
-                        className="px-3 py-1.5 bg-slate-955 border border-slate-800 focus:ring-2 focus:ring-indigo-500/20 text-slate-200 rounded-xl text-xs outline-none"
-                      >
-                        <option value="All" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>All Programs</option>
-                        <option value="Ministry Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Ministry Program</option>
-                        <option value="Zonal Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Zonal Program</option>
-                        <option value="Church Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Church Program</option>
-                        <option value="Chapter Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Chapter Program</option>
-                        <option value="Cell Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Cell Program</option>
-                        <option value="Personal Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Personal Program</option>
-                      </select>
-                    </div>
-                  )}
-                  {revealedReport === 'givings' && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">Category:</span>
-                      <select
-                        value={givingCategoryFilter}
-                        onChange={(e) => setGivingCategoryFilter(e.target.value)}
-                        className="px-3 py-1.5 bg-slate-955 border border-slate-800 focus:ring-2 focus:ring-indigo-500/20 text-slate-200 rounded-xl text-xs outline-none"
-                      >
-                        <option value="All" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>All Categories</option>
-                        <option value="Tithe" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Tithe</option>
-                        <option value="Offering" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Offering</option>
-                        <option value="Partnership" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Partnership</option>
-                        <option value="Firstfruit" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Firstfruit</option>
-                        <option value="Thanksgiving" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Thanksgiving</option>
-                        <option value="ChurchHosting" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>ChurchHosting</option>
-                        <option value="PCO" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>PCO</option>
-                        <option value="PCO Seed" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>PCO Seed</option>
-                        <option value="Welfare" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Welfare</option>
-                        <option value="Others" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Others</option>
-                      </select>
-                    </div>
-                  )}
-                  <button
-                    onClick={() => { setRevealedReport(null); setOutreachFilter('All'); setGivingCategoryFilter('All'); }}
-                    className="w-8 h-8 rounded-full bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-all cursor-pointer shadow-lg active:scale-90 shrink-0 text-lg font-bold"
-                  >
-                    &times;
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-6">
-                <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/40">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="text-slate-500 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
-                        {headers.map((h, i) => {
-                          const isAmountHeader = h.toLowerCase().includes('amount') || h.toLowerCase().includes('souls') || h.toLowerCase().includes('giving') || h.toLowerCase().includes('givings') || h.toLowerCase().includes('base');
-                          return (
-                            <th key={i} className={`px-6 py-3 ${isAmountHeader ? 'text-right' : ''}`}>{h}</th>
-                          );
-                        })}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-850 font-medium text-slate-300">
-                      {rows.map((row, rIdx) => (
-                        <tr key={rIdx} className="ledger-row transition-colors">
-                          {row.map((val, cIdx) => {
-                            const isNumeric = typeof val === 'string' && (val.startsWith('$') || val.startsWith('+') || /^\d+$/.test(val));
-                            return (
-                              <td 
-                                key={cIdx} 
-                                className={`px-6 py-3 ${isNumeric ? 'font-mono tabular-nums text-right text-indigo-400 font-bold' : ''}`}
-                              >
-                                {val}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                      {rows.length === 0 && (
-                        <tr>
-                          <td colSpan={headers.length} className="text-center py-8 text-slate-500 italic">No entries found for this report.</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-6 border-t border-slate-800 bg-slate-950/20">
-                <div className="text-[10px] text-slate-500 font-extrabold uppercase">Export Format Options:</div>
-                <div className="flex gap-2.5">
-                  <button
-                    onClick={() => exportToTxt(reportTitle, headers, rows)}
-                    className="px-3.5 py-2 bg-slate-950 border border-slate-800 text-slate-300 font-bold rounded-xl text-xs hover:border-slate-700 active:scale-95 transition-all cursor-pointer"
-                  >
-                    Download TXT
-                  </button>
-                  <button
-                    onClick={() => exportToWord(reportTitle, headers, rows)}
-                    className="px-3.5 py-2 bg-slate-950 border border-slate-800 text-slate-350 font-bold rounded-xl text-xs hover:border-slate-700 active:scale-95 transition-all cursor-pointer"
-                  >
-                    Download Word
-                  </button>
-                  <button
-                    onClick={() => triggerPrint(reportTitle, headers, rows)}
-                    className="px-3.5 py-2 bg-indigo-650 hover:bg-indigo-600 text-white font-bold rounded-xl text-xs active:scale-95 transition-all shadow-md cursor-pointer border-none"
-                  >
-                    Print Report
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      {/* Exporter Reveal Modal is now rendered inline above */}
 
       {/* Double click receipt auditing modal */}
       {selectedReceipt && (

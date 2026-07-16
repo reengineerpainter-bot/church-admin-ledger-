@@ -38,7 +38,7 @@ const getBezierPath = (points) => {
   return d;
 };
 
-export function LineChart({ data = [], height = 180, strokeColor = '#6366f1', fillColor }) {
+export function LineChart({ data = [], height = 180, strokeColor = '#6366f1', fillColor, formatValue = (v) => `$${v.toLocaleString()}` }) {
   if (!data || data.length === 0) return <div className="text-slate-500 text-[11px] text-center py-10 italic font-medium">No data available</div>;
 
   const width = 500;
@@ -115,7 +115,7 @@ export function LineChart({ data = [], height = 180, strokeColor = '#6366f1', fi
               fontFamily="monospace"
               textAnchor="end"
             >
-              ${line.value.toLocaleString()}
+              {formatValue(line.value)}
             </text>
           </g>
         ))}
@@ -176,7 +176,7 @@ export function LineChart({ data = [], height = 180, strokeColor = '#6366f1', fi
                 textAnchor="middle"
                 fontFamily="monospace"
               >
-                ${p.value.toLocaleString()}
+                {formatValue(p.value)}
               </text>
             </g>
           </g>
@@ -201,7 +201,7 @@ export function LineChart({ data = [], height = 180, strokeColor = '#6366f1', fi
   );
 }
 
-export function BarChart({ data = [], height = 180, barColor = '#10b981' }) {
+export function BarChart({ data = [], height = 180, barColor = '#10b981', formatValue = (v) => `$${v.toLocaleString()}` }) {
   if (!data || data.length === 0) return <div className="text-slate-500 text-[11px] text-center py-10 italic font-medium">No data available</div>;
 
   const width = 500;
@@ -264,7 +264,7 @@ export function BarChart({ data = [], height = 180, barColor = '#10b981' }) {
               fontFamily="monospace"
               textAnchor="end"
             >
-              ${line.value.toLocaleString()}
+              {formatValue(line.value)}
             </text>
           </g>
         ))}
@@ -318,7 +318,7 @@ export function BarChart({ data = [], height = 180, barColor = '#10b981' }) {
                   textAnchor="middle"
                   fontFamily="monospace"
                 >
-                  ${d.value.toLocaleString()}
+                  {formatValue(d.value)}
                 </text>
               </g>
               {/* X label */}
