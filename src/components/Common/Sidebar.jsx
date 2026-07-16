@@ -93,6 +93,15 @@ export function Sidebar({
 
   const visibleUsers = getVisibleUsers();
   const adminUsers = visibleUsers.admin || [];
+  const filteredAdminUsers = adminUsers.filter(u => {
+    if (currentUser?.role === 'group_pastor') {
+      return u.role !== 'admin';
+    }
+    if (currentUser?.role === 'pastor') {
+      return u.role !== 'admin' && u.role !== 'group_pastor';
+    }
+    return true;
+  });
   const clUsers = visibleUsers.cl || [];
   const cellUsers = visibleUsers.cell || [];
   const memberUsers = visibleUsers.member || [];
@@ -206,12 +215,11 @@ export function Sidebar({
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsProfileSwitcherOpen(false)} />
                 <div className="absolute right-0 left-0 mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-50 overflow-hidden max-h-80 overflow-y-auto animate-dropdown">
-                  
-                  {/* Pastors (L1 - L3) */}
-                  {adminUsers.length > 0 && (
+                                    {/* Pastors (L1 - L3) */}
+                  {filteredAdminUsers.length > 0 && (
                     <div className="p-1 border-b border-slate-850 bg-slate-900/20">
                       <span className="text-[9px] text-slate-500 font-extrabold tracking-wider uppercase px-2.5 py-1 block">Pastors (L1 - L3)</span>
-                      {adminUsers.map(u => (
+                      {filteredAdminUsers.map(u => (
                         <button
                           key={u.id}
                           onClick={() => { onSwitchUser(u.id); setIsProfileSwitcherOpen(false); }}
@@ -324,50 +332,50 @@ export function Sidebar({
             </button>
           );
         })}
-      </nav>
+      </nav>       {/* 3. System logs / Console Drawer */}
+      {currentUser && currentUser.role === 'admin' && (
+        <div className="border-t border-slate-800 bg-slate-950/30 flex flex-col shrink-0">
+          <button
+            onClick={() => setShowLogs(!showLogs)}
+            className={`flex items-center justify-between px-6 py-3.5 text-xs font-bold transition-colors border-none cursor-pointer ${showLogs ? 'text-indigo-400 bg-slate-950/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30'}`}
+          >
+            <div className="flex items-center gap-2">
+              <Terminal size={14} className="text-slate-500" />
+              <span>Audit Console</span>
+            </div>
+            {logs.length > 0 && (
+              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse-soft" />
+            )}
+          </button>
 
-      {/* 3. System logs / Console Drawer */}
-      <div className="border-t border-slate-800 bg-slate-950/30 flex flex-col shrink-0">
-        <button
-          onClick={() => setShowLogs(!showLogs)}
-          className={`flex items-center justify-between px-6 py-3.5 text-xs font-bold transition-colors border-none cursor-pointer ${showLogs ? 'text-indigo-400 bg-slate-950/60' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30'}`}
-        >
-          <div className="flex items-center gap-2">
-            <Terminal size={14} className="text-slate-500" />
-            <span>Audit Console</span>
-          </div>
-          {logs.length > 0 && (
-            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse-soft" />
+          {showLogs && (
+            <div className="h-44 border-t border-slate-800 bg-slate-950/80 p-3 font-mono text-[10px] overflow-y-auto flex flex-col gap-1.5 shadow-inner">
+              <div className="flex items-center justify-between border-b border-slate-850 pb-1.5 mb-1.5 shrink-0">
+                <span className="text-slate-550 font-bold uppercase tracking-wider flex items-center gap-1">
+                  <Activity size={10} className="text-indigo-400" /> System Logs
+                </span>
+                <button
+                  onClick={handleDownloadLogs}
+                  className="text-indigo-400 hover:text-indigo-300 font-bold uppercase text-[9px] flex items-center gap-1 transition-colors bg-transparent border-none cursor-pointer"
+                >
+                  <Download size={9} /> TXT
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto space-y-1 pr-1 scrollbar-thin">
+                {logs.map((log) => (
+                  <div key={log.id} className="flex items-start gap-1">
+                    <span className="text-slate-655 shrink-0 font-bold">[{log.time}]</span>
+                    <span className="text-slate-300">{log.text}</span>
+                  </div>
+                ))}
+                {logs.length === 0 && (
+                  <div className="text-slate-600 italic text-center py-4">No logged actions recorded yet.</div>
+                )}
+              </div>
+            </div>
           )}
-        </button>
-
-        {showLogs && (
-          <div className="h-44 border-t border-slate-800 bg-slate-950/80 p-3 font-mono text-[10px] overflow-y-auto flex flex-col gap-1.5 shadow-inner">
-            <div className="flex items-center justify-between border-b border-slate-850 pb-1.5 mb-1.5 shrink-0">
-              <span className="text-slate-550 font-bold uppercase tracking-wider flex items-center gap-1">
-                <Activity size={10} className="text-indigo-400" /> System Logs
-              </span>
-              <button
-                onClick={handleDownloadLogs}
-                className="text-indigo-400 hover:text-indigo-300 font-bold uppercase text-[9px] flex items-center gap-1 transition-colors bg-transparent border-none cursor-pointer"
-              >
-                <Download size={9} /> TXT
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto space-y-1 pr-1 scrollbar-thin">
-              {logs.map((log) => (
-                <div key={log.id} className="flex items-start gap-1">
-                  <span className="text-slate-655 shrink-0 font-bold">[{log.time}]</span>
-                  <span className="text-slate-300">{log.text}</span>
-                </div>
-              ))}
-              {logs.length === 0 && (
-                <div className="text-slate-600 italic text-center py-4">No logged actions recorded yet.</div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* 4. Settings, Theme Switcher & Logout */}
       <div className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-between gap-2.5 shrink-0">
@@ -389,13 +397,15 @@ export function Sidebar({
           )}
         </button>
 
-        <button
-          onClick={onReset}
-          className="p-2 bg-slate-900 border border-slate-800 hover:border-rose-500/30 text-slate-500 hover:text-rose-400 rounded-xl transition-all active:scale-[0.98] cursor-pointer"
-          title="Reset All Simulation States"
-        >
-          <RotateCcw size={14} />
-        </button>
+        {currentUser && currentUser.role === 'admin' && (
+          <button
+            onClick={onReset}
+            className="p-2 bg-slate-900 border border-slate-800 hover:border-rose-500/30 text-slate-500 hover:text-rose-400 rounded-xl transition-all active:scale-[0.98] cursor-pointer"
+            title="Reset All Simulation States"
+          >
+            <RotateCcw size={14} />
+          </button>
+        )}
 
         {currentUser && (
           <button
