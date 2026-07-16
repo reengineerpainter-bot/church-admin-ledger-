@@ -27,6 +27,7 @@ export function MemberPortal({
   const [wednesdayOnline, setWednesdayOnline] = useState(currentUser.attendance?.wednesdayOnline || false);
   const [attendanceSuccess, setAttendanceSuccess] = useState(false);
   const [revealedReport, setRevealedReport] = useState(null); // 'givings' | 'souls' | 'submissions' | null
+  const [outreachFilter, setOutreachFilter] = useState('All');
   const [timeframe, setTimeframe] = useState('monthly');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
@@ -587,15 +588,18 @@ export function MemberPortal({
           ]);
         } else if (revealedReport === 'souls') {
           reportTitle = 'My Personal Soul-Winning Outreach Report';
-          headers = ['Service Date', 'Souls Won', 'Verification Status', 'Submission Date'];
-          rows = mySubmissionsFiltered
-            .filter(item => item.newMembersBroughtIn > 0)
-            .map(item => [
-              item.serviceDate,
-              `+${item.newMembersBroughtIn}`,
-              item.status.replace(/_/g, ' '),
-              new Date(item.createdAt).toLocaleString()
-            ]);
+          headers = ['Soul Name', 'Gender', 'Profession', 'Phone Number', 'Outreach Program', 'Status', 'Date & Time'];
+          const mySouls = souls.filter(s => s.recordedBy === currentUser.id && filterByTimeframe(s.recordedAt || s.createdAt || new Date()));
+          const displaySouls = mySouls.filter(s => outreachFilter === 'All' || s.outreachProgram === outreachFilter);
+          rows = displaySouls.map(s => [
+            s.name,
+            s.sex,
+            s.profession,
+            s.phone,
+            s.outreachProgram || 'Personal Program',
+            s.status.replace(/_/g, ' '),
+            s.recordedAt || s.createdAt || 'N/A'
+          ]);
         } else if (revealedReport === 'submissions') {
           reportTitle = 'My Submission Log History Audit Report';
           headers = ['Category', 'Segment', 'Amount', 'Uploaded At', 'Verification Status'];
@@ -611,18 +615,37 @@ export function MemberPortal({
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
             <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl animate-fade-in">
-              <div className="flex items-center justify-between p-6 border-b border-slate-850 bg-slate-900/10">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border-b border-slate-855 bg-slate-900/10 gap-4">
                 <div>
                   <h3 className="text-lg font-bold text-slate-100">{reportTitle}</h3>
                   <p className="text-xs text-slate-500 mt-0.5">Summary of personal transaction records and submission logs</p>
                 </div>
-                <button
-                  onClick={() => setRevealedReport(null)}
-                  className="w-8 h-8 rounded-full bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-all cursor-pointer shadow-lg active:scale-90 shrink-0 text-lg font-bold"
-                  aria-label="Close modal"
-                >
-                  &times;
-                </button>
+                <div className="flex items-center gap-4">
+                  {revealedReport === 'souls' && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">Outreach:</span>
+                      <select
+                        value={outreachFilter}
+                        onChange={(e) => setOutreachFilter(e.target.value)}
+                        className="px-3 py-1.5 bg-slate-955 border border-slate-800 focus:ring-2 focus:ring-indigo-500/20 text-slate-200 rounded-xl text-xs outline-none"
+                      >
+                        <option value="All" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>All Programs</option>
+                        <option value="Ministry Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Ministry Program</option>
+                        <option value="Zonal Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Zonal Program</option>
+                        <option value="Church Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Church Program</option>
+                        <option value="Chapter Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Chapter Program</option>
+                        <option value="Cell Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Cell Program</option>
+                        <option value="Personal Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Personal Program</option>
+                      </select>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => { setRevealedReport(null); setOutreachFilter('All'); }}
+                    className="w-8 h-8 rounded-full bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-all cursor-pointer shadow-lg active:scale-90 shrink-0 text-lg font-bold"
+                  >
+                    &times;
+                  </button>
+                </div>
               </div>
 
               <div className="flex-1 overflow-y-auto p-6">

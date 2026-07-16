@@ -39,6 +39,7 @@ export function ChapterPortal({
   const [cellCity, setCellCity] = useState('');
   const [cellSuccess, setCellSuccess] = useState(false);
   const [revealedReport, setRevealedReport] = useState(null); // 'givings' | 'souls' | 'cells' | 'members' | null
+  const [outreachFilter, setOutreachFilter] = useState('All');
   const [timeframe, setTimeframe] = useState('monthly');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
@@ -1026,20 +1027,23 @@ export function ChapterPortal({
               ];
             });
         } else if (revealedReport === 'souls') {
-          reportTitle = `Chapter Souls Won outreach Report (${chapterName})`;
-          headers = ['Cell Group', 'Member', 'Souls Won', 'Date & Time'];
-          rows = [...confirmedLedger]
-            .filter(item => item.newMembersBroughtIn > 0)
-            .sort((a, b) => b.newMembersBroughtIn - a.newMembersBroughtIn)
-            .map(item => {
-              const cellName = cells.find(c => c.id === item.cellId)?.name || 'Unknown';
-              return [
-                cellName,
-                item.memberName,
-                `+${item.newMembersBroughtIn}`,
-                new Date(item.createdAt).toLocaleString()
-              ];
-            });
+          reportTitle = `Chapter Souls Won Outreach Report (${chapterName})`;
+          headers = ['Soul Name', 'Gender', 'Profession', 'Phone Number', 'Outreach Program', 'Cell Group', 'Recorded By', 'Date & Time'];
+          const chapterSouls = souls.filter(s => s.status === 'Approved' && s.chapterId === chapterId && filterByTimeframe(s.recordedAt || s.createdAt || new Date()));
+          const displaySouls = chapterSouls.filter(s => outreachFilter === 'All' || s.outreachProgram === outreachFilter);
+          rows = displaySouls.map(s => {
+            const cellName = cells.find(c => c.id === s.cellId)?.name || 'Unknown';
+            return [
+              s.name,
+              s.sex,
+              s.profession,
+              s.phone,
+              s.outreachProgram || 'Personal Program',
+              cellName,
+              s.reporterName || 'Unknown',
+              s.recordedAt || s.createdAt || 'N/A'
+            ];
+          });
         } else if (revealedReport === 'cells') {
           reportTitle = `Active Fellowship Cells Report (${chapterName})`;
           headers = ['Cell Name', 'Leader Name', 'Total Members', 'Weekly Status'];
@@ -1072,17 +1076,37 @@ export function ChapterPortal({
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
             <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
-              <div className="flex items-center justify-between p-6 border-b border-slate-800 bg-slate-900/10">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border-b border-slate-800 bg-slate-900/10 gap-4">
                 <div>
                   <h3 className="text-lg font-bold text-slate-100">{reportTitle}</h3>
                   <p className="text-xs text-slate-500 mt-0.5">Summary of network records and growth breakdown</p>
                 </div>
-                <button
-                  onClick={() => setRevealedReport(null)}
-                  className="w-8 h-8 rounded-full bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-all cursor-pointer shadow-lg active:scale-90 shrink-0 text-lg font-bold"
-                >
-                  &times;
-                </button>
+                <div className="flex items-center gap-4">
+                  {revealedReport === 'souls' && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">Outreach:</span>
+                      <select
+                        value={outreachFilter}
+                        onChange={(e) => setOutreachFilter(e.target.value)}
+                        className="px-3 py-1.5 bg-slate-955 border border-slate-800 focus:ring-2 focus:ring-indigo-500/20 text-slate-200 rounded-xl text-xs outline-none"
+                      >
+                        <option value="All" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>All Programs</option>
+                        <option value="Ministry Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Ministry Program</option>
+                        <option value="Zonal Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Zonal Program</option>
+                        <option value="Church Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Church Program</option>
+                        <option value="Chapter Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Chapter Program</option>
+                        <option value="Cell Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Cell Program</option>
+                        <option value="Personal Program" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Personal Program</option>
+                      </select>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => { setRevealedReport(null); setOutreachFilter('All'); }}
+                    className="w-8 h-8 rounded-full bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-all cursor-pointer shadow-lg active:scale-90 shrink-0 text-lg font-bold"
+                  >
+                    &times;
+                  </button>
+                </div>
               </div>
 
               <div className="flex-1 overflow-y-auto p-6">
