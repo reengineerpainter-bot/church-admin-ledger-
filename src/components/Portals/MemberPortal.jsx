@@ -28,6 +28,7 @@ export function MemberPortal({
   const [attendanceSuccess, setAttendanceSuccess] = useState(false);
   const [revealedReport, setRevealedReport] = useState(null); // 'givings' | 'souls' | 'submissions' | null
   const [outreachFilter, setOutreachFilter] = useState('All');
+  const [givingCategoryFilter, setGivingCategoryFilter] = useState('All');
   const [timeframe, setTimeframe] = useState('monthly');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
@@ -577,9 +578,10 @@ export function MemberPortal({
         let rows = [];
 
         if (revealedReport === 'givings') {
-          reportTitle = 'My Personal Confirmed Givings Report';
+          reportTitle = 'My Confirmed Total Givings Report';
           headers = ['Category', 'Segment', 'Payment Method', 'Amount', 'Date & Time'];
-          rows = myConfirmedFiltered.map(item => [
+          const displayGivings = myConfirmedFiltered.filter(item => givingCategoryFilter === 'All' || item.category === givingCategoryFilter);
+          rows = displayGivings.map(item => [
             item.category || 'Tithe',
             item.segment || 'Local',
             item.paymentMethod,
@@ -639,9 +641,31 @@ export function MemberPortal({
                       </select>
                     </div>
                   )}
+                  {revealedReport === 'givings' && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">Category:</span>
+                      <select
+                        value={givingCategoryFilter}
+                        onChange={(e) => setGivingCategoryFilter(e.target.value)}
+                        className="px-3 py-1.5 bg-slate-955 border border-slate-800 focus:ring-2 focus:ring-indigo-500/20 text-slate-200 rounded-xl text-xs outline-none"
+                      >
+                        <option value="All" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>All Categories</option>
+                        <option value="Tithe" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Tithe</option>
+                        <option value="Offering" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Offering</option>
+                        <option value="Partnership" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Partnership</option>
+                        <option value="Firstfruit" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Firstfruit</option>
+                        <option value="Thanksgiving" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Thanksgiving</option>
+                        <option value="ChurchHosting" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>ChurchHosting</option>
+                        <option value="PCO" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>PCO</option>
+                        <option value="PCO Seed" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>PCO Seed</option>
+                        <option value="Welfare" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Welfare</option>
+                        <option value="Others" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Others</option>
+                      </select>
+                    </div>
+                  )}
                   <button
-                    onClick={() => { setRevealedReport(null); setOutreachFilter('All'); }}
-                    className="w-8 h-8 rounded-full bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-all cursor-pointer shadow-lg active:scale-90 shrink-0 text-lg font-bold"
+                    onClick={() => { setRevealedReport(null); setOutreachFilter('All'); setGivingCategoryFilter('All'); }}
+                    className="w-8 h-8 rounded-full bg-slate-955 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-all cursor-pointer shadow-lg active:scale-90 shrink-0 text-lg font-bold"
                   >
                     &times;
                   </button>

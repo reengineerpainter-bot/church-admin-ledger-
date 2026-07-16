@@ -21,7 +21,7 @@ export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser, showAtte
     if (seg === 'Local') {
       setCategory('Tithe');
     } else {
-      setCategory('PCO Seed');
+      setCategory('PCO');
     }
   };
 
@@ -177,10 +177,13 @@ export function RecordGivingForm({ currentUser, onSubmit, onUpdateUser, showAtte
                   <option value="Tithe" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Tithe</option>
                   <option value="Offering" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Offering</option>
                   <option value="Partnership" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Partnership</option>
-                  <option value="Church Hosting" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Church Hosting</option>
+                  <option value="Firstfruit" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Firstfruit</option>
+                  <option value="Thanksgiving" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Thanksgiving</option>
+                  <option value="ChurchHosting" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>ChurchHosting</option>
                 </>
               ) : (
                 <>
+                  <option value="PCO" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>PCO</option>
                   <option value="PCO Seed" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>PCO Seed</option>
                   <option value="Welfare" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Welfare</option>
                   <option value="Others" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Others</option>
