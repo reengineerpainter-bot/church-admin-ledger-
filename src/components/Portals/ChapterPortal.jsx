@@ -314,7 +314,7 @@ export function ChapterPortal({
   };
 
   const filteredLedger = filterBySearch(chapterLedger, ['id', 'memberName', 'category', 'paymentMethod', 'serviceDate']);
-  const filteredSouls = filterBySearch(souls.filter(s => s.status === 'Approved' && s.chapterId === chapterId), ['name', 'sex', 'reporterName', 'profession', 'phone']);
+  const filteredSouls = filterBySearch(souls.filter(s => s.status === 'Approved' && s.chapterId === chapterId), ['name', 'sex', 'reporterName', 'profession', 'phone', 'outreachProgram']);
 
   return (
     <div className="space-y-6">
@@ -582,6 +582,7 @@ export function ChapterPortal({
                     <th className="px-6 py-3.5">Soul Name</th>
                     <th className="px-6 py-3.5">Sex</th>
                     <th className="px-6 py-3.5">Profession</th>
+                    <th className="px-6 py-3.5">Outreach Program</th>
                     <th className="px-6 py-3.5">Phone Number</th>
                     <th className="px-6 py-3.5">Recorded By</th>
                   </tr>
@@ -594,13 +595,14 @@ export function ChapterPortal({
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 font-bold border border-indigo-900">{soul.sex}</span>
                       </td>
                       <td className="px-6 py-3 text-slate-400">{soul.profession}</td>
+                      <td className="px-6 py-3 text-slate-350 font-semibold">{soul.outreachProgram || 'Personal Program'}</td>
                       <td className="px-6 py-3 font-mono text-slate-450">{soul.phone}</td>
                       <td className="px-6 py-3 text-slate-350">{soul.reporterName}</td>
                     </tr>
                   ))}
                   {filteredSouls.length === 0 && (
                     <tr>
-                      <td colSpan="5" className="text-center text-slate-650 py-12 italic">No outreach records match search constraints.</td>
+                      <td colSpan="6" className="text-center text-slate-650 py-12 italic">No outreach records match search constraints.</td>
                     </tr>
                   )}
                 </tbody>
@@ -755,6 +757,7 @@ export function ChapterPortal({
                       <p className="text-[10px] text-slate-500 mt-1">Recorded by: <span className="text-slate-400 font-semibold">{soul.reporterName}</span></p>
                       <div className="mt-2 text-xs space-y-1 text-slate-450 border-t border-slate-900 pt-2">
                         <p><span className="text-slate-500 font-semibold">Profession:</span> {soul.profession}</p>
+                        <p><span className="text-slate-500 font-semibold">Outreach Program:</span> {soul.outreachProgram || 'Personal Program'}</p>
                         <p><span className="text-slate-500 font-semibold">Phone:</span> {soul.phone}</p>
                         <p><span className="text-slate-500 font-semibold">Address:</span> {soul.address}</p>
                       </div>

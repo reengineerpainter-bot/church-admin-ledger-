@@ -207,7 +207,7 @@ export function MemberPortal({
   };
 
   const filteredSubmissions = filterBySearch(mySubmissions, ['category', 'serviceDate', 'paymentMethod']);
-  const filteredSouls = filterBySearch(souls.filter(s => s.status === 'Approved' && s.recordedBy === currentUser.id), ['name', 'sex', 'profession', 'phone']);
+  const filteredSouls = filterBySearch(souls.filter(s => s.status === 'Approved' && s.recordedBy === currentUser.id), ['name', 'sex', 'profession', 'phone', 'outreachProgram']);
 
   return (
     <div className="space-y-6">
@@ -485,10 +485,11 @@ export function MemberPortal({
             <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/40">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="text-slate-550 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
+                  <tr className="text-slate-555 border-b border-slate-800 font-extrabold uppercase bg-slate-900/40 text-[10px] tracking-wider">
                     <th className="px-6 py-3.5">Soul Name</th>
                     <th className="px-6 py-3.5">Sex</th>
                     <th className="px-6 py-3.5">Profession</th>
+                    <th className="px-6 py-3.5">Outreach Program</th>
                     <th className="px-6 py-3.5">Phone Number</th>
                   </tr>
                 </thead>
@@ -500,12 +501,13 @@ export function MemberPortal({
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 font-bold border border-indigo-900">{soul.sex}</span>
                       </td>
                       <td className="px-6 py-3 text-slate-400">{soul.profession}</td>
+                      <td className="px-6 py-3 text-slate-350 font-semibold">{soul.outreachProgram || 'Personal Program'}</td>
                       <td className="px-6 py-3 font-mono text-slate-455">{soul.phone}</td>
                     </tr>
                   ))}
                   {filteredSouls.length === 0 && (
                     <tr>
-                      <td colSpan="4" className="text-center text-slate-650 py-12 italic">No outreach additions recorded. Use Outreach form to add.</td>
+                      <td colSpan="5" className="text-center text-slate-650 py-12 italic">No outreach additions recorded. Use Outreach form to add.</td>
                     </tr>
                   )}
                 </tbody>

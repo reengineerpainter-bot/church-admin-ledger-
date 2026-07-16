@@ -422,7 +422,7 @@ export function useAppState() {
   };
 
   // Souls Won Records Workflow
-  const submitSoulRecord = (name, address, phone, sex, profession, soulChapterId, soulCellId) => {
+  const submitSoulRecord = (name, address, phone, sex, profession, soulChapterId, soulCellId, outreachProgram) => {
     const isPastor = currentUser.role === 'admin';
     const initialStatus = isPastor ? 'Approved' : 'Pending_Approval';
     const targetChapterId = soulChapterId || currentUser.chapterId || 'c1';
@@ -440,6 +440,7 @@ export function useAppState() {
       reporterName: currentUser.name,
       chapterId: targetChapterId,
       cellId: targetCellId,
+      outreachProgram: outreachProgram || 'Personal Program',
       createdAt: new Date().toLocaleString()
     };
 

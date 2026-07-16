@@ -9,6 +9,7 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
   const [profession, setProfession] = useState('');
   const [selectedChapterId, setSelectedChapterId] = useState('');
   const [selectedCellId, setSelectedCellId] = useState('');
+  const [outreachProgram, setOutreachProgram] = useState('Personal Program');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
@@ -41,7 +42,8 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
       sex,
       profession.trim(),
       soulChapterId,
-      soulCellId
+      soulCellId,
+      outreachProgram
     );
 
     if (res && res.success) {
@@ -50,6 +52,7 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
       setAddress('');
       setPhone('');
       setProfession('');
+      setOutreachProgram('Personal Program');
       setSelectedChapterId('');
       setSelectedCellId('');
       setError('');
@@ -147,6 +150,22 @@ export function RecordSoulForm({ currentUser, chapters = [], cells = [], onSubmi
               className="w-full pl-10 pr-4 py-2.5 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">select outreach programs</label>
+          <select
+            value={outreachProgram}
+            onChange={(e) => setOutreachProgram(e.target.value)}
+            className="w-full px-4 py-2.5 bg-slate-955 border border-slate-800 custom-focus text-slate-100 rounded-xl text-sm outline-none transition-all"
+          >
+            <option value="Ministry Program" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Ministry Program</option>
+            <option value="Zonal Program" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Zonal Program</option>
+            <option value="Church Program" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Church Program</option>
+            <option value="Chapter Program" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Chapter Program</option>
+            <option value="Cell Program" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Cell Program</option>
+            <option value="Personal Program" className="bg-slate-900 text-slate-200 font-medium" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Personal Program</option>
+          </select>
         </div>
 
         {/* Dynamic assignments based on leader visibility */}
