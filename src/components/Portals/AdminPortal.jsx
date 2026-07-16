@@ -54,6 +54,8 @@ export function AdminPortal({
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [givingStructureView, setGivingStructureView] = useState('chapters');
+  const [soulsStructureView, setSoulsStructureView] = useState('cell');
 
   const getRoleMeta = () => {
     if (currentUser.role === 'group_pastor') {
@@ -326,6 +328,48 @@ export function AdminPortal({
       return { label, value: weeklySoulsMap[date] };
     });
 
+  // Helper to map L4 Chapters/L5 Cells to L2 Group Church and L3 Church structures
+  const getStructureInfo = (chapterId, cellId) => {
+    let groupChurch = 'Global Network Group';
+    let church = 'Global Network Church';
+    let chapter = 'Global Chapter';
+    let cell = 'Global Cell';
+
+    if (chapterId === 'c1') {
+      groupChurch = 'Grace Group Church';
+      church = 'Grace Church Lagos';
+      chapter = 'Grace Chapter';
+    } else if (chapterId === 'c2') {
+      groupChurch = 'Hope Group Church';
+      church = 'Hope Church London';
+      chapter = 'Hope Chapter';
+    } else {
+      const ch = chapters.find(c => c.id === chapterId);
+      if (ch) {
+        chapter = ch.name;
+        if (ch.type === 'group') {
+          groupChurch = ch.name;
+          church = ch.name + ' Local';
+        } else if (ch.type === 'church') {
+          groupChurch = ch.name + ' Group';
+          church = ch.name;
+        } else {
+          groupChurch = ch.name + ' Group';
+          church = ch.name + ' Local';
+        }
+      }
+    }
+
+    if (cellId) {
+      const ce = cells.find(c => c.id === cellId);
+      if (ce) {
+        cell = ce.name;
+      }
+    }
+
+    return { groupChurch, church, chapter, cell };
+  };
+
   // 2. Giving allocation breakdown
   const categoryTotalsMap = {};
   confirmedLedgerFiltered.forEach(item => {
@@ -334,38 +378,85 @@ export function AdminPortal({
   const givingTypeData = Object.keys(categoryTotalsMap)
     .map(cat => ({ label: cat, value: categoryTotalsMap[cat] }));
 
-  // 3. Giving by Chapter
-  const chapterGivingMap = {};
-  chapters.forEach(ch => {
-    chapterGivingMap[ch.name] = 0;
-  });
+  // 3. Giving by Structure
+  const structureGivingMap = {};
   confirmedLedgerFiltered.forEach(item => {
-    const chName = chapters.find(c => c.id === item.chapterId)?.name;
-    if (chName) {
-      chapterGivingMap[chName] = (chapterGivingMap[chName] || 0) + item.totalAmount;
-    }
-  });
-  const chapterGivingData = Object.keys(chapterGivingMap)
-    .map(name => ({ label: name, value: chapterGivingMap[name] }));
+    const info = getStructureInfo(item.chapterId, item.cellId);
+    let key = '';
+    if (givingStructureView === 'groupchurch') key = info.groupChurch;
+    else if (givingStructureView === 'church') key = info.church;
+    else if (givingStructureView === 'chapters') key = info.chapter;
+    else if (givingStructureView === 'cell') key = info.cell;
 
-  // 4. Soul-winning ranking
-  const cellSoulsMap = {};
-  cells.forEach(cell => {
-    const chName = chapters.find(ch => ch.id === cell.chapterId)?.name || 'Unknown';
-    cellSoulsMap[cell.id] = { name: cell.name, chapter: chName, souls: 0 };
+    if (key) {
+      structureGivingMap[key] = (structureGivingMap[key] || 0) + item.totalAmount;
+    }
   });
+
+  const structureGivingData = Object.keys(structureGivingMap)
+    .map(name => ({ label: name, value: structureGivingMap[name] }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10); // Limit to top 10
+
+  // 4. Soul-winning ranking by Structure
+  const structureSoulsMap = {};
   soulsFiltered.forEach(s => {
-    if (cellSoulsMap[s.cellId]) {
-      cellSoulsMap[s.cellId].souls += 1;
+    const info = getStructureInfo(s.chapterId, s.cellId);
+    let key = '';
+    let parentName = '';
+    if (soulsStructureView === 'groupchurch') {
+      key = info.groupChurch;
+      parentName = 'Global Region';
+    } else if (soulsStructureView === 'church') {
+      key = info.church;
+      parentName = info.groupChurch;
+    } else if (soulsStructureView === 'chapters') {
+      key = info.chapter;
+      parentName = info.church;
+    } else if (soulsStructureView === 'cell') {
+      key = info.cell;
+      parentName = info.chapter;
+    }
+
+    if (key) {
+      if (!structureSoulsMap[key]) {
+        structureSoulsMap[key] = { name: key, parent: parentName, souls: 0 };
+      }
+      structureSoulsMap[key].souls += 1;
     }
   });
+
   confirmedLedgerFiltered.forEach(item => {
-    if (cellSoulsMap[item.cellId]) {
-      cellSoulsMap[item.cellId].souls += item.newMembersBroughtIn;
+    if (item.newMembersBroughtIn > 0) {
+      const info = getStructureInfo(item.chapterId, item.cellId);
+      let key = '';
+      let parentName = '';
+      if (soulsStructureView === 'groupchurch') {
+        key = info.groupChurch;
+        parentName = 'Global Region';
+      } else if (soulsStructureView === 'church') {
+        key = info.church;
+        parentName = info.groupChurch;
+      } else if (soulsStructureView === 'chapters') {
+        key = info.chapter;
+        parentName = info.church;
+      } else if (soulsStructureView === 'cell') {
+        key = info.cell;
+        parentName = info.chapter;
+      }
+
+      if (key) {
+        if (!structureSoulsMap[key]) {
+          structureSoulsMap[key] = { name: key, parent: parentName, souls: 0 };
+        }
+        structureSoulsMap[key].souls += item.newMembersBroughtIn;
+      }
     }
   });
-  const cellLeaderboard = Object.values(cellSoulsMap)
-    .sort((a, b) => b.souls - a.souls);
+
+  const structureSoulsLeaderboard = Object.values(structureSoulsMap)
+    .sort((a, b) => b.souls - a.souls)
+    .slice(0, 10); // Limit to top 10
 
   // --- CREDENTIALS WORKFLOW QUEUES ---
   const pendingCellLeaders = users.filter(u => {
@@ -538,7 +629,7 @@ export function AdminPortal({
                 <div className="p-6 glass-panel rounded-3xl">
                   <h3 className="text-md font-bold text-slate-105 mb-2 flex items-center gap-2 tracking-tight">
                     <TrendingUp size={16} className="text-amber-500" />
-                    Global Weekly Giving Trends
+                    Global Giving Trends
                   </h3>
                   <p className="text-xs text-slate-500 mb-4">Confirmed receipts aggregated by service dates.</p>
                   <div className="h-40 flex items-center">
@@ -549,7 +640,7 @@ export function AdminPortal({
                 <div className="p-6 glass-panel rounded-3xl">
                   <h3 className="text-md font-bold text-slate-105 mb-2 flex items-center gap-2 tracking-tight">
                     <Users size={16} className="text-indigo-400" />
-                    Global Weekly Soulwinning Trends
+                    Global Soulwinning Trends
                   </h3>
                   <p className="text-xs text-slate-500 mb-4">Approved soul registrations & ledger data by date.</p>
                   <div className="h-40 flex items-center">
@@ -571,13 +662,30 @@ export function AdminPortal({
                 </div>
 
                 <div className="p-6 glass-panel rounded-3xl lg:col-span-2">
-                  <h3 className="text-md font-bold text-slate-105 mb-2 flex items-center gap-2 tracking-tight">
-                    <Map size={16} className="text-amber-500" />
-                    Giving Receipts by Regional Chapter
-                  </h3>
-                  <p className="text-xs text-slate-500 mb-4">Regional performance based on audit confirmed transactions within selected timeframe.</p>
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h3 className="text-md font-bold text-slate-105 flex items-center gap-2 tracking-tight">
+                        <Map size={16} className="text-amber-500" />
+                        Giving Reciept by Structure
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-1">Regional performance based on audit confirmed transactions within selected timeframe.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">View By:</span>
+                      <select
+                        value={givingStructureView}
+                        onChange={(e) => setGivingStructureView(e.target.value)}
+                        className="px-2.5 py-1 bg-slate-950 border border-slate-800 text-slate-300 rounded-xl text-xs outline-none cursor-pointer font-semibold"
+                      >
+                        <option value="groupchurch" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Group Church</option>
+                        <option value="church" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Church</option>
+                        <option value="chapters" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Chapters</option>
+                        <option value="cell" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Cell</option>
+                      </select>
+                    </div>
+                  </div>
                   <div className="h-40 flex items-center">
-                    <BarChart data={chapterGivingData} barColor="#f59e0b" />
+                    <BarChart data={structureGivingData} barColor="#f59e0b" />
                   </div>
                 </div>
               </div>
@@ -585,34 +693,56 @@ export function AdminPortal({
               <div className="grid grid-cols-1 gap-6 mt-6">
                 <div className="p-6 glass-panel rounded-3xl flex flex-col justify-between">
                   <div>
-                    <h3 className="text-md font-bold text-slate-105 mb-2 flex items-center gap-2 tracking-tight">
-                      <Trophy size={16} className="text-yellow-500" />
-                      Cell Group Soul-Winning Leaderboard
-                    </h3>
-                    <p className="text-xs text-slate-500 mb-4">Ranking cell outreach units by new members added within selected timeframe.</p>
+                    <div className="flex justify-between items-center mb-4">
+                      <div>
+                        <h3 className="text-md font-bold text-slate-105 flex items-center gap-2 tracking-tight">
+                          <Trophy size={16} className="text-yellow-500" />
+                          Soul-Winning Leaderboard
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-1">Ranking outreach units by new members added within selected timeframe.</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">View By:</span>
+                        <select
+                          value={soulsStructureView}
+                          onChange={(e) => setSoulsStructureView(e.target.value)}
+                          className="px-2.5 py-1 bg-slate-950 border border-slate-800 text-slate-300 rounded-xl text-xs outline-none cursor-pointer font-semibold"
+                        >
+                          <option value="groupchurch" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Group Church</option>
+                          <option value="church" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Church</option>
+                          <option value="chapters" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Chapters</option>
+                          <option value="cell" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Cell</option>
+                        </select>
+                      </div>
+                    </div>
                     
                     <div className="overflow-x-auto max-h-56 overflow-y-auto pr-1">
                       <table className="w-full text-left text-xs border-collapse">
                         <thead>
                           <tr className="text-slate-500 border-b border-slate-800 font-extrabold uppercase text-[10px] tracking-wide">
-                            <th className="pb-2">Cell Group</th>
-                            <th className="pb-2">Regional Chapter</th>
+                            <th className="pb-2">Name</th>
+                            <th className="pb-2">Parent Structure</th>
                             <th className="pb-2 text-right">Souls Won</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-850">
-                          {cellLeaderboard.map((cell, idx) => (
+                          {structureSoulsLeaderboard.map((item, idx) => (
                             <tr key={idx} className="ledger-row transition-all duration-250">
                               <td className="py-2.5 text-slate-205 font-bold flex items-center gap-1.5">
                                 <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[9px] ${idx === 0 ? 'bg-yellow-500/10 text-yellow-500' : idx === 1 ? 'bg-slate-350/10 text-slate-350' : 'bg-slate-800 text-slate-400'}`}>
                                   {idx + 1}
                                 </span>
-                                {cell.name}
+                                {item.name}
                               </td>
-                              <td className="py-2.5 text-slate-450">{cell.chapter}</td>
-                              <td className="py-2.5 text-right font-extrabold text-indigo-400 font-mono tabular-nums">{cell.souls}</td>
+                              <td className="py-2.5 text-slate-450">{item.parent}</td>
+                              <td className="py-2.5 text-right font-extrabold text-indigo-400 font-mono tabular-nums">{item.souls}</td>
                             </tr>
                           ))}
+                          {structureSoulsLeaderboard.length === 0 && (
+                            <tr>
+                              <td colSpan="3" className="text-center text-slate-550 italic py-8">No outreach statistics recorded.</td>
+                            </tr>
+                          )}
                         </tbody>
                       </table>
                     </div>
