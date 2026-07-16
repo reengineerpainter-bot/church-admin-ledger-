@@ -54,8 +54,18 @@ export function AdminPortal({
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [selectedReceipt, setSelectedReceipt] = useState(null);
-  const [givingStructureView, setGivingStructureView] = useState('chapters');
-  const [soulsStructureView, setSoulsStructureView] = useState('cell');
+  const [givingStructureView, setGivingStructureView] = useState(() => {
+    const role = currentUser?.role;
+    if (role === 'admin') return 'groupchurch';
+    if (role === 'group_pastor') return 'church';
+    return 'chapters';
+  });
+  const [soulsStructureView, setSoulsStructureView] = useState(() => {
+    const role = currentUser?.role;
+    if (role === 'admin') return 'groupchurch';
+    if (role === 'group_pastor') return 'church';
+    return 'chapters';
+  });
 
   const getRoleMeta = () => {
     if (currentUser.role === 'group_pastor') {
@@ -276,7 +286,18 @@ export function AdminPortal({
   const activeMembersCount = users.filter(u => u.role === 'member' && u.status === 'Active').length;
   const activeCellLeaders = users.filter(u => u.role === 'cell_leader' && u.status === 'Active').length;
 
-  const pendingDeletions = users.filter(u => u.status === 'Pending_Deletion');
+  const pendingDeletions = users.filter(u => {
+    if (u.status !== 'Pending_Deletion') return false;
+    if (currentUser.role === 'group_pastor') {
+      const allowedRoles = ['pastor', 'chapter_leader', 'cell_leader', 'member'];
+      if (!allowedRoles.includes(u.role)) return false;
+    }
+    if (currentUser.role === 'pastor') {
+      const allowedRoles = ['chapter_leader', 'cell_leader', 'member'];
+      if (!allowedRoles.includes(u.role)) return false;
+    }
+    return true;
+  });
 
   // Souls pending approval under Pastor (Chapter Leaders' recorded souls)
   const pendingSouls = souls.filter(s => {
@@ -461,6 +482,17 @@ export function AdminPortal({
   // --- CREDENTIALS WORKFLOW QUEUES ---
   const pendingCellLeaders = users.filter(u => {
     if (u.status !== 'Pending_Higher_Approval') return false;
+    
+    // Prevent church or group pastor from seeing/approving higher hierarchies
+    if (currentUser.role === 'group_pastor') {
+      const allowedRoles = ['pastor', 'chapter_leader', 'cell_leader', 'member'];
+      if (!allowedRoles.includes(u.role)) return false;
+    }
+    if (currentUser.role === 'pastor') {
+      const allowedRoles = ['chapter_leader', 'cell_leader', 'member'];
+      if (!allowedRoles.includes(u.role)) return false;
+    }
+
     if (currentUser.role === 'admin') return true; // Zonal Pastor L1 sees overall database queue
     return u.chapterId === currentUser.chapterId || u.creatorId === currentUser.id;
   });
@@ -591,15 +623,15 @@ export function AdminPortal({
               {/* Metric Dashboard Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
-                  title="Global Total Giving"
+                  title={currentUser.role === 'admin' ? "Global Total Giving" : currentUser.role === 'group_pastor' ? "Group Total Giving" : "Church Total Giving"}
                   value={`$${totalGiving.toLocaleString()}`}
                   icon={TrendingUp}
-                  description="Double-click to reveal breakdown of chapter, cell, and member giving"
+                  description={currentUser.role === 'admin' ? "Double-click to reveal breakdown of chapter, cell, and member giving" : "Double-click to reveal breakdown of cells and member giving"}
                   status="info"
                   onClick={() => setRevealedReport('givings')}
                 />
                 <StatCard
-                  title="Total Souls Won"
+                  title={currentUser.role === 'admin' ? "Total Souls Won" : currentUser.role === 'group_pastor' ? "Group Souls Won" : "Church Souls Won"}
                   value={totalSoulsWon}
                   icon={Trophy}
                   description="Double-click to reveal cell group and individual soul-winning tallies"
@@ -629,7 +661,7 @@ export function AdminPortal({
                 <div className="p-6 glass-panel rounded-3xl">
                   <h3 className="text-md font-bold text-slate-105 mb-2 flex items-center gap-2 tracking-tight">
                     <TrendingUp size={16} className="text-amber-500" />
-                    Global Giving Trends
+                    {currentUser.role === 'admin' ? "Global Giving Trends" : currentUser.role === 'group_pastor' ? "Group Giving Trends" : "Church Giving Trends"}
                   </h3>
                   <p className="text-xs text-slate-500 mb-4">Confirmed receipts aggregated by service dates.</p>
                   <div className="h-40 flex items-center">
@@ -640,7 +672,7 @@ export function AdminPortal({
                 <div className="p-6 glass-panel rounded-3xl">
                   <h3 className="text-md font-bold text-slate-105 mb-2 flex items-center gap-2 tracking-tight">
                     <Users size={16} className="text-indigo-400" />
-                    Global Soulwinning Trends
+                    {currentUser.role === 'admin' ? "Global Soulwinning Trends" : currentUser.role === 'group_pastor' ? "Group Soulwinning Trends" : "Church Soulwinning Trends"}
                   </h3>
                   <p className="text-xs text-slate-500 mb-4">Approved soul registrations & ledger data by date.</p>
                   <div className="h-40 flex items-center">
@@ -677,8 +709,12 @@ export function AdminPortal({
                         onChange={(e) => setGivingStructureView(e.target.value)}
                         className="px-2.5 py-1 bg-slate-950 border border-slate-800 text-slate-300 rounded-xl text-xs outline-none cursor-pointer font-semibold"
                       >
-                        <option value="groupchurch" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Group Church</option>
-                        <option value="church" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Church</option>
+                        {currentUser.role === 'admin' && (
+                          <option value="groupchurch" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Group Church</option>
+                        )}
+                        {(currentUser.role === 'admin' || currentUser.role === 'group_pastor') && (
+                          <option value="church" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Church</option>
+                        )}
                         <option value="chapters" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Chapters</option>
                         <option value="cell" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Cell</option>
                       </select>
@@ -708,8 +744,12 @@ export function AdminPortal({
                           onChange={(e) => setSoulsStructureView(e.target.value)}
                           className="px-2.5 py-1 bg-slate-950 border border-slate-800 text-slate-300 rounded-xl text-xs outline-none cursor-pointer font-semibold"
                         >
-                          <option value="groupchurch" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Group Church</option>
-                          <option value="church" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Church</option>
+                          {currentUser.role === 'admin' && (
+                            <option value="groupchurch" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Group Church</option>
+                          )}
+                          {(currentUser.role === 'admin' || currentUser.role === 'group_pastor') && (
+                            <option value="church" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Church</option>
+                          )}
                           <option value="chapters" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Chapters</option>
                           <option value="cell" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Cell</option>
                         </select>
