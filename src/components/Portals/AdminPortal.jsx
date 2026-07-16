@@ -564,7 +564,7 @@ export function AdminPortal({
                     <Grid size={16} className="text-amber-500" />
                     Giving Breakdown
                   </h3>
-                  <p className="text-xs text-slate-500 mb-4">Category allocation of received funds.</p>
+                  <p className="text-xs text-slate-500 mb-4">Category allocation of received funds within selected timeframe.</p>
                   <div className="h-40 flex items-center justify-center">
                     <DonutChart data={givingTypeData} size={150} />
                   </div>
@@ -575,7 +575,7 @@ export function AdminPortal({
                     <Map size={16} className="text-amber-500" />
                     Giving Receipts by Regional Chapter
                   </h3>
-                  <p className="text-xs text-slate-500 mb-4">Regional performance based on audit confirmed transactions.</p>
+                  <p className="text-xs text-slate-500 mb-4">Regional performance based on audit confirmed transactions within selected timeframe.</p>
                   <div className="h-40 flex items-center">
                     <BarChart data={chapterGivingData} barColor="#f59e0b" />
                   </div>
@@ -589,7 +589,7 @@ export function AdminPortal({
                       <Trophy size={16} className="text-yellow-500" />
                       Cell Group Soul-Winning Leaderboard
                     </h3>
-                    <p className="text-xs text-slate-500 mb-4">Ranking cell outreach units by new members added.</p>
+                    <p className="text-xs text-slate-500 mb-4">Ranking cell outreach units by new members added within selected timeframe.</p>
                     
                     <div className="overflow-x-auto max-h-56 overflow-y-auto pr-1">
                       <table className="w-full text-left text-xs border-collapse">
