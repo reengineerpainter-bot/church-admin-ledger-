@@ -45,6 +45,8 @@ export function ChapterPortal({
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [givingStructureView, setGivingStructureView] = useState('cell');
+  const [soulsStructureView, setSoulsStructureView] = useState('cell');
 
   const filterByTimeframe = (dateStr) => {
     if (!dateStr) return false;
@@ -230,18 +232,38 @@ export function ChapterPortal({
       return { label, value: weeklySoulsMap[date] };
     });
 
-  const cellGivingMap = {};
-  chapterCells.forEach(c => {
-    cellGivingMap[c.name] = 0;
-  });
+  // Helper to map L4 Chapters/L5 Cells to dynamic structure names
+  const getStructureInfo = (chapterId, cellId) => {
+    let chapterNameStr = chapterName || 'Global Chapter';
+    let cellNameStr = 'Global Cell';
+
+    if (cellId) {
+      const ce = cells.find(c => c.id === cellId);
+      if (ce) {
+        cellNameStr = ce.name;
+      }
+    }
+
+    return { chapter: chapterNameStr, cell: cellNameStr };
+  };
+
+  // 3. Giving by Structure
+  const structureGivingMap = {};
   confirmedLedgerFiltered.forEach(item => {
-    const cName = cells.find(c => c.id === item.cellId)?.name;
-    if (cName) {
-      cellGivingMap[cName] = (cellGivingMap[cName] || 0) + item.totalAmount;
+    const info = getStructureInfo(item.chapterId, item.cellId);
+    let key = '';
+    if (givingStructureView === 'chapters') key = info.chapter;
+    else if (givingStructureView === 'cell') key = info.cell;
+
+    if (key) {
+      structureGivingMap[key] = (structureGivingMap[key] || 0) + item.totalAmount;
     }
   });
-  const cellGivingData = Object.keys(cellGivingMap)
-    .map(name => ({ label: name, value: cellGivingMap[name] }));
+
+  const structureGivingData = Object.keys(structureGivingMap)
+    .map(name => ({ label: name, value: structureGivingMap[name] }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10); // Limit to top 10
 
   // --- CREDENTIALS WORKFLOW QUEUES ---
   const pendingMembers = users.filter(u => 
@@ -261,23 +283,53 @@ export function ChapterPortal({
     return reporter && reporter.role === 'cell_leader' && reporter.chapterId === chapterId;
   });
 
-  // Cell Leaderboard outreach
-  const cellSoulsMap = {};
-  chapterCells.forEach(cell => {
-    cellSoulsMap[cell.id] = { name: cell.name, souls: 0 };
-  });
+  // 4. Soul-winning ranking by Structure
+  const structureSoulsMap = {};
   soulsFiltered.forEach(s => {
-    if (cellSoulsMap[s.cellId]) {
-      cellSoulsMap[s.cellId].souls += 1;
+    const info = getStructureInfo(s.chapterId, s.cellId);
+    let key = '';
+    let parentName = '';
+    if (soulsStructureView === 'chapters') {
+      key = info.chapter;
+      parentName = 'Regional Headquarter';
+    } else if (soulsStructureView === 'cell') {
+      key = info.cell;
+      parentName = info.chapter;
+    }
+
+    if (key) {
+      if (!structureSoulsMap[key]) {
+        structureSoulsMap[key] = { name: key, parent: parentName, souls: 0 };
+      }
+      structureSoulsMap[key].souls += 1;
     }
   });
+
   confirmedLedgerFiltered.forEach(item => {
-    if (cellSoulsMap[item.cellId]) {
-      cellSoulsMap[item.cellId].souls += item.newMembersBroughtIn;
+    if (item.newMembersBroughtIn > 0) {
+      const info = getStructureInfo(item.chapterId, item.cellId);
+      let key = '';
+      let parentName = '';
+      if (soulsStructureView === 'chapters') {
+        key = info.chapter;
+        parentName = 'Regional Headquarter';
+      } else if (soulsStructureView === 'cell') {
+        key = info.cell;
+        parentName = info.chapter;
+      }
+
+      if (key) {
+        if (!structureSoulsMap[key]) {
+          structureSoulsMap[key] = { name: key, parent: parentName, souls: 0 };
+        }
+        structureSoulsMap[key].souls += item.newMembersBroughtIn;
+      }
     }
   });
-  const cellLeaderboard = Object.values(cellSoulsMap)
-    .sort((a, b) => b.souls - a.souls);
+
+  const structureSoulsLeaderboard = Object.values(structureSoulsMap)
+    .sort((a, b) => b.souls - a.souls)
+    .slice(0, 10); // Limit to top 10
 
   // --- NON-PERFORMANCE FLAGGING SYSTEM ---
   const latestDate = '2026-07-05';
@@ -426,7 +478,7 @@ export function ChapterPortal({
                 <div className="p-6 glass-panel rounded-3xl">
                   <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2 tracking-tight">
                     <TrendingUp size={16} className="text-emerald-500" />
-                    Chapter Weekly Giving Trends
+                    Chapter Giving Trends
                   </h3>
                   <p className="text-xs text-slate-500 mb-4">Confirmed receipts aggregated by service dates.</p>
                   <div className="h-40 flex items-center">
@@ -437,7 +489,7 @@ export function ChapterPortal({
                 <div className="p-6 glass-panel rounded-3xl">
                   <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2 tracking-tight">
                     <Users size={16} className="text-indigo-400" />
-                    Chapter Weekly Soulwinning Trends
+                    Chapter Soulwinning Trends
                   </h3>
                   <p className="text-xs text-slate-500 mb-4">Approved soul registrations & ledger data by date.</p>
                   <div className="h-40 flex items-center">
@@ -448,43 +500,81 @@ export function ChapterPortal({
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
                 <div className="p-6 glass-panel rounded-3xl lg:col-span-2">
-                  <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2 tracking-tight">
-                    <Grid size={16} className="text-emerald-500" />
-                    Giving Receipts by Cell Group
-                  </h3>
-                  <p className="text-xs text-slate-500 mb-4">Fellowship cells performance breakdown in this chapter.</p>
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h3 className="text-md font-bold text-slate-100 flex items-center gap-2 tracking-tight">
+                        <Grid size={16} className="text-emerald-500" />
+                        Giving Reciept by Structure
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-1">Fellowship structures performance breakdown in this chapter.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">View By:</span>
+                      <select
+                        value={givingStructureView}
+                        onChange={(e) => setGivingStructureView(e.target.value)}
+                        className="px-2.5 py-1 bg-slate-950 border border-slate-800 text-slate-300 rounded-xl text-xs outline-none cursor-pointer font-semibold"
+                      >
+                        <option value="chapters" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Chapter</option>
+                        <option value="cell" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Cell</option>
+                      </select>
+                    </div>
+                  </div>
                   <div className="h-40 flex items-center">
-                    <BarChart data={cellGivingData} barColor="#10b981" />
+                    <BarChart data={structureGivingData} barColor="#10b981" />
                   </div>
                 </div>
 
                 <div className="p-6 glass-panel rounded-3xl flex flex-col justify-between">
                   <div>
-                    <h3 className="text-md font-bold text-slate-100 mb-2 flex items-center gap-2 tracking-tight">
-                      <Trophy size={16} className="text-yellow-500" />
-                      Cell Outreach Leaderboard
-                    </h3>
-                    <p className="text-xs text-slate-500 mb-4">Outreach performance rankings inside this chapter.</p>
+                    <div className="flex justify-between items-center mb-4">
+                      <div>
+                        <h3 className="text-md font-bold text-slate-100 flex items-center gap-2 tracking-tight">
+                          <Trophy size={16} className="text-yellow-500" />
+                          Soul-Winning Leaderboard
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-1">Outreach performance rankings inside this chapter.</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">View By:</span>
+                        <select
+                          value={soulsStructureView}
+                          onChange={(e) => setSoulsStructureView(e.target.value)}
+                          className="px-2.5 py-1 bg-slate-950 border border-slate-800 text-slate-300 rounded-xl text-xs outline-none cursor-pointer font-semibold"
+                        >
+                          <option value="chapters" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Chapter</option>
+                          <option value="cell" className="bg-slate-900 text-slate-200" style={{ backgroundColor: '#0f172a', color: '#cbd5e1' }}>Cell</option>
+                        </select>
+                      </div>
+                    </div>
+                    
                     <div className="overflow-x-auto max-h-56 overflow-y-auto pr-1">
                       <table className="w-full text-left text-xs border-collapse">
                         <thead>
                           <tr className="text-slate-555 border-b border-slate-800 font-extrabold uppercase text-[10px] tracking-wide">
-                            <th className="pb-2">Cell Group</th>
+                            <th className="pb-2">Name</th>
+                            <th className="pb-2">Parent Structure</th>
                             <th className="pb-2 text-right">Souls Won</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-850">
-                          {cellLeaderboard.map((cell, idx) => (
+                          {structureSoulsLeaderboard.map((item, idx) => (
                             <tr key={idx} className="ledger-row transition-all duration-200">
                               <td className="py-2.5 text-slate-205 font-bold flex items-center gap-1.5">
                                 <span className="w-5 h-5 rounded-full flex items-center justify-center font-bold text-[9px] bg-slate-800 text-slate-400">
                                   {idx + 1}
                                 </span>
-                                {cell.name}
+                                {item.name}
                               </td>
-                              <td className="py-2.5 text-right font-extrabold text-indigo-400 font-mono tabular-nums">{cell.souls}</td>
+                              <td className="py-2.5 text-slate-450">{item.parent}</td>
+                              <td className="py-2.5 text-right font-extrabold text-indigo-400 font-mono tabular-nums">{item.souls}</td>
                             </tr>
                           ))}
+                          {structureSoulsLeaderboard.length === 0 && (
+                            <tr>
+                              <td colSpan="3" className="text-center text-slate-550 italic py-8">No outreach statistics recorded.</td>
+                            </tr>
+                          )}
                         </tbody>
                       </table>
                     </div>
